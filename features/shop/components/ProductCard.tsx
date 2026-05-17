@@ -1,156 +1,175 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
-import { MotiView } from "moti"; // Install via: npx expo install moti react-native-reanimated
-import { LinearGradient } from "expo-linear-gradient";
-
-const { width } = Dimensions.get("window");
+import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import { MotiView } from "moti";
+import { Colors } from "@/constants/Theme";
 
 interface ProductCardProps {
   product: any;
+  index: number;
   onPress: () => void;
 }
 
-const IMAGE_BASE_URL = "http://thelink.innovex.biz/"; // Replace with your actual base URL
+const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
+const FALLBACK_PLACEHOLDER =
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
 
-const ProductCard = ({ product, onPress }: ProductCardProps) => {
+const ProductCard = ({ product, index, onPress }: ProductCardProps) => {
+  // Gracefully handles dynamic media asset string resolution paths safely
+  const resolvedImageUri = product.ImageName
+    ? `${IMAGE_BASE_URL}${product.ImageName}`
+    : FALLBACK_PLACEHOLDER;
+
   return (
     <MotiView
-      from={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "timing", duration: 500 }}
-      style={styles.container}
+      from={{ opacity: 0, translateY: 15 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{
+        type: "timing",
+        duration: 400,
+        delay: Math.min(index * 60, 300), // Staggers cell loads dynamically
+      }}
+      style={styles.cardContainer}
     >
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.85}
         onPress={onPress}
-        style={styles.card}
+        style={styles.clickableArea}
       >
-        {/* Product Image */}
-        <Image
-          source={{ uri: `${IMAGE_BASE_URL}${product.ImageName}` }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        {/* Upper Image Canvas Frame */}
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{
+              uri:
+                // resolvedImageUri ||
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbdhRadCYHT3ZgleM6rrje1kRwNvjloVwLnA&s",
+            }}
+            style={styles.productImage}
+          />
 
-        {/* Badge for New Products */}
-        {product.IsNewProduct && (
-          <View style={styles.newBadge}>
-            <Text style={styles.newBadgeText}>NEW</Text>
-          </View>
-        )}
-
-        {/* Info Overlay */}
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.8)"]}
-          style={styles.gradient}
-        >
-          <View style={styles.infoContainer}>
-            <Text style={styles.productName} numberOfLines={1}>
-              {product.ProductName}
-            </Text>
-
-            <View style={styles.priceRow}>
-              <Text style={styles.priceText}>
-                Rs. {product.MinPrice} - {product.MaxPrice}
-              </Text>
-
-              {product.IsFeaturedProduct && (
-                <View style={styles.featuredBadge}>
-                  <Text style={styles.featuredText}>Featured</Text>
-                </View>
-              )}
+          {/* Badge Layout Layer Modules */}
+          {product.IsNewProduct && (
+            <View style={styles.newBadge}>
+              <Text style={styles.newBadgeText}>New</Text>
             </View>
-          </View>
-        </LinearGradient>
+          )}
+
+          {product.IsFeaturedProduct && (
+            <View style={styles.featuredBadge}>
+              <Text style={styles.featuredBadgeText}>Hot</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Lower High-Contrast Product Info block */}
+        <View style={styles.detailsBlock}>
+          <Text style={styles.productName} numberOfLines={1}>
+            {product.ProductName}
+          </Text>
+
+          <Text style={styles.priceString} numberOfLines={1}>
+            {product.MinPrice === product.MaxPrice
+              ? `Rs. ${product.MinPrice}`
+              : `Rs. ${product.MinPrice} - ${product.MaxPrice}`}
+          </Text>
+        </View>
       </TouchableOpacity>
     </MotiView>
   );
 };
 
-export default ProductCard;
+// Pure memoized asset component preservation structure
+export default React.memo(ProductCard);
 
 const styles = StyleSheet.create({
-  container: {
-    width: width - 40, // Full width minus padding
-    alignSelf: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
+  cardContainer: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     overflow: "hidden",
-    height: 250,
+
+    // Luxury detail border
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+
+    // Crisp depth profile shadow values
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  image: {
+  clickableArea: {
+    width: "100%",
+  },
+  imageWrapper: {
+    width: "100%",
+    aspectRatio: 1.1, // Clean layout ratio boundary constraints box
+    backgroundColor: "#F8FAFC",
+    overflow: "hidden",
+  },
+  productImage: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
-  gradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    justifyContent: "flex-end",
-    padding: 20,
-  },
-  infoContainer: {
-    width: "100%",
+  detailsBlock: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFFFFF",
   },
   productName: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+    color: "#0F172A", // Premium deep slate text high contrast profile
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.1,
+    marginBottom: 4,
   },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 8,
+  priceString: {
+    color: Colors.headerOne[0] || "#0284C7", // Your signature brand identifier accent color
+    fontSize: 13,
+    fontWeight: "700",
   },
-  priceText: {
-    color: "#38BDF8", // Cyan/Sky blue accent
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  /* Absolute Badge Position Elements */
   newBadge: {
     position: "absolute",
-    top: 15,
-    left: 15,
+    top: 10,
+    left: 10,
     backgroundColor: "#EF4444",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   newBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   featuredBadge: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#F59E0B", // High visibility premium luxury gold accent amber
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  featuredText: {
-    color: "#fff",
+  featuredBadgeText: {
+    color: "#FFFFFF",
     fontSize: 10,
+    fontWeight: "800",
     textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
 });

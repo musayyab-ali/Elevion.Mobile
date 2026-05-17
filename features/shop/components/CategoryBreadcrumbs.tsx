@@ -39,7 +39,7 @@ export const CategoryBreadcrumbs = ({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
-      <TouchableOpacity onPress={() => router.replace("/(tabs)/category")}>
+      <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
         <Text style={styles.inactiveCrumb}>Home</Text>
       </TouchableOpacity>
 

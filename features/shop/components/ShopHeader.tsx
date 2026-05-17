@@ -52,7 +52,8 @@ export const ShopHeader = () => {
     <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
       <View style={styles.headerContent}>
         <View style={styles.leftHeader}>
-          <Text style={styles.userSmallText}>{userName}</Text>
+          {/* <Text style={styles.userSmallText}>{userName}</Text> */}
+          <Text style={styles.userSmallText}>Waseem Khan</Text>
           <View style={styles.addressRow}>
             <Animated.View
               style={[styles.blinkCircle, { opacity: blinkAnim }]}
