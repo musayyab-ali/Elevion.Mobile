@@ -12,15 +12,22 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Colors } from "@/constants/Theme";
 import { CategoryBreadcrumbs } from "@/features/shop/components/CategoryBreadcrumbs";
 import { useDiscovery } from "@/features/shop/hooks/useDiscovery";
+import { useWishlist } from "@/features/wishlist/hooks/useWishlist"; // Import the premium hook
 import ProductCard from "@/features/shop/components/ProductCard";
 
 export default function ProductListScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { bannerProducts, breadcrumbs, loading } = useDiscovery(categoryId);
 
-  if (loading) {
+  const {
+    bannerProducts,
+    breadcrumbs,
+    loading: discoveryLoading,
+  } = useDiscovery(categoryId);
+  const { wishlistMap, isProcessing, toggleWishlist } = useWishlist();
+
+  if (discoveryLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary || "#38BDF8"} />
@@ -65,25 +72,38 @@ export default function ProductListScreen() {
               </Text>
             ) : null
           }
-          renderItem={({ item, index }) => (
-            <View
-              style={[
-                styles.gridCell,
-                { maxWidth: `${100 / calculatedColumns}%` },
-              ]}
-            >
-              <ProductCard
-                product={item}
-                index={index} // Passed down to cleanly stagger layout animations
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/category/product-details",
-                    params: { productId: item.ProductId },
-                  })
-                }
-              />
-            </View>
-          )}
+          renderItem={({ item, index }) => {
+            // Determine active variant configuration if defined, fallback smoothly to base structure
+            const targetDetailId =
+              item.ProductVariantDetail?.productVariantCombinationList?.[0]
+                ?.ProductDetailId || item.ProductId;
+            const isItemWishlisted = wishlistMap.has(item.ProductId);
+
+            return (
+              <View
+                style={[
+                  styles.gridCell,
+                  { maxWidth: `${100 / calculatedColumns}%` },
+                ]}
+              >
+                <ProductCard
+                  product={item}
+                  index={index} // Passed down to cleanly stagger layout animations
+                  isWishlisted={isItemWishlisted}
+                  isProcessing={isProcessing(item.ProductId)}
+                  onWishlistToggle={() =>
+                    toggleWishlist(item.ProductId, targetDetailId, item)
+                  }
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/category/product-details",
+                      params: { productId: item.ProductId },
+                    })
+                  }
+                />
+              </View>
+            );
+          }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>No Products Found</Text>

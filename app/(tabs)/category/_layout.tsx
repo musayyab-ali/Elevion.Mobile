@@ -16,6 +16,14 @@ export default function CategoryStackLayout() {
       <Stack.Screen name="[id]" options={{ headerShown: true }} />
       <Stack.Screen name="products" options={{ headerShown: true }} />
 
+      <Stack.Screen
+        name="cart"
+        options={{
+          headerShown: true,
+          // This tells the native navigation context to hide the parent layout's bottom bar
+          tabsBarStyle: { display: "none" },
+        }}
+      />
       {/* PERFECT TAB BAR HIDING LOGIC */}
       <Stack.Screen
         name="product-details"

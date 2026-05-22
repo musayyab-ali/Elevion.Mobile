@@ -1,13 +1,36 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { customerApi } from "../features/customer/services/customerApi";
 
 const STORAGE_KEY = "active_customer_address";
 
+interface Address {
+  AddressBookId: number;
+  FullName: string;
+  PhoneNumber: string;
+  IsDefault: boolean;
+  Address: string;
+  City: string;
+  CityId: number;
+  Longitude: string;
+  Latitude: string;
+}
+
 interface AddressContextType {
-  activeAddress: any;
-  setActiveAddress: (addr: any) => Promise<void>;
-  refreshAddress: () => Promise<void>;
+  addresses: Address[];
+  activeAddress: Address | null;
+  loading: boolean;
+  fetchAddresses: () => Promise<void>;
+  saveActiveAddress: (address: Address | null) => Promise<void>;
+  handleSaveAddress: (addressData: any) => Promise<{ success: boolean }>;
+  handleDeleteAddress: (addressBookId: number) => Promise<void>;
 }
 
 const AddressContext = createContext<AddressContextType | undefined>(undefined);
@@ -17,79 +40,117 @@ export const AddressProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [activeAddress, setInternalAddress] = useState<any>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [activeAddress, setActiveAddress] = useState<Address | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const saveActiveAddress = async (address: any) => {
-    setInternalAddress(address);
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(address));
-  };
-
-  const res = {
-    Message: "Success",
-    StatusCode: 200,
-    Data: {
-      TotalRecords: 2,
-      AddressBooks: [
-        {
-          AddressBookId: 101,
-          FullName: "John Doe",
-          PhoneNumber: "+1-555-0123",
-          IsDefault: true,
-          DefaultDisplayStatus: "Primary",
-          Address: "48 Maple Avenue,",
-          City: "New York",
-          CityId: 10,
-          Longitude: "-74.0060",
-          Latitude: "40.7128",
-        },
-        {
-          AddressBookId: 102,
-          FullName: "Jane Smith",
-          PhoneNumber: "+1-555-9876",
-          IsDefault: false,
-          DefaultDisplayStatus: "Secondary",
-          Address: "12 Suplex Street",
-          City: "Los Angeles",
-          CityId: 25,
-          Longitude: "-118.2437",
-          Latitude: "34.0522",
-        },
-      ],
-    },
-  };
-
-  const syncAddress = async () => {
+  // 1. Fetch address books from API source
+  const fetchAddresses = useCallback(async () => {
+    setLoading(true);
     try {
-      //   const res = await customerApi.getAddresses();
-      const list = res?.Data?.AddressBooks || [];
-      const savedJson = await SecureStore.getItemAsync(STORAGE_KEY);
+      const res = await customerApi.getAddresses();
+      // ✅ FIX: Axios data nesting check (res.data.Data vs res.Data)
+      const rawPayload = res?.data || res;
+      const list: Address[] = rawPayload?.Data?.AddressBooks || [];
 
+      setAddresses(list);
+
+      // Restore active choice from storage if it exists, otherwise use fallback defaults
+      const savedJson = await SecureStore.getItemAsync(STORAGE_KEY);
       if (savedJson) {
         const parsed = JSON.parse(savedJson);
         const exists = list.find(
-          (a: any) => a.AddressBookId === parsed.AddressBookId,
+          (a) => a.AddressBookId === parsed.AddressBookId,
         );
-        setInternalAddress(
-          exists || list.find((a: any) => a.IsDefault) || list[0],
+        setActiveAddress(
+          exists || list.find((a) => a.IsDefault) || list[0] || null,
         );
       } else {
-        setInternalAddress(list.find((a: any) => a.IsDefault) || list[0]);
+        setActiveAddress(list.find((a) => a.IsDefault) || list[0] || null);
       }
     } catch (err) {
-      console.error("Context Sync Error", err);
+      console.error("Context Fetch Addresses Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 2. Change active customer address selection globally
+  const saveActiveAddress = async (address: Address | null) => {
+    setActiveAddress(address);
+    if (address) {
+      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(address));
+    } else {
+      await SecureStore.deleteItemAsync(STORAGE_KEY);
+    }
+  };
+
+  // 3. Mutation: Save / Create continuous endpoints
+  const handleSaveAddress = async (addressData: any) => {
+    try {
+      const res = await customerApi.saveAddress(addressData);
+      const payload = res?.data || res;
+
+      // Match status code success layouts from Swagger documentation specifications
+      if (
+        payload?.HttpStatusCode === 100 ||
+        payload?.StatusCode === 0 ||
+        payload?.Type === "Success"
+      ) {
+        Alert.alert(
+          "Success",
+          "Your delivery address profile has been saved successfully!",
+        );
+        await fetchAddresses(); // Instantly update global views
+        return { success: true };
+      }
+
+      Alert.alert("Server Error", payload?.Message || "Could not save entry.");
+      return { success: false };
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.Message || err.message || "Failed to save address";
+      Alert.alert("Network Exception", msg);
+      return { success: false };
+    }
+  };
+
+  // 4. Mutation: Delete endpoint
+  const handleDeleteAddress = async (id: number) => {
+    try {
+      const res = await customerApi.deleteAddress(id);
+      console.log("Delete Response:", res);
+
+      // Update running arrays instantly
+      setAddresses((prev) => prev.filter((a) => a.AddressBookId !== id));
+
+      // Cleanup: If active address is the one deleted, strip cache keys safely
+      if (activeAddress?.AddressBookId === id) {
+        await SecureStore.deleteItemAsync(STORAGE_KEY);
+        setActiveAddress(null);
+      }
+    } catch (err) {
+      Alert.alert(
+        "Deletion Failure",
+        "Could not remove specified destination profile.",
+      );
     }
   };
 
   useEffect(() => {
-    syncAddress();
-  }, []);
+    fetchAddresses();
+  }, [fetchAddresses]);
 
   return (
     <AddressContext.Provider
       value={{
+        addresses,
         activeAddress,
-        setActiveAddress: saveActiveAddress,
-        refreshAddress: syncAddress,
+        loading,
+        fetchAddresses,
+        saveActiveAddress,
+        handleSaveAddress,
+        handleDeleteAddress,
       }}
     >
       {children}

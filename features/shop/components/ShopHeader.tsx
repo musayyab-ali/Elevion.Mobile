@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
@@ -21,29 +22,42 @@ export const ShopHeader = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState("Customer");
-  const { addresses, activeAddress, saveActiveAddress } = useAddress();
+  const { activeAddress, saveActiveAddress, loading } = useAddress();
   const [showAddressModal, setShowAddressModal] = useState(false);
   const blinkAnim = useRef(new Animated.Value(0)).current;
 
+  // 1. Safe Isolated Loop Animation Lifecycle Management
   useEffect(() => {
-    Animated.loop(
+    const animationLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(blinkAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(blinkAnim, {
           toValue: 0,
-          duration: 800,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
 
+    animationLoop.start();
+
+    // Clean up loop immediately if the user leaves or switches screens
+    return () => animationLoop.stop();
+  }, [blinkAnim]);
+
+  // 2. Read Secure Cache User Registration Data Separately
+  useEffect(() => {
     const getUserData = async () => {
-      const name = await SecureStore.getItemAsync("user_name");
-      if (name) setUserName(name);
+      try {
+        const name = await SecureStore.getItemAsync("user_name");
+        if (name) setUserName(name);
+      } catch (err) {
+        console.log("Error loading username from SecureStore", err);
+      }
     };
     getUserData();
   }, []);
@@ -51,21 +65,32 @@ export const ShopHeader = () => {
   return (
     <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
       <View style={styles.headerContent}>
+        {/* LEFT VIEW: USER PROFILE & TARGET ADDRESS SELECTION */}
         <View style={styles.leftHeader}>
-          {/* <Text style={styles.userSmallText}>{userName}</Text> */}
-          <Text style={styles.userSmallText}>Waseem Khan</Text>
+          <Text style={styles.userSmallText}>{userName}</Text>
+
           <View style={styles.addressRow}>
             <Animated.View
               style={[styles.blinkCircle, { opacity: blinkAnim }]}
             />
-            <Text style={styles.addressText} numberOfLines={1}>
-              {activeAddress?.Address || "No address added"}
-            </Text>
+
+            {loading ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFF"
+                style={{ marginLeft: 4 }}
+              />
+            ) : (
+              <Text style={styles.addressText} numberOfLines={1}>
+                {activeAddress?.Address || "No address added"}
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity
             style={styles.addressBtn}
             onPress={() => setShowAddressModal(true)}
+            activeOpacity={0.7}
           >
             <Text style={styles.addressBtnText} numberOfLines={1}>
               {activeAddress ? "Change Address" : "Select Address"}
@@ -73,26 +98,35 @@ export const ShopHeader = () => {
             <Ionicons
               name={activeAddress ? "repeat" : "chevron-forward"}
               size={12}
-              color={Colors.primary}
+              color={Colors.white || "#FFF"}
             />
           </TouchableOpacity>
         </View>
 
+        {/* RIGHT VIEW: NAVIGATION SHORTCUT ACTION BUTTONS */}
         <View style={styles.rightHeader}>
           <TouchableOpacity
             style={styles.iconCircle}
             onPress={() => router.push("/search")}
+            activeOpacity={0.8}
           >
-            <Ionicons name="search-outline" size={22} color={Colors.white} />
+            <Ionicons
+              name="search-outline"
+              size={22}
+              color={Colors.white || "#FFF"}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconCircle}
-            onPress={() => router.push("/profile")}
+            onPress={() => router.push("/(tabs)/category/cart")}
+            activeOpacity={0.8}
           >
-            <Ionicons name="person-outline" size={22} color={Colors.white} />
+            <Ionicons name="cart" size={22} color={Colors.white || "#FFF"} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* GLOBAL MOUNTED DIALOG MODAL OBJECT */}
       <AddressModal
         visible={showAddressModal}
         onClose={() => setShowAddressModal(false)}
@@ -104,7 +138,7 @@ export const ShopHeader = () => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: Colors.headerOne[0],
+    backgroundColor: Colors.headerOne?.[0] || "#E11D48",
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
@@ -115,48 +149,53 @@ const styles = StyleSheet.create({
   },
   leftHeader: { flex: 1 },
   userSmallText: {
-    color: Colors.white,
+    color: Colors.white || "#FFF",
     fontSize: 12,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  addressRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    minHeight: 18,
+  },
   blinkCircle: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.success,
+    backgroundColor: Colors.success || "#22C55E",
     marginRight: 6,
   },
   addressText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 12,
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 13,
     fontWeight: "700",
-    maxWidth: width * 0.5,
+    maxWidth: width * 0.55,
   },
   addressBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 6,
     marginTop: 8,
     alignSelf: "flex-start",
   },
   addressBtnText: {
-    color: Colors.white,
+    color: Colors.white || "#FFF",
     fontSize: 11,
     fontWeight: "600",
-    marginRight: 2,
+    marginRight: 4,
   },
   rightHeader: { flexDirection: "row", alignItems: "center" },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 12,

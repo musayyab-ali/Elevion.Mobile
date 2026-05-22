@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -21,82 +21,133 @@ interface Props {
   onSelectAddress: (address: any) => void;
 }
 
+const INITIAL_FORM_STATE = {
+  AddressBookId: 0,
+  FullName: "",
+  PhoneNumber: "",
+  IsDefault: true,
+  Address: "",
+  CityId: 0,
+  Longitude: "0.0",
+  Latitude: "0.0",
+};
+
 export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
   const { addresses, loading, handleSave, handleDelete } = useAddress();
   const [view, setView] = useState<"list" | "form">("list");
-  const [formData, setFormData] = useState({
-    AddressBookId: 0,
-    FullName: "",
-    PhoneNumber: "",
-    IsDefault: true,
-    Address: "",
-    Country: "Pakistan",
-    CityId: 1, // Defaulting for example
-    Longitude: "0",
-    Latitude: "0",
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+
+  // Reset form whenever modal changes visibility context state parameters
+  useEffect(() => {
+    if (!visible) {
+      setView("list");
+      setFormData(INITIAL_FORM_STATE);
+    }
+  }, [visible]);
 
   const onSavePress = async () => {
+    if (!formData.FullName || !formData.PhoneNumber || !formData.Address) {
+      alert("Please fill in all requested fields safely.");
+      return;
+    }
+
     const res = await handleSave(formData);
-    console.log("Save address response:", res);
-    if (res?.success) setView("list");
+    if (res?.success) {
+      setView("list");
+      setFormData(INITIAL_FORM_STATE); // Clear state traces completely
+    }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
       <View style={styles.modalOverlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalContainer}
         >
-          {/* HEADER */}
+          {/* HEADER ROW */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {view === "list" ? "Select Address" : "Add New Address"}
             </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={Colors.textMain} />
+            <TouchableOpacity onPress={onClose} padding-8>
+              <Ionicons
+                name="close"
+                size={24}
+                color={Colors.textMain || "#1E293B"}
+              />
             </TouchableOpacity>
           </View>
 
           {view === "list" ? (
             <>
               {loading ? (
-                <ActivityIndicator
-                  style={{ margin: 20 }}
-                  color={Colors.primary}
-                />
+                <View style={styles.loaderBox}>
+                  <ActivityIndicator
+                    size="large"
+                    color={Colors.primary || "#E11D48"}
+                  />
+                </View>
               ) : (
                 <FlatList
                   data={addresses}
-                  keyExtractor={(item: any) => item.AddressBookId.toString()}
+                  keyExtractor={(item) => item.AddressBookId.toString()}
+                  contentContainerStyle={styles.listContainer}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyText}>
+                      No saved delivery destinations located.
+                    </Text>
+                  }
                   renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.addressItem}
-                      onPress={() => {
-                        onSelectAddress(item);
-                        onClose();
-                      }}
-                    >
-                      <Ionicons
-                        name="location-sharp"
-                        size={20}
-                        color={Colors.primary}
-                      />
-                      <View style={styles.addressTextWrapper}>
-                        <Text style={styles.addressName}>{item.City}</Text>
-                        <Text style={styles.addressDetail}>{item.Address}</Text>
-                      </View>
+                    <View style={styles.addressItemRow}>
                       <TouchableOpacity
+                        style={styles.addressClickableArea}
+                        onPress={() => {
+                          onSelectAddress(item);
+                          onClose();
+                        }}
+                      >
+                        <Ionicons
+                          name={
+                            item.IsDefault ? "location" : "location-outline"
+                          }
+                          size={22}
+                          color={Colors.primary || "#E11D48"}
+                        />
+                        <View style={styles.addressTextWrapper}>
+                          <View style={styles.inlineHeader}>
+                            <Text style={styles.addressName}>
+                              {item.FullName || "Recipient Name"}
+                            </Text>
+                            {item.IsDefault && (
+                              <Text style={styles.defaultBadge}>Default</Text>
+                            )}
+                          </View>
+                          <Text style={styles.addressDetail}>
+                            {item.Address}
+                          </Text>
+                          <Text style={styles.phoneText}>
+                            📞 {item.PhoneNumber}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
                         onPress={() => handleDelete(item.AddressBookId)}
                       >
                         <Ionicons
                           name="trash-outline"
-                          size={20}
-                          color={Colors.error}
+                          size={18}
+                          color={Colors.error || "#EF4444"}
                         />
                       </TouchableOpacity>
-                    </TouchableOpacity>
+                    </View>
                   )}
                 />
               )}
@@ -105,37 +156,54 @@ export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
                 onPress={() => setView("form")}
               >
                 <Ionicons name="add" size={20} color="#fff" />
-                <Text style={styles.addBtnText}>Add New Address</Text>
+                <Text style={styles.addBtnText}>
+                  Create New Profile Address
+                </Text>
               </TouchableOpacity>
             </>
           ) : (
-            /* FORM VIEW */
+            /* FORM LOGIC CONTAINER SUBVIEW */
             <View style={styles.form}>
               <TextInput
-                placeholder="Full Name"
+                placeholder="Full Name (e.g. Ali Khan)"
+                placeholderTextColor="#94A3B8"
                 style={styles.input}
+                value={formData.FullName}
                 onChangeText={(t) => setFormData({ ...formData, FullName: t })}
               />
               <TextInput
-                placeholder="Phone Number"
+                placeholder="Phone Number (e.g. 03001234567)"
+                placeholderTextColor="#94A3B8"
                 style={styles.input}
                 keyboardType="phone-pad"
+                value={formData.PhoneNumber}
                 onChangeText={(t) =>
                   setFormData({ ...formData, PhoneNumber: t })
                 }
               />
               <TextInput
-                placeholder="Complete Address"
-                style={[styles.input, { height: 80 }]}
+                placeholder="Complete Delivery Address, Street Name, House Number"
+                placeholderTextColor="#94A3B8"
+                style={[styles.input, styles.textArea]}
                 multiline
+                numberOfLines={3}
+                value={formData.Address}
                 onChangeText={(t) => setFormData({ ...formData, Address: t })}
               />
+
               <View style={styles.formActions}>
                 <TouchableOpacity
                   style={styles.cancelBtn}
                   onPress={() => setView("list")}
                 >
-                  <Text style={{ color: Colors.error }}>Back</Text>
+                  <Text
+                    style={{
+                      color: Colors.error || "#EF4444",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.saveBtn} onPress={onSavePress}>
                   <Text style={{ color: "#fff", fontWeight: "700" }}>
@@ -154,71 +222,115 @@ export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
   modalContainer: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "80%",
-    paddingBottom: 30,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "85%",
+    paddingBottom: Platform.OS === "ios" ? 40 : 20,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#F1F5F9",
   },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
-  addressItem: {
+  headerTitle: { fontSize: 18, fontWeight: "700", color: "#1E293B" },
+  loaderBox: { padding: 40, alignItems: "center", justifyContent: "center" },
+  listContainer: { paddingBottom: 16 },
+  emptyText: {
+    textAlign: "center",
+    color: "#94A3B8",
+    marginVertical: 32,
+    fontSize: 14,
+  },
+  addressItemRow: {
     flexDirection: "row",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderColor: "#f9f9f9",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderColor: "#F8FAFC",
   },
-  addressTextWrapper: { flex: 1, marginLeft: 10 },
-  addressName: { fontWeight: "600", fontSize: 14 },
-  addressDetail: { color: Colors.tertiary, fontSize: 12 },
+  addressClickableArea: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  addressTextWrapper: { flex: 1, marginLeft: 12, paddingRight: 8 },
+  inlineHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  addressName: { fontWeight: "600", fontSize: 14, color: "#1E293B" },
+  defaultBadge: {
+    backgroundColor: "#FEF2F2",
+    color: "#E11D48",
+    fontSize: 10,
+    fontWeight: "700",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  addressDetail: { color: "#475569", fontSize: 13, lineHeight: 18 },
+  phoneText: {
+    color: "#64748B",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
+  },
+  deleteBtn: { padding: 8, justifyContent: "center", alignItems: "center" },
   addBtn: {
-    backgroundColor: Colors.primary,
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#E11D48",
+    marginHorizontal: 20,
+    marginVertical: 16,
+    padding: 16,
+    borderRadius: 12,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
-  addBtnText: { color: "#fff", fontWeight: "700" },
+  addBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   form: { padding: 20 },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 16,
+    fontSize: 14,
+    color: "#1E293B",
+    backgroundColor: "#F8FAFC",
   },
+  textArea: { height: 90, textAlignVertical: "top" },
   formActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 8,
   },
   saveBtn: {
-    backgroundColor: Colors.primary,
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#1E293B",
+    padding: 16,
+    borderRadius: 12,
     width: "68%",
     alignItems: "center",
   },
   cancelBtn: {
     borderWidth: 1,
-    borderColor: Colors.error,
-    padding: 15,
-    borderRadius: 10,
+    borderColor: "#CBD5E1",
+    padding: 16,
+    borderRadius: 12,
     width: "28%",
     alignItems: "center",
+    justifyContent: "center",
   },
 });

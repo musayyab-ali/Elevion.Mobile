@@ -82,8 +82,8 @@ export const ProfileScreen = () => {
               <Text style={styles.nameValue}>{profile?.FullName}</Text>
             )}
 
-            {/* <Text style={styles.emailValue}>{profile?.Email}</Text> */}
-            <Text style={styles.emailValue}>thelink@gmail.com</Text>
+            <Text style={styles.emailValue}>{profile?.Email}</Text>
+            {/* <Text style={styles.emailValue}>thelink@gmail.com</Text> */}
           </View>
         </View>
         {/* DETAILS SECTION */}

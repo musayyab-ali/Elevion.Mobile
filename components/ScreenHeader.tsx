@@ -48,7 +48,9 @@ export const ScreenHeader = ({
 
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={onProfilePress || (() => router.push("/profile"))}
+            onPress={
+              onProfilePress || (() => router.push("/(tabs)/category/cart"))
+            }
           >
             <Ionicons
               name="person-circle-outline"

@@ -1,6 +1,8 @@
 import { Stack, SplashScreen, useRouter, useSegments } from "expo-router"; // Add useRouter and useSegments
 import { AuthProvider, useAuth } from "../store/AuthContext";
 import { AddressProvider } from "../store/AddressContext";
+import { WishlistProvider } from "../store/WishlistContext";
+import { CartProvider } from "../store/CartContext";
 import { AnimatedSplash } from "../components/AnimatedSplash";
 import { View, StyleSheet } from "react-native";
 import { useEffect } from "react";
@@ -66,7 +68,11 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <AddressProvider>
-        <RootStack />
+        <WishlistProvider>
+          <CartProvider>
+            <RootStack />
+          </CartProvider>
+        </WishlistProvider>
       </AddressProvider>
     </AuthProvider>
   );

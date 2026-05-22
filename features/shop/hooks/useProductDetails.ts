@@ -15,7 +15,6 @@ export const useProductDetails = (productId: string | undefined) => {
       try {
         const response = await shopApi.getProductDetails(Number(productId));
         const data = response?.Data;
-        // console.log("data is :", data);
         setProduct(data);
 
         // Auto-select the default SKU variant array combination if available

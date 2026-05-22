@@ -76,15 +76,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="orders"
         options={{
@@ -94,15 +86,22 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={24} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen name="category" options={{ href: null }} />
       <Tabs.Screen
-        name="refNull/all-reviews"
-        options={{ title: "Reviews", href: null }}
+        name="cart/checkout-summary"
+        options={{ title: "Checkout", href: null }}
       />
-      <Tabs.Screen
-        name="refNull/settings"
-        options={{ title: "Settings", href: null }}
-      />
+      <Tabs.Screen name="refNull/settings" options={{ href: null }} />
+      <Tabs.Screen name="refNull/all-reviews" options={{ href: null }} />
     </Tabs>
   );
 }

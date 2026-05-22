@@ -32,9 +32,9 @@ export const customerApi = {
     return await apiClient.get(endpoint);
   },
 
-  getAddresses: async (pageNumber = 1, pageSize = 10, cityId = 0) => {
+  getAddresses: async (pageSize = 10, pageNumber = 1) => {
     return await apiClient.get(
-      `/Customer/addresses?PageNumber=${pageNumber}&PageSize=${pageSize}&CityId=${cityId}`,
+      `/Customer/addresses?PageSize=${pageSize}&PageNumber=${pageNumber}`,
     );
   },
 
