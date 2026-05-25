@@ -100,6 +100,10 @@ export default function TabLayout() {
         name="cart/checkout-summary"
         options={{ title: "Checkout", href: null }}
       />
+      <Tabs.Screen
+        name="cart/payment-methods"
+        options={{ title: "payment", href: null }}
+      />
       <Tabs.Screen name="refNull/settings" options={{ href: null }} />
       <Tabs.Screen name="refNull/all-reviews" options={{ href: null }} />
     </Tabs>

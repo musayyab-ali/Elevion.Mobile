@@ -6,9 +6,13 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
-import * as Crypto from "expo-crypto"; // Or any fallback UUID generator/SecureStore configuration
+import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
 import { cartApi, CartResponse } from "@/features/cart/services/cartApi";
 import { useAuth } from "./AuthContext";
+
+const GUEST_SESSION_KEY = "guest_cart_session_id";
+
 interface CartContextType {
   cartData: any | null;
   cartCount: number;
@@ -29,11 +33,12 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{
-  children: React.ReactNode;
-  // userToken?: string | null;
-}> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // Extract both authenticated state and a settled flag from AuthContext
+  // If your AuthContext doesn't have isAuthSettled, we add a fallback check below
+  const { isAuthenticated, isAuthSettled } = useAuth() as any;
 
   const [cartData, setCartData] = useState<CartResponse["Data"] | null>(null);
   const [cartCount, setCartCount] = useState<number>(0);
@@ -41,63 +46,82 @@ export const CartProvider: React.FC<{
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [guestSessionId, setGuestSessionId] = useState<string | null>(null);
+  const [isSessionReady, setIsSessionReady] = useState<boolean>(false);
 
-  // const isAuthenticated = useMemo(() => !!userToken, [userToken]);
-  console.log("CartContext initialization - Authenticated:", isAuthenticated);
-  // Lazy initialize or generate a persistent Guest Session Id tracking signature string
+  // 1. Initialize or load the tracking tracking session keys safely
   useEffect(() => {
-    if (!isAuthenticated && !guestSessionId) {
-      setGuestSessionId(`guest_${Crypto.randomUUID()}`);
-    }
-  }, [isAuthenticated, guestSessionId]);
+    const initializeSessionId = async () => {
+      try {
+        let storedId = await SecureStore.getItemAsync(GUEST_SESSION_KEY);
+        if (!storedId) {
+          storedId = `guest_${Crypto.randomUUID()}`;
+          await SecureStore.setItemAsync(GUEST_SESSION_KEY, storedId);
+        }
+        setGuestSessionId(storedId);
+      } catch (err) {
+        console.error("Failed to establish device tracking keys:", err);
+      } finally {
+        setIsSessionReady(true);
+      }
+    };
+    initializeSessionId();
+  }, []);
 
-  // Master fetching orchestration routing system
+  console.log(`fuck me : ${guestSessionId}`);
+
+  // 2. Fetch cart contents with conditional gates
   const fetchCart = useCallback(async () => {
+    // 🛑 GATE 1: Wait until Auth state is resolved from SecureStore
+    if (isAuthSettled === false) return;
+
+    // 🛑 GATE 2: Wait until guest tracking keys are fully loaded from storage
+    if (!isSessionReady) return;
+
     setLoading(true);
     try {
       let response: CartResponse;
       if (isAuthenticated) {
         response = await cartApi.getCart();
-        // console.log("API Response for Get Cart Context:", response.Data);
       } else if (guestSessionId) {
         response = await cartApi.getCartGuest(guestSessionId);
-        // console.log(
-        //   "API Response for Get Cart session Context:",
-        //   response.Data,
-        // );
       } else {
         return;
       }
 
       if (response?.Data) {
         setCartData(response.Data);
-        // Calculate item list length fallback if backend doesn't aggregate explicit structural flags
         const count =
           response.Data.CartItemList?.reduce(
             (sum, item) => sum + (item.Quantity || 0),
             0,
           ) || 0;
         setCartCount(count);
+      } else {
+        // Fallback clear reset rules if backend data arrives clean empty
+        setCartData(null);
+        setCartCount(0);
       }
     } catch (error: any) {
       console.error("Cart Hydration Runtime Interruption:", error);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, guestSessionId]);
+  }, [isAuthenticated, isAuthSettled, guestSessionId, isSessionReady]);
 
-  // Triggers immediate fetch invocation context parameters on mount or auth identity transformation
+  // Handle immediate auto-fetch execution gates securely
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
-  // Unified execution block managing pipeline states safely with error parsing bounds
+  // 3. Mutation: Add items to cart
   const addItemToCart = useCallback(
     async (
       productId: number,
       productDetailId: number,
       quantity: number,
     ): Promise<boolean> => {
+      if (!isSessionReady || !guestSessionId) return false;
+
       setProcessingIds((prev) => {
         const next = new Set(prev);
         next.add(productDetailId);
@@ -111,32 +135,28 @@ export const CartProvider: React.FC<{
             productId,
             productDetailId,
             quantity,
+            guestSessionId,
           );
-        } else if (guestSessionId) {
+        } else {
           result = await cartApi.addToCartGuest(
             guestSessionId,
             productId,
             productDetailId,
             quantity,
           );
-        } else {
-          throw new Error(
-            "No secure validation context or guest tracing identifier available.",
-          );
         }
 
         if (result?.HttpStatusCode === 200 || result?.Data) {
-          setCartCount(result.Data.CartCount);
-          await fetchCart(); // Re-sync entire structural array state mapping summary details smoothly
+          await fetchCart(); // Refresh context values across active layout tabs
           setApiMessage("Item appended successfully to your shopping bag.");
           return true;
         }
         return false;
       } catch (error: any) {
-        console.error("Add to Bag Core Processing Exception Exception:", error);
-        const errorMsg =
-          error?.Message || "Unable to update cart allocation values.";
-        setApiMessage(errorMsg);
+        console.error("Add to Bag Core Processing Exception:", error);
+        setApiMessage(
+          error?.Message || "Unable to update cart allocation values.",
+        );
         return false;
       } finally {
         setProcessingIds((prev) => {
@@ -147,14 +167,13 @@ export const CartProvider: React.FC<{
         setTimeout(() => setApiMessage(null), 4000);
       }
     },
-    [isAuthenticated, guestSessionId, fetchCart],
+    [isAuthenticated, guestSessionId, isSessionReady, fetchCart],
   );
 
   const updateCartItemQuantity = useCallback(
     async (cartId: number, quantity: number) => {
       if (quantity < 1) return;
 
-      // Optimistic UI updates to keep interactions incredibly fast
       setCartData((prev) => {
         if (!prev) return null;
         const updatedList = prev.CartItemList.map((item: any) =>
@@ -167,7 +186,7 @@ export const CartProvider: React.FC<{
             : item,
         );
         const newTotal = updatedList.reduce(
-          (sum: number, item: any) => sum + item.TotalAmount,
+          (sum: number, i: any) => sum + i.TotalAmount,
           0,
         );
         return {
@@ -182,7 +201,7 @@ export const CartProvider: React.FC<{
         await cartApi.updateQuantity(cartId, quantity);
       } catch (error) {
         console.error("Failed to sync structural quantity updates:", error);
-        fetchCart(); // Rollback if API fails
+        fetchCart();
       }
     },
     [fetchCart],
@@ -190,14 +209,13 @@ export const CartProvider: React.FC<{
 
   const removeCartItem = useCallback(
     async (cartId: number) => {
-      // Optimistic item removal
       setCartData((prev) => {
         if (!prev) return null;
         const filteredList = prev.CartItemList.filter(
           (item: any) => item.CartId !== cartId,
         );
         const newTotal = filteredList.reduce(
-          (sum: number, item: any) => sum + (item.TotalAmount || 0),
+          (sum: number, i: any) => sum + (i.TotalAmount || 0),
           0,
         );
         return {
@@ -215,60 +233,20 @@ export const CartProvider: React.FC<{
         }
       } catch (error) {
         console.error("Cart deletion routine exception:", error);
-        fetchCart(); // Rollback sequence
+        fetchCart();
       }
     },
     [fetchCart],
   );
 
-  // const executeCheckout = useCallback(
-  //   async (attachments: string[] = []) => {
-  //     setLoading(true);
-  //     try {
-  //       let checkoutResult;
-  //       if (isAuthenticated) {
-  //         checkoutResult = await cartApi.checkout(attachments);
-  //       } else if (guestSessionId) {
-  //         checkoutResult = await cartApi.checkoutGuest(
-  //           guestSessionId,
-  //           attachments,
-  //         );
-  //       } else {
-  //         throw new Error(
-  //           "No tracking authentication signature context established.",
-  //         );
-  //       }
-
-  //       // Clean up internal states upon successful order placement
-  //       setCartData(null);
-  //       setCartCount(0);
-  //       return checkoutResult;
-  //     } catch (error: any) {
-  //       console.error("Checkout execution exception:", error);
-  //       setApiMessage(error?.Message || "Checkout validation failure.");
-  //       throw error;
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   },
-  //   [isAuthenticated, guestSessionId],
-  // );
   const executeCheckout = useCallback(
     async (attachments: string[] = []) => {
       setLoading(true);
       try {
         let checkoutResult;
         if (isAuthenticated) {
-          console.log(
-            "Executing authenticated checkout with attachments:",
-            attachments,
-          );
           checkoutResult = await cartApi.checkout(attachments);
         } else if (guestSessionId) {
-          console.log(
-            "Executing guest checkout with attachments:",
-            attachments,
-          );
           checkoutResult = await cartApi.checkoutGuest(
             guestSessionId,
             attachments,
@@ -278,13 +256,9 @@ export const CartProvider: React.FC<{
             "No tracking authentication signature context established.",
           );
         }
-
-        // ✅ FIX: Do NOT clear cart data here. The user is only REVIEWING the checkout summary right now!
-        console.log("Checkout result:", checkoutResult);
         return checkoutResult;
       } catch (error: any) {
         console.error("Checkout execution exception:", error);
-        setApiMessage(error?.Message || "Checkout validation failure.");
         throw error;
       } finally {
         setLoading(false);
@@ -292,6 +266,7 @@ export const CartProvider: React.FC<{
     },
     [isAuthenticated, guestSessionId],
   );
+
   const value = useMemo(
     () => ({
       cartData,
@@ -305,6 +280,7 @@ export const CartProvider: React.FC<{
       updateCartItemQuantity,
       executeCheckout,
       removeCartItem,
+      guestSessionId,
     }),
     [
       cartData,
@@ -318,6 +294,7 @@ export const CartProvider: React.FC<{
       updateCartItemQuantity,
       executeCheckout,
       removeCartItem,
+      guestSessionId,
     ],
   );
 
@@ -326,10 +303,9 @@ export const CartProvider: React.FC<{
 
 export const useSharedCartData = () => {
   const context = useContext(CartContext);
-  if (!context) {
+  if (!context)
     throw new Error(
-      "useSharedCartData must balance explicitly wrapped execution within a CartProvider frame layer.",
+      "useSharedCartData must be wrapped within a CartProvider frame layer.",
     );
-  }
   return context;
 };

@@ -65,14 +65,6 @@ export const customerApi = {
     return await apiClient.get(`/Customer/ratings?productId=${productId}`);
   },
 
-  getDeliveryOptions: async () => {
-    return await apiClient.get(`/Setting/delivery/services/options`);
-  },
-
-  /**
-   * Deactivates the customer account.
-   * Based on the API definition, this requires a security key in the header.
-   */
   deactivateAccount: async () => {
     return await apiClient.post(`/Customer/account/deactivate`);
   },

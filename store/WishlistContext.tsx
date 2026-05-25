@@ -7,7 +7,7 @@ import React, {
   useEffect,
 } from "react";
 import { wishlistApi } from "../features/wishlist/services/wishlistApi";
-import { useAuth } from "./AuthContext"; // 👈 Pull live authentication state
+import { useAuth } from "./AuthContext";
 
 interface WishlistContextType {
   items: any[];

@@ -4,6 +4,7 @@ import { authEvents } from "../utils/authEvents";
 interface AuthContextType {
   isAuthenticated: boolean;
   isAppReady: boolean;
+  isAuthSettled: boolean;
   login: (tokens: any) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -12,6 +13,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthSettled, setIsAuthSettled] = useState(false);
   const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
@@ -24,6 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (e) {
         setIsAuthenticated(false);
       } finally {
+        setIsAuthSettled(true);
         setTimeout(() => setIsAppReady(true), 4000);
       }
     };
@@ -76,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isAppReady, login, logout }}
+      value={{ isAuthenticated, isAppReady, login, logout, isAuthSettled }}
     >
       {children}
     </AuthContext.Provider>

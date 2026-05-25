@@ -29,7 +29,9 @@ export const cartApi = {
     productId: number,
     productDetailId: number,
     quantity: number,
+    sessionId: string,
   ): Promise<AddToCartResponse> => {
+    console.log(`fuck is this : ${sessionId}`);
     const response = await apiClient.post(
       "/Cart/AddToCart/add-product",
       {},
@@ -38,9 +40,11 @@ export const cartApi = {
           ProductId: productId,
           ProductDetailId: productDetailId,
           Quantity: quantity,
+          SessionId: sessionId,
         },
       },
     );
+
     return response.data;
   },
 
@@ -59,6 +63,7 @@ export const cartApi = {
           ProductId: productId,
           ProductDetailId: productDetailId,
           Quantity: quantity,
+          SessionId: sessionId,
         },
       },
     );
@@ -68,7 +73,7 @@ export const cartApi = {
   // 3. Get Authenticated Cart
   getCart: async (): Promise<CartResponse> => {
     const response = await apiClient.get("/Cart/GetCart/current");
-    // console.log("API Response for Get Cart:", response.data);
+    console.log("API Response for Get Cart:", response.data);
     return response.data;
   },
 
@@ -109,9 +114,8 @@ export const cartApi = {
   checkout: async (fileUris: string[] = []): Promise<any> => {
     // ✅ FIX: If no attachments are passed, don't use FormData at all!
     if (fileUris.length === 0) {
-      const response = await apiClient.post("/Cart/Checkout/checkout", null, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiClient.post("/Cart/Checkout/checkout", null);
+      console.log("Checkout API Response (No Files):", response.data);
       return response.data;
     }
 
@@ -129,6 +133,7 @@ export const cartApi = {
     const response = await apiClient.post("/Cart/Checkout/checkout", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    console.log("Checkout API Response Big Ass:", response.data);
     return response.data;
   },
 
@@ -141,9 +146,6 @@ export const cartApi = {
       const response = await apiClient.post(
         `/Cart/Checkout/session/${sessionId}/checkout`,
         null,
-        {
-          headers: { "Content-Type": "application/json" },
-        },
       );
       return response.data;
     }

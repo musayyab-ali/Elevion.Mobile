@@ -25,8 +25,6 @@ export const CartScreen = () => {
     handleProcessCheckoutPipeline,
   } = useCartScreen();
 
-  // console.log("Cart Items:", cartItems);
-
   if (loading && cartItems.length === 0) {
     return (
       <View style={styles.centerContainer}>
