@@ -61,7 +61,7 @@ export default function WelcomeScreen() {
         <MotiView
           from={{ translateY: SCREEN_HEIGHT * 0.4 }}
           animate={{ translateY: 0 }}
-          transition={{ type: "spring", damping: 15 }}
+          // transition={{ type: "spring", damping: 3 }}
           style={styles.bottomCard}
         >
           <View style={styles.cardContent}>

@@ -6,6 +6,7 @@ export const useOtp = () => {
   const router = useRouter();
   const { login: saveAuth } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -35,6 +36,11 @@ export const useOtp = () => {
       });
       // CRITICAL: Extract the token from the response
       // Based on your API: result.Data.AccessToken
+      console.log("OTP Verification Result:", result.Data);
+      console.log(
+        "OTP Verification Result AccessToken:",
+        result.Data.AccessToken,
+      );
       const tokenData = { AccessToken: result.Data.AccessToken };
 
       // 1. Save to SecureStore and update global state
@@ -43,7 +49,7 @@ export const useOtp = () => {
 
       setTimeout(() => {
         setIsSuccess(false);
-        router.replace("/(tabs)");
+        router.replace("/(tabs)/index");
       }, 4500);
 
       return { success: true };
@@ -57,7 +63,7 @@ export const useOtp = () => {
   };
 
   const resendOtp = async (userName: string) => {
-    setLoading(true);
+    setResetLoading(true);
     setApiMessage(null);
     try {
       await authApi.resendOtp(userName);
@@ -68,9 +74,9 @@ export const useOtp = () => {
       return { success: false };
     } finally {
       setTimeout(() => setApiMessage(null), 3000);
-      setLoading(false);
+      setResetLoading(false);
     }
   };
 
-  return { verifyOtp, resendOtp, loading, apiMessage, isSuccess };
+  return { verifyOtp, resendOtp, loading, apiMessage, isSuccess, resetLoading };
 };

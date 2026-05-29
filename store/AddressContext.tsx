@@ -69,7 +69,7 @@ export const AddressProvider = ({
         setActiveAddress(list.find((a) => a.IsDefault) || list[0] || null);
       }
     } catch (err) {
-      console.error("Context Fetch Addresses Error:", err);
+      console.log("Context Fetch Addresses Error:", err);
     } finally {
       setLoading(false);
     }

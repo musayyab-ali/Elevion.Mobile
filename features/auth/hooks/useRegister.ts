@@ -64,6 +64,7 @@ export const useRegister = () => {
           },
         });
       }
+      formData = null;
     } catch (error: any) {
       // Handle professional error display based on Status Code
       if (error.StatusCode === 400 && error.Errors) {

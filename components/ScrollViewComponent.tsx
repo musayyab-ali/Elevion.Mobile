@@ -18,5 +18,5 @@ export const ScrollViewComponent = ({ children, style }) => (
 );
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingTop: 30, paddingBottom: 40 },
+  scrollContent: { paddingTop: 30, paddingBottom: 100 },
 });

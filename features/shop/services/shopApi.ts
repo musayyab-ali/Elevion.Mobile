@@ -1,31 +1,3 @@
-// import apiClient from "../../../services/api/apiClient";
-// import { CategoryResponse, CategoryQueryParams } from "../types/shopTypes";
-
-// export const shopApi = {
-//   getCategories: async (
-//     params: CategoryQueryParams,
-//   ): Promise<CategoryResponse> => {
-//     try {
-//       console.log("📡 API Request Params:", params); // DEBUG LOG
-//       const response = await apiClient.get("/Category/current", {
-//         params: {
-//           ...params,
-//           Status: params.Status ?? 1,
-//         },
-//       });
-//       console.log(
-//         `✅ API Success [ID: ${params.CategoryId || "Root"}]:`,
-//         response.data.Data?.length,
-//         "items",
-//       ); // DEBUG LOG
-//       return response.data;
-//     } catch (error: any) {
-//       console.error("❌ API Error:", error.response?.data || error.message);
-//       throw error.response?.data || { Message: "Failed to fetch categories" };
-//     }
-//   },
-// };
-
 import apiClient from "../../../services/api/apiClient";
 import {
   CategoryResponse,

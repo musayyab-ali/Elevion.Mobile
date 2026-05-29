@@ -2,13 +2,18 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Theme";
 import { ScreenHeader } from "../../components/ScreenHeader";
-import { getFocusedRouteNameFromRoute } from "@react-navigation/native"; // 1. IMPORT THIS
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // 🌟 For exact traditional padding
+import { useWindowDimensions } from "react-native";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isTablet = width > 600;
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        // 2. TURN THIS INTO A FUNCTION TO EXTRACT 'route'
         headerShown: true,
         header: ({ options, route: headerRoute }) => {
           if (headerRoute.name === "index" || headerRoute.name === "category") {
@@ -21,39 +26,55 @@ export default function TabLayout() {
             />
           );
         },
-        tabBarTransparent: true,
+        // 🌟 Turned off transparent/floating behaviors for the traditional layout approach
+        tabBarTransparent: false,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: Colors.headerOne[0],
-        tabBarInactiveTintColor: Colors.white,
-        tabBarActiveBackgroundColor: Colors.white,
+        tabBarInactiveTintColor: "#94A3B8", // Clean slate gray for standard inactive state
+        tabBarActiveBackgroundColor: "transparent", // Simple traditional highlights
 
-        // 3. DYNAMICALLY ALTER VISIBILITY BASED ON INTERNAL NESTED SCREENS
+        // 🌟 CLEAN TRADITIONAL FULL-WIDTH STYLE
         tabBarStyle: (() => {
           const focusedRoute = getFocusedRouteNameFromRoute(route);
 
-          // If the user dives into detail views, hide the bar completely
           if (focusedRoute === "product-details") {
             return { display: "none" };
           }
+
           return {
-            backgroundColor: Colors.headerOne[0],
-            height: 70,
-            position: "absolute",
-            bottom: 10,
-            marginLeft: 10,
-            marginRight: 10,
-            borderRadius: 50,
-            borderTopWidth: 0,
-            paddingHorizontal: "2%",
+            backgroundColor: Colors.white, // Classic solid white or background-matched header bar
+            borderTopWidth: 1,
+            borderTopColor: "#E2E8F0", // Ultra-subtle border separator line
+
+            // 📐 Height scales traditionally: 56px base + dynamic physical hardware inset notch protection
+            height: 56 + insets.bottom,
+            paddingBottom: insets.bottom > 0 ? insets.bottom - 4 : 4, // Aligns labels perfectly above home indicators
+            paddingTop: 6,
+
+            // Remove floating attributes entirely
+            position: "relative",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            borderRadius: 0,
+            marginHorizontal: 0,
+            width: "100%",
           };
         })(),
 
         tabBarItemStyle: {
-          borderRadius: 50,
-          overflow: "hidden",
-          marginHorizontal: "auto",
-          marginVertical: 5,
-          height: 60,
+          height: 48,
+          marginHorizontal: 0,
+          marginVertical: 0,
+          borderRadius: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: isTablet ? 13 : 11,
+          fontWeight: "600",
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
         },
       })}
     >
@@ -63,7 +84,7 @@ export default function TabLayout() {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={24} color={color} />
+            <Ionicons name="home" size={isTablet ? 26 : 22} color={color} />
           ),
         }}
       />
@@ -72,17 +93,16 @@ export default function TabLayout() {
         options={{
           title: "Saved",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="heart" size={24} color={color} />
+            <Ionicons name="heart" size={isTablet ? 26 : 22} color={color} />
           ),
         }}
       />
-
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="receipt" size={24} color={color} />
+            <Ionicons name="receipt" size={isTablet ? 26 : 22} color={color} />
           ),
         }}
       />
@@ -91,10 +111,12 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
+            <Ionicons name="person" size={isTablet ? 26 : 22} color={color} />
           ),
         }}
       />
+
+      {/* Hidden Utility Routes Configuration */}
       <Tabs.Screen name="category" options={{ href: null }} />
       <Tabs.Screen
         name="cart/checkout-summary"
@@ -104,8 +126,14 @@ export default function TabLayout() {
         name="cart/payment-methods"
         options={{ title: "payment", href: null }}
       />
-      <Tabs.Screen name="refNull/settings" options={{ href: null }} />
-      <Tabs.Screen name="refNull/all-reviews" options={{ href: null }} />
+      <Tabs.Screen
+        name="refNull/settings"
+        options={{ title: "Settings", href: null }}
+      />
+      <Tabs.Screen
+        name="refNull/all-reviews"
+        options={{ title: "All Reviews", href: null }}
+      />
     </Tabs>
   );
 }

@@ -2,9 +2,10 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { emitLogout } from "../../utils/authEvents";
 // Using your environment variables for safety
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
-
+// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
+const BASE_URL = "http://thelink.innovex.biz/api/v1";
+const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -75,7 +76,7 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        console.error("Session expired. Forcing logout.");
+        console.log("Session expired. Forcing logout.");
 
         // Clear tokens from storage
         await SecureStore.deleteItemAsync("accessToken");

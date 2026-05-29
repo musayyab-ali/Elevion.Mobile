@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Login Store Error:", error);
+      console.log("Login Store Error:", error);
     }
   };
 

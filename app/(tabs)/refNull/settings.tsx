@@ -19,24 +19,11 @@ const SettingsScreen = () => {
   const router = useRouter();
   const { confirmDeactivation, loading: deactivating } = useAccountSettings();
   const { activeAddress, saveActiveAddress } = useAddress();
-  const {
-    deliveryOptions,
-    loading: settingsLoading,
-    handleLogout,
-  } = useSettings();
+  const { loading: settingsLoading, handleLogout } = useSettings();
   const [showAddressModal, setShowAddressModal] = useState(false);
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.headerOne[0]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

@@ -10,7 +10,7 @@ export const Theme = {
 
 export const GlobalStyles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
     backgroundColor: Theme.background,
     padding: 20,
   },

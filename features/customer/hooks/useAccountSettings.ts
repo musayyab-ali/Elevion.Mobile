@@ -20,9 +20,6 @@ export const useAccountSettings = () => {
             {
               text: "OK",
               onPress: async () => {
-                // This is the fix: use your built-in logout logic
-                // It clears accessToken, refreshToken, names, etc.,
-                // and sets isAuthenticated to false.
                 await logout();
               },
             },

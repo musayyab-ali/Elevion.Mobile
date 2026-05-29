@@ -1,9 +1,10 @@
-// app/(tabs)/category/_layout.tsx
 import { Stack } from "expo-router";
-import { Colors } from "../../../constants/Theme";
-
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "@/constants/Theme";
+import { StyleSheet } from "react-native";
 export default function CategoryStackLayout() {
   return (
+    // <SafeAreaView style={styles.safeContainer} edges={["top", "bottom"]}>
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: Colors.headerOne[0] },
@@ -19,9 +20,9 @@ export default function CategoryStackLayout() {
       <Stack.Screen
         name="cart"
         options={{
+          title: "MY Cart",
           headerShown: true,
-          // This tells the native navigation context to hide the parent layout's bottom bar
-          tabsBarStyle: { display: "none" },
+          // tabsBarStyle: { display: "none" },
         }}
       />
       {/* PERFECT TAB BAR HIDING LOGIC */}
@@ -34,5 +35,14 @@ export default function CategoryStackLayout() {
         }}
       />
     </Stack>
+    // </SafeAreaView>
   );
 }
+
+// const styles = StyleSheet.create({
+//   safeContainer: {
+//     flex: 1,
+//     // 🌟 Set your primary background color here so your layout views never change color or flash white
+//     backgroundColor: Colors.headerOne[0],
+//   },
+// });

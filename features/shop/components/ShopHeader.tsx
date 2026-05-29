@@ -107,7 +107,7 @@ export const ShopHeader = () => {
         <View style={styles.rightHeader}>
           <TouchableOpacity
             style={styles.iconCircle}
-            onPress={() => router.push("/search")}
+            // onPress={() => router.push("/search")}
             activeOpacity={0.8}
           >
             <Ionicons

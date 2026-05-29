@@ -41,7 +41,7 @@ export const ScreenHeader = ({
         <View style={styles.iconGroup}>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={onSearchPress || (() => router.push("/search"))}
+            // onPress={onSearchPress || (() => router.push("/search"))}
           >
             <Ionicons name="search-outline" size={24} color={Colors.white} />
           </TouchableOpacity>

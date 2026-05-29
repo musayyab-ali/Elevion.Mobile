@@ -6,7 +6,8 @@ import { CartProvider } from "../store/CartContext";
 import { AnimatedSplash } from "../components/AnimatedSplash";
 import { View, StyleSheet } from "react-native";
 import { useEffect } from "react";
-
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Colors } from "../constants/Theme";
 SplashScreen.preventAutoHideAsync();
 
 function RootStack() {
@@ -17,23 +18,22 @@ function RootStack() {
   console.log("Auth State Changed: isAuthenticated =", isAuthenticated);
 
   useEffect(() => {
-    // Hide the native splash
     SplashScreen.hideAsync();
   }, []);
 
-  // FORCE REDIRECT LOGIC
   useEffect(() => {
     if (!isAppReady) return;
 
     const inAuthGroup = segments[0] === "(tabs)";
 
     if (isAuthenticated && !inAuthGroup) {
-      // If logged in but NOT in the tabs, go to tabs
+      console.log("Redirecting to (tabs) because user is authenticated");
       router.replace("/(tabs)");
     } else if (!isAuthenticated && inAuthGroup) {
-      // If NOT logged in but currently IN the tabs, force them to login
-      // replace ensures they can't go "back" to the authorized screens
-      router.replace("/(unauthorized)/login");
+      console.log(
+        "Redirecting to (unauthorized)/welcome because user is not authenticated",
+      );
+      router.replace("/(unauthorized)/welcome");
     }
   }, [isAuthenticated, isAppReady, segments]);
 
@@ -46,23 +46,35 @@ function RootStack() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        <>
-          <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
-          <Stack.Screen name="products" options={{ headerShown: true }} />
+    <SafeAreaProvider style={styles.providerContainer}>
+      <Stack screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+            <Stack.Screen name="products" options={{ headerShown: true }} />
+            <Stack.Screen
+              name="product-details"
+              options={{ headerShown: true }}
+            />
+          </>
+        ) : (
+          // Ensure this name matches your folder name exactly
           <Stack.Screen
-            name="product-details"
-            options={{ headerShown: true }}
+            name="(unauthorized)"
+            options={{ animation: "slide_from_right" }}
           />
-        </>
-      ) : (
-        // Ensure this name matches your folder name exactly
-        <Stack.Screen name="(unauthorized)" options={{ animation: "fade" }} />
-      )}
-    </Stack>
+        )}
+      </Stack>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  providerContainer: {
+    flex: 1,
+    backgroundColor: Colors.headerOne[0],
+  },
+});
 
 export default function RootLayout() {
   return (

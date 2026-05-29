@@ -11,6 +11,7 @@ import {
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartScreen } from "../hooks/useCartScreen";
+import { Colors } from "@/constants/Theme";
 
 const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
 
@@ -151,9 +152,17 @@ export const CartScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
-  centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  listContainer: { padding: 16, paddingBottom: 220 },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  listContainer: {
+    // flex: 1,
+    padding: 16,
+    paddingBottom: 220,
+  },
   sheetTitle: {
     fontSize: 20,
     fontWeight: "800",
@@ -237,7 +246,7 @@ const styles = StyleSheet.create({
   },
   checkoutFooter: {
     position: "absolute",
-    bottom: 70,
+    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",

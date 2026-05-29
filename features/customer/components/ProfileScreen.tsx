@@ -55,7 +55,6 @@ export const ProfileScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -189,6 +188,7 @@ export const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>}
     </View>
   );
 };
@@ -216,15 +216,21 @@ const DetailItem = ({ icon, label, value, isEditing, onChange }: any) => (
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.headerOne[0],
   },
   scrollContent: {
     padding: 20,
-    // Add this to ensure content clears the floating tab bar
-    paddingBottom: 120,
+    paddingBottom: 100,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: "#F8FAFC",
   },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+  },
   identityWrapper: {
     marginTop: 40, // Space for the half-out icon
     marginBottom: 20,

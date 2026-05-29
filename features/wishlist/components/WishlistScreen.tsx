@@ -200,7 +200,7 @@ export const WishlistScreen = () => {
         { backgroundColor: Colors.headerOne?.[0] || "#0F172A" },
       ]}
     >
-      <Stack.Screen
+      {/* <Stack.Screen
         options={{
           headerTitle: "My Saved Wishlist",
           headerShadowVisible: false,
@@ -209,7 +209,7 @@ export const WishlistScreen = () => {
           headerTintColor: "#FFFFFF",
           headerTitleAlign: "center",
         }}
-      />
+      /> */}
 
       {/* Main Luxury White Sheet Content Canvas */}
       <View style={styles.contentCanvas}>

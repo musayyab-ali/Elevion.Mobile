@@ -25,8 +25,9 @@ export default function OtpVerificationScreen() {
     userName: string;
     message: string;
   }>();
-  const { verifyOtp, resendOtp, loading, apiMessage, isSuccess } = useOtp();
-
+  const { verifyOtp, resendOtp, loading, apiMessage, isSuccess, resetLoading } =
+    useOtp();
+  const [fieldError, setFieldError] = useState("");
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(30);
 
@@ -39,11 +40,20 @@ export default function OtpVerificationScreen() {
   }, []);
 
   const handleVerify = async () => {
-    // We pass both; the API and Hook will prioritize whichever is available
+    if (!otp) {
+      setFieldError("Please enter the OTP");
+      return;
+    }
+    if (otp.length < 6) {
+      setFieldError("Please enter a valid 6-digit OTP");
+      return;
+    }
     await verifyOtp(otp, phoneNumber, userName);
   };
 
   const handleResend = async () => {
+    setFieldError("");
+    setOtp("");
     if (!userName) return alert("Username missing");
     const result = await resendOtp(userName);
     if (result.success) setTimer(30);
@@ -74,13 +84,20 @@ export default function OtpVerificationScreen() {
           value={otp}
           onChangeText={setOtp}
           style={styles.otpInput}
+          error={fieldError}
         />
 
         <AppButton
-          title={loading ? "VERIFYING..." : "VERIFY & PROCEED"}
+          title={
+            loading
+              ? "VERIFYING..."
+              : resetLoading
+                ? "SENDING..."
+                : "VERIFY & PROCEED"
+          }
           onPress={handleVerify}
           style={styles.verifyBtn}
-          disabled={otp.length < 4}
+          disabled={otp.length < 6 || loading || resetLoading}
         />
 
         <View style={styles.resendContainer}>

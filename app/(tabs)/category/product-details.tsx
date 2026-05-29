@@ -891,48 +891,6 @@ export default function ProductDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: "Product Details",
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={[
-                styles.headerButton,
-                { marginTop: Math.max(insets.top - 12, 0) },
-              ]}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="chevron-back" size={22} color="#0F172A" />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={handleWishlistPress}
-              disabled={isWishlistActionRunning}
-              style={[
-                styles.headerButton,
-                styles.headerRightWishlistBtn,
-                { marginTop: Math.max(insets.top - 12, 0) },
-              ]}
-              activeOpacity={0.8}
-            >
-              {isWishlistActionRunning ? (
-                <ActivityIndicator size="small" color="#EF4444" />
-              ) : (
-                <Ionicons
-                  name={isCurrentProductWishlisted ? "heart" : "heart-outline"}
-                  size={20}
-                  color={isCurrentProductWishlisted ? "#EF4444" : "#0F172A"}
-                />
-              )}
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollPadding}
@@ -1217,7 +1175,7 @@ export default function ProductDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.headerOne[0],
   },
   loadingContainer: {
     flex: 1,
@@ -1255,6 +1213,8 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
   carouselContainer: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     position: "relative",
     backgroundColor: "#F1F5F9",
   },
@@ -1286,25 +1246,7 @@ const styles = StyleSheet.create({
     width: 4,
     backgroundColor: "rgba(15, 23, 42, 0.2)",
   },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 4,
-    marginRight: 10,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  headerRightWishlistBtn: {
-    marginRight: 4,
-    marginLeft: 10,
-  },
+
   detailsCard: {
     flex: 1,
     borderTopLeftRadius: 30,

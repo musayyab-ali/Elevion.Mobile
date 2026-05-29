@@ -1,14 +1,7 @@
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
-
-// const handleResponse = async (response: Response) => {
-//   const result = await response.json();
-//   console.log("API Response:", result);
-//   if (!response.ok) throw result;
-//   return result;
-// };
-const url = `${BASE_URL}/oauth/token`;
-console.log("DEBUG - Attempting Login at:", url, "/api/v1/oauth/token");
+// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
+const BASE_URL = "http://thelink.innovex.biz/api/v1";
+const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
 
 const handleResponse = async (response: Response) => {
   const contentType = response.headers.get("content-type");
