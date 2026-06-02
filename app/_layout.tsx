@@ -1,69 +1,79 @@
-import { Stack, SplashScreen, useRouter, useSegments } from "expo-router"; // Add useRouter and useSegments
+import { Stack, SplashScreen } from "expo-router";
 import { AuthProvider, useAuth } from "../store/AuthContext";
 import { AddressProvider } from "../store/AddressContext";
 import { WishlistProvider } from "../store/WishlistContext";
 import { CartProvider } from "../store/CartContext";
-import { AnimatedSplash } from "../components/AnimatedSplash";
-import { View, StyleSheet } from "react-native";
-import { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Colors } from "../constants/Theme";
+import * as SecureStore from "expo-secure-store";
+
+// 🔒 Hold the native app splash screen locked over the screen
 SplashScreen.preventAutoHideAsync();
 
 function RootStack() {
-  const { isAuthenticated, isAppReady } = useAuth();
-  const segments = useSegments(); // This tells us where the user is (e.g., "(tabs)")
-  const router = useRouter();
+  const { isAppReady } = useAuth();
+  const [checkingLaunch, setCheckingLaunch] = useState(true);
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
 
-  console.log("Auth State Changed: isAuthenticated =", isAuthenticated);
-
+  // Determine the launch status while the native splash screen remains visible
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    async function determineNavigationFlow() {
+      if (!isAppReady) return;
 
-  useEffect(() => {
-    if (!isAppReady) return;
-
-    const inAuthGroup = segments[0] === "(tabs)";
-
-    if (isAuthenticated && !inAuthGroup) {
-      console.log("Redirecting to (tabs) because user is authenticated");
-      router.replace("/(tabs)");
-    } else if (!isAuthenticated && inAuthGroup) {
-      console.log(
-        "Redirecting to (unauthorized)/welcome because user is not authenticated",
-      );
-      router.replace("/(unauthorized)/welcome");
+      try {
+        // await SecureStore.deleteItemAsync("HAS_LAUNCHED");
+        const hasLaunched = await SecureStore.getItemAsync("HAS_LAUNCHED");
+        if (hasLaunched === null) {
+          setIsFirstLaunch(true);
+        } else {
+          setIsFirstLaunch(false);
+        }
+      } catch (error) {
+        console.error("Failed to read launch storage keys:", error);
+        setIsFirstLaunch(false);
+      } finally {
+        setCheckingLaunch(false);
+      }
     }
-  }, [isAuthenticated, isAppReady, segments]);
 
-  if (!isAppReady) {
-    return (
-      <View style={StyleSheet.absoluteFill}>
-        <AnimatedSplash />
-      </View>
-    );
+    determineNavigationFlow();
+  }, [isAppReady]);
+
+  // 🏁 Drop the native splash veil ONLY after the layout engine mounts the initial route
+  const handleLayoutReady = () => {
+    if (!checkingLaunch && isFirstLaunch !== null) {
+      SplashScreen.hideAsync();
+    }
+  };
+
+  // Keep the native splash screen visible by returning nothing until states are ready
+  if (!isAppReady || checkingLaunch || isFirstLaunch === null) {
+    return null;
   }
 
   return (
     <SafeAreaProvider style={styles.providerContainer}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <>
-            <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
-            <Stack.Screen name="products" options={{ headerShown: true }} />
-            <Stack.Screen
-              name="product-details"
-              options={{ headerShown: true }}
-            />
-          </>
-        ) : (
-          // Ensure this name matches your folder name exactly
-          <Stack.Screen
-            name="(unauthorized)"
-            options={{ animation: "slide_from_right" }}
-          />
-        )}
+      <Stack
+        initialRouteName={isFirstLaunch ? "welcome" : "(tabs)"}
+        screenOptions={{ headerShown: false }}
+        screenListeners={{
+          state: () => {
+            // Trigger splash hide the millisecond the navigator completes its first rendering state step
+            handleLayoutReady();
+          },
+        }}
+      >
+        {/* Onboarding Welcome Screen layout */}
+        <Stack.Screen name="welcome" options={{ animation: "fade" }} />
+
+        {/* Main Public/Private Application Interface */}
+        <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+        <Stack.Screen
+          name="(unauthorized)"
+          options={{ animation: "slide_from_bottom" }}
+        />
       </Stack>
     </SafeAreaProvider>
   );

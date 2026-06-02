@@ -1,141 +1,3 @@
-// import React from "react";
-// import {
-//   View,
-//   Text,
-//   FlatList,
-//   Image,
-//   StyleSheet,
-//   TouchableOpacity,
-//   ActivityIndicator,
-//   RefreshControl,
-// } from "react-native";
-// import { useWishlist } from "../hooks/useWishlist";
-// import { Colors } from "../../../constants/Theme";
-// import { Ionicons } from "@expo/vector-icons";
-// import { ErrorMessage } from "@/components/ErrorMessage";
-
-// export const WishlistScreen = () => {
-//   const {
-//     items,
-//     loading,
-//     refreshing,
-//     fetchWishlist,
-//     removeFromWishlist,
-//     apiMessage,
-//   } = useWishlist();
-
-//   if (loading && !refreshing) {
-//     return (
-//       <View style={styles.center}>
-//         <ActivityIndicator size="large" color={Colors.headerOne[0]} />
-//       </View>
-//     );
-//   }
-
-//   const renderItem = ({ item }: { item: any }) => (
-//     <View style={styles.card}>
-//       <Image
-//         source={{ uri: item.ProductImage }}
-//         style={styles.image}
-//         resizeMode="cover"
-//       />
-//       <View style={styles.details}>
-//         <Text style={styles.name} numberOfLines={1}>
-//           {item.ProductName}
-//         </Text>
-//         <Text style={styles.category}>{item.Category?.CategoryName}</Text>
-//         <View style={styles.priceRow}>
-//           <Text style={styles.price}>
-//             ${item.DiscountedPrice || item.Price}
-//           </Text>
-//           {item.Discount > 0 && (
-//             <Text style={styles.oldPrice}>${item.Price}</Text>
-//           )}
-//         </View>
-//       </View>
-//       <TouchableOpacity
-//         style={styles.deleteButton}
-//         onPress={() => removeFromWishlist(item.WishListId)}
-//       >
-//         <Ionicons name="trash-outline" size={20} color={Colors.white} />
-//       </TouchableOpacity>
-//     </View>
-//   );
-
-//   return (
-//     <View style={styles.container}>
-//       {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>}
-//       <FlatList
-//         data={items}
-//         keyExtractor={(item) => item.WishListId.toString()}
-//         renderItem={renderItem}
-//         contentContainerStyle={styles.listContent}
-//         refreshControl={
-//           <RefreshControl
-//             refreshing={refreshing}
-//             onRefresh={() => fetchWishlist(true)}
-//             tintColor={Colors.headerOne[0]}
-//           />
-//         }
-//         ListEmptyComponent={
-//           <View style={styles.empty}>
-//             <Ionicons
-//               name="heart-dislike-outline"
-//               size={60}
-//               color={Colors.secondary}
-//             />
-//             <Text style={styles.emptyText}>Your wishlist is empty</Text>
-//           </View>
-//         }
-//       />
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: Colors.white },
-//   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-//   listContent: { padding: 15 },
-//   card: {
-//     flexDirection: "row",
-//     backgroundColor: Colors.white,
-//     borderRadius: 12,
-//     marginBottom: 15,
-//     padding: 10,
-//     elevation: 3,
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
-//     alignItems: "center",
-//   },
-//   image: {
-//     width: 80,
-//     height: 80,
-//     borderRadius: 8,
-//     backgroundColor: Colors.secondary,
-//   },
-//   details: { flex: 1, marginLeft: 15 },
-//   name: { fontSize: 16, fontWeight: "700", color: Colors.textMain },
-//   category: { fontSize: 12, color: Colors.tertiary, marginTop: 2 },
-//   priceRow: { flexDirection: "row", alignItems: "center", marginTop: 5 },
-//   price: { fontSize: 15, fontWeight: "700", color: Colors.headerOne[0] },
-//   oldPrice: {
-//     fontSize: 12,
-//     color: Colors.tertiary,
-//     textDecorationLine: "line-through",
-//     marginLeft: 8,
-//   },
-//   deleteButton: {
-//     backgroundColor: "#FF4D4D",
-//     padding: 8,
-//     borderRadius: 8,
-//     marginLeft: 10,
-//   },
-//   empty: { marginTop: 100, alignItems: "center" },
-//   emptyText: { marginTop: 10, color: Colors.tertiary, fontSize: 16 },
-// });
-
 import React from "react";
 import {
   View,
@@ -149,15 +11,21 @@ import {
 } from "react-native";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Colors } from "@/constants/Theme";
-import { useWishlistScreen, WishlistItem } from "../hooks/useWishlistScreen";
-
+import { useWishlistScreen } from "../hooks/useWishlistScreen";
+import { useAuth } from "@/store/AuthContext";
+import { AppButton } from "@/components/AppButton";
+import { useWishlist } from "../hooks/useWishlist";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
+import { PremiumGuestGate } from "@/components/PremiumGuestGate";
 const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
 const FALLBACK_PLACEHOLDER =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
 
 export const WishlistScreen = () => {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const {
     wishlistItems,
@@ -166,14 +34,16 @@ export const WishlistScreen = () => {
     handleNavigateToDetails,
     handleRemoveItem,
   } = useWishlistScreen();
-
-  // Dynamic distribution matrix tracking
+  const { wishMessage } = useWishlist();
   const calculatedColumns = width > 900 ? 4 : width > 600 ? 3 : 2;
-  console.log(`wishlist items are: ${wishlistItems}`);
+  if (!isAuthenticated) {
+    return <PremiumGuestGate screenType="wishlist" />;
+  }
+
   // Stupendous Luxury Skeleton Loading State Shimmer Module
   const renderSkeletons = () => (
     <View style={styles.gridContainer}>
-      {Array.from({ length: 4 }).map((_, index) => (
+      {Array.from({ length: 2 }).map((_, index) => (
         <View
           key={`skel-${index}`}
           style={[styles.gridCell, { maxWidth: `${100 / calculatedColumns}%` }]}
@@ -195,23 +65,8 @@ export const WishlistScreen = () => {
 
   return (
     <View
-      style={[
-        styles.container,
-        { backgroundColor: Colors.headerOne?.[0] || "#0F172A" },
-      ]}
+      style={[styles.container, { backgroundColor: Colors.headerOne?.[1] }]}
     >
-      {/* <Stack.Screen
-        options={{
-          headerTitle: "My Saved Wishlist",
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: Colors.headerOne?.[0] || "#0F172A" },
-          headerTitleStyle: styles.navBarTitle,
-          headerTintColor: "#FFFFFF",
-          headerTitleAlign: "center",
-        }}
-      /> */}
-
-      {/* Main Luxury White Sheet Content Canvas */}
       <View style={styles.contentCanvas}>
         {loading ? (
           renderSkeletons()
@@ -227,7 +82,7 @@ export const WishlistScreen = () => {
             ListHeaderComponent={
               wishlistItems.length > 0 ? (
                 <Text style={styles.savedCounterText}>
-                  Your Collection ({wishlistItems.length} Premium items saved)
+                  Your Collection ({wishlistItems.length} items saved)
                 </Text>
               ) : null
             }
@@ -319,6 +174,8 @@ export const WishlistScreen = () => {
             }
           />
         )}
+        {/* {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>} */}
+        {wishMessage && <CustomErrorMessage>{wishMessage}</CustomErrorMessage>}
       </View>
     </View>
   );
@@ -327,6 +184,42 @@ export const WishlistScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  guestContainer: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 45,
+    backgroundColor: "rgba(0, 180, 216, 0.1)", // Smooth soft transparency accent
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  guestTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#1E293B",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  guestSubtitle: {
+    fontSize: 15,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  authBtn: {
+    width: "100%",
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.accent,
   },
   navBarTitle: {
     fontSize: 16,
@@ -354,7 +247,7 @@ const styles = StyleSheet.create({
   },
   savedCounterText: {
     fontSize: 12,
-    color: "#64748B",
+    color: Colors.tertiary,
     fontWeight: "700",
     paddingHorizontal: 16,
     marginBottom: 14,

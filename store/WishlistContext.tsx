@@ -16,8 +16,8 @@ interface WishlistContextType {
   setLoading: (loading: boolean) => void;
   refreshing: boolean;
   setRefreshing: (refreshing: boolean) => void;
-  apiMessage: string | null;
-  setApiMessage: (msg: string | null) => void;
+  wishMessage: string | null;
+  setWishMessage: (msg: string | null) => void;
   processingIds: Set<number>;
   setProcessingIds: React.Dispatch<React.SetStateAction<Set<number>>>;
   fetchWishlist: (isRefresh?: boolean) => Promise<void>;
@@ -31,18 +31,19 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   // Consume live authentication dependencies directly
-  const { isAuthenticated, userToken } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [wishMessage, setWishMessage] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 
   const fetchWishlist = useCallback(
     async (isRefresh = false) => {
       // 🛑 Hard stop if the explicit user security parameters are missing
-      if (!isAuthenticated || !userToken) {
+      if (!isAuthenticated) {
+        console.log("oh god");
         setItems([]);
         return;
       }
@@ -51,28 +52,28 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       else setLoading(true);
 
       try {
-        const result = await wishlistApi.getWishlist(1, 1);
-        console.log("Wishlist Fetch Result:", result);
+        const result = await wishlistApi.getWishlist(100, 1);
         setItems(result?.Data?.WishItemList ?? []);
       } catch (error) {
-        console.error("Wishlist Fetch Core Exception:", error);
-        setApiMessage("Failed to retrieve your saved favorites catalog.");
+        console.log("Wishlist Fetch Core Exception:", error);
+        setWishMessage("Failed to retrieve your saved favorites catalog.");
       } finally {
+        setTimeout(() => setWishMessage(null), 2000);
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [isAuthenticated, userToken],
+    [isAuthenticated],
   );
 
   // Dynamic initialization sync: Triggers every single time user auth token state toggles
   useEffect(() => {
-    if (isAuthenticated && userToken) {
+    if (isAuthenticated) {
       fetchWishlist();
     } else {
       setItems([]); // Clear out local collection cache cleanly on user exit
     }
-  }, [isAuthenticated, userToken, fetchWishlist]);
+  }, [isAuthenticated, fetchWishlist]);
 
   const value = useMemo(
     () => ({
@@ -82,13 +83,13 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading,
       refreshing,
       setRefreshing,
-      apiMessage,
-      setApiMessage,
+      wishMessage,
+      setWishMessage,
       processingIds,
       setProcessingIds,
       fetchWishlist,
     }),
-    [items, loading, refreshing, apiMessage, processingIds, fetchWishlist],
+    [items, loading, refreshing, wishMessage, processingIds, fetchWishlist],
   );
 
   return (

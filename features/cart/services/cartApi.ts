@@ -115,7 +115,7 @@ export const cartApi = {
     // ✅ FIX: If no attachments are passed, don't use FormData at all!
     if (fileUris.length === 0) {
       const response = await apiClient.post("/Cart/Checkout/checkout", null);
-      console.log("Checkout API Response (No Files):", response.data);
+      // console.log("Checkout API Response (No Files):", response.data);
       return response.data;
     }
 
@@ -133,7 +133,7 @@ export const cartApi = {
     const response = await apiClient.post("/Cart/Checkout/checkout", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    console.log("Checkout API Response Big Ass:", response.data);
+    // console.log("Checkout API Response Big Ass:", response.data);
     return response.data;
   },
 
@@ -141,12 +141,14 @@ export const cartApi = {
     sessionId: string,
     fileUris: string[] = [],
   ): Promise<any> => {
-    // ✅ FIX: Guest route option check if attachments array is empty
+    console.log(`session id is : ${sessionId}`);
     if (fileUris.length === 0) {
+      console.log("fuck you");
       const response = await apiClient.post(
         `/Cart/Checkout/session/${sessionId}/checkout`,
         null,
       );
+      // console.log("Checkout Guest API Response Big Ass one:", response);
       return response.data;
     }
 
@@ -167,6 +169,7 @@ export const cartApi = {
         headers: { "Content-Type": "multipart/form-data" },
       },
     );
+    // console.log("Checkout Guest API Response Big Ass:", response);
     return response.data;
   },
 };

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { customerApi } from "../services/customerApi";
 
 export const useOrders = () => {
-  // const [orders, setOrders] = useState([
   //   {
   //     OrderId: 1,
   //     OrderNumber: "455",
@@ -40,7 +39,8 @@ export const useOrders = () => {
     else setLoading(true);
 
     try {
-      const response = await customerApi.getOrders(1, 20);
+      const response = await customerApi.getOrders(100, 1);
+      console.log("Orders API response:", response);
       if (response?.Data?.CustomerOrders) {
         setOrders(response.Data.CustomerOrders);
       }

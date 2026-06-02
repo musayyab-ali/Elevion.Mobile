@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../../constants/Theme";
 import { AddressModal } from "@/features/customer/components/AddressModal";
 import { useAddress } from "@/features/customer/hooks/useAddress";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
@@ -63,7 +64,11 @@ export const ShopHeader = () => {
   }, []);
 
   return (
-    <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+    <LinearGradient
+      colors={[Colors.headerOne[0], Colors.headerOne[1]]}
+      style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}
+    >
+      {/* <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}> */}
       <View style={styles.headerContent}>
         {/* LEFT VIEW: USER PROFILE & TARGET ADDRESS SELECTION */}
         <View style={styles.leftHeader}>
@@ -132,13 +137,14 @@ export const ShopHeader = () => {
         onClose={() => setShowAddressModal(false)}
         onSelectAddress={(addr) => saveActiveAddress(addr)}
       />
-    </View>
+      {/* </View> */}
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: Colors.headerOne?.[0] || "#E11D48",
+    backgroundColor: Colors.headerOne?.[1],
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

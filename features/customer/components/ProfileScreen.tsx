@@ -8,16 +8,20 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Pressable,
 } from "react-native";
 import { useProfile } from "../hooks/useProfile";
 import { Colors } from "../../../constants/Theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ErrorMessage } from "@/components/ErrorMessage";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useReviews } from "../hooks/useReviews";
 import { ReviewItem } from "./ReviewItem";
+import { useAuth } from "@/store/AuthContext";
+import { PremiumGuestGate } from "@/components/PremiumGuestGate";
 
 export const ProfileScreen = () => {
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const {
     profile,
@@ -26,7 +30,8 @@ export const ProfileScreen = () => {
     handleUpdate,
     isEditing,
     setIsEditing,
-    apiMessage,
+    profileMessage,
+    setProfileMessage,
   } = useProfile();
   const { reviews, loading: reviewsLoading } = useReviews();
   // Local state for editing fields
@@ -37,11 +42,21 @@ export const ProfileScreen = () => {
   }, [profile]);
 
   const onSave = async () => {
-    const result = await handleUpdate(formData);
-    if (result.success) {
+    setProfileMessage(null);
+    try {
+      const result = await handleUpdate(formData);
+      if (!result || !result.success) {
+        const apiError =
+          result?.message || "Could not update profile. Please try again.";
+        setProfileMessage(apiError);
+        return;
+      }
       Alert.alert("Success", "Profile updated successfully");
-    } else {
-      Alert.alert("Error", result.error);
+    } catch (err) {
+      console.error("Error while updating profile:", err);
+      setProfileMessage("Network error. Please check your connection.");
+    } finally {
+      setTimeout(() => setProfileMessage(null), 4000);
     }
   };
 
@@ -51,6 +66,9 @@ export const ProfileScreen = () => {
         <ActivityIndicator size="large" color={Colors.headerOne[0]} />
       </View>
     );
+  }
+  if (!isAuthenticated) {
+    return <PremiumGuestGate screenType="profile" />;
   }
 
   return (
@@ -188,7 +206,9 @@ export const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>}
+      {profileMessage && (
+        <CustomErrorMessage>{profileMessage}</CustomErrorMessage>
+      )}
     </View>
   );
 };
@@ -214,9 +234,47 @@ const DetailItem = ({ icon, label, value, isEditing, onChange }: any) => (
 );
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  cardCenter: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  bigRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "rgba(0, 180, 216, 0.08)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  heading: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#1E293B",
+    marginBottom: 8,
+  },
+  sub: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 28,
+  },
+  primaryButton: {
+    height: 50,
+    width: "100%",
+    backgroundColor: Colors.accent,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  btnText: { color: "#FFFFFF", fontWeight: "700", fontSize: 15 },
   mainContainer: {
     flex: 1,
-    backgroundColor: Colors.headerOne[0],
+    backgroundColor: Colors.headerOne[1],
   },
   scrollContent: {
     padding: 20,
@@ -252,7 +310,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.headerOne[0],
+    backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 4,

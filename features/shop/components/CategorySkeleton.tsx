@@ -1,18 +1,24 @@
 import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import { Colors } from "../../../constants/Theme";
+import { MotiView } from "moti";
 
 const { width } = Dimensions.get("window");
 
 export const CategorySkeleton = ({ style }) => {
   return (
-    <View style={[styles.card, style]}>
+    <MotiView
+      from={{ opacity: 0.4 }}
+      animate={{ opacity: 0.8 }}
+      transition={{ type: "timing", duration: 800, loop: true }}
+      style={[styles.card, style]}
+    >
       <View style={styles.imagePlaceholder} />
       <View style={styles.info}>
         <View style={styles.line} />
         <View style={[styles.line, { width: "60%" }]} />
       </View>
-    </View>
+    </MotiView>
   );
 };
 

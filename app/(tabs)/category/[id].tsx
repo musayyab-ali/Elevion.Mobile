@@ -53,7 +53,7 @@ export default function SubCategoryScreen() {
 
   return (
     // Container matches header color to let rounded canvas overlay seamlessly
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[0] }]}>
+    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
       <Stack.Screen
         options={{
           headerTitle: () => <CategoryBreadcrumbs breadcrumbs={breadcrumbs} />,

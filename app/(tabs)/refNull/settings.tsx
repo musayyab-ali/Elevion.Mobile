@@ -48,28 +48,6 @@ const SettingsScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* SECTION 2: DELIVERY OPTIONS (API) */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Services</Text>
-          {settingsLoading ? (
-            <ActivityIndicator color={Colors.primary} />
-          ) : (
-            deliveryOptions.map((item: any) => (
-              <View key={item.DeliveryTypeId} style={styles.optionCard}>
-                <View>
-                  <Text style={styles.optionName}>{item.DisplayName}</Text>
-                  <Text style={styles.optionDays}>
-                    Estimated: {item.EstimatedDays} Days
-                  </Text>
-                </View>
-                <Text style={styles.optionPrice}>Rs. {item.Charge}</Text>
-              </View>
-            ))
-          )}
-        </View> */}
-
-        {/* SECTION 3: ACCOUNT ACTIONS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>

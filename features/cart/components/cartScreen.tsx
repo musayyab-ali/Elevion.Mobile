@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,21 +12,32 @@ import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartScreen } from "../hooks/useCartScreen";
 import { Colors } from "@/constants/Theme";
-
+import { useAuth } from "@/store/AuthContext";
+import { AuthGuardModal } from "@/components/AuthGuardModal";
+import { useSharedCartData } from "@/store/CartContext";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
+import { EmptyState } from "@/components/EmptyState";
 const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
 
 export const CartScreen = () => {
+  const { isAuthenticated } = useAuth();
   const {
     cartItems,
     pricingSummary,
-    loading,
     handleIncrement,
     handleDecrement,
     handleRemove,
     handleProcessCheckoutPipeline,
   } = useCartScreen();
 
-  if (loading && cartItems.length === 0) {
+  const { cartMessage, loading, serverError, fetchCart } = useSharedCartData();
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const handleRetryFetch = () => {
+    fetchCart();
+  };
+
+  if (loading.fetching) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#0284C7" />
@@ -36,116 +47,152 @@ export const CartScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={cartItems}
-        keyExtractor={(item) => `cart-row-${item.CartId}`}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <Text style={styles.sheetTitle}>
-            Shopping Bag ({cartItems.length} items)
-          </Text>
-        }
-        renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 15 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 300, delay: index * 40 }}
-            style={styles.cartCard}
-          >
-            <Image
-              source={{ uri: `${IMAGE_BASE_URL}${item.ProductImage}` }}
-              style={styles.productImage}
-            />
-
-            <View style={styles.cardDetails}>
-              <View style={styles.rowHeader}>
-                <Text style={styles.productName} numberOfLines={1}>
-                  {item.ProductName}
-                </Text>
-                <TouchableOpacity onPress={() => handleRemove(item.CartId)}>
-                  <Ionicons name="trash-outline" size={18} color="#94A3B8" />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.variantText}>
-                {item.ProductVariants || "Standard Configuration"}
+      {serverError ? (
+        <EmptyState
+          iconName="cloud-offline-outline"
+          title="Server Connection Interrupted"
+          description="We are having trouble synchronizing our Cart items. Please check your network and try again."
+          actionLabel="Retry Connection"
+          onActionPress={handleRetryFetch}
+        />
+      ) : (
+        <>
+          <FlatList
+            data={cartItems}
+            keyExtractor={(item) => `cart-row-${item.CartId}`}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <Text style={styles.sheetTitle}>
+                Cart ({cartItems.length} items)
               </Text>
+            }
+            renderItem={({ item, index }) => (
+              <MotiView
+                from={{ opacity: 0, translateY: 15 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: "timing",
+                  duration: 300,
+                  delay: index * 40,
+                }}
+                style={styles.cartCard}
+              >
+                <Image
+                  source={{ uri: `${IMAGE_BASE_URL}${item.ProductImage}` }}
+                  style={styles.productImage}
+                />
 
-              <View style={styles.priceRow}>
-                <Text style={styles.priceText}>
-                  Rs. {item.Price.toLocaleString()}
-                </Text>
+                <View style={styles.cardDetails}>
+                  <View style={styles.rowHeader}>
+                    <Text style={styles.productName} numberOfLines={1}>
+                      {item.ProductName}
+                    </Text>
+                    {!loading.deleting ? (
+                      <TouchableOpacity
+                        onPress={() => handleRemove(item.CartId)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="red" />
+                      </TouchableOpacity>
+                    ) : (
+                      <ActivityIndicator size="small" color="red" />
+                    )}
+                  </View>
 
-                {/* Micro Controller Quantity Box */}
-                <View style={styles.quantityWidget}>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => handleDecrement(item.CartId, item.Quantity)}
-                  >
-                    <Ionicons name="remove" size={14} color="#1E293B" />
-                  </TouchableOpacity>
-                  <Text style={styles.qtyText}>{item.Quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => handleIncrement(item.CartId, item.Quantity)}
-                  >
-                    <Ionicons name="add" size={14} color="#1E293B" />
-                  </TouchableOpacity>
+                  <Text style={styles.variantText}>
+                    {item.ProductVariants || "Standard Configuration"}
+                  </Text>
+
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceText}>
+                      Rs. {item.Price.toLocaleString()}
+                    </Text>
+
+                    {/* Micro Controller Quantity Box */}
+                    <View style={styles.quantityWidget}>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => {
+                          if (!isAuthenticated) {
+                            setModalVisible(true);
+                            return;
+                          }
+                          handleDecrement(item.CartId, item.Quantity);
+                        }}
+                      >
+                        <Ionicons name="remove" size={14} color="#1E293B" />
+                      </TouchableOpacity>
+                      <Text style={styles.qtyText}>{item.Quantity}</Text>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => {
+                          if (!isAuthenticated) {
+                            setModalVisible(true);
+                            return;
+                          }
+                          handleIncrement(item.CartId, item.Quantity);
+                        }}
+                      >
+                        <Ionicons name="add" size={14} color="#1E293B" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
+              </MotiView>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyView}>
+                <Ionicons name="bag-handle-outline" size={64} color="#CBD5E1" />
+                <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
+                <Text style={styles.emptySubtitle}>
+                  Items you add to your shopping cart will appear right here.
+                </Text>
               </View>
+            }
+          />
+          {cartItems.length > 0 && (
+            <View style={styles.checkoutFooter}>
+              <View style={styles.summaryLine}>
+                <Text style={styles.summaryLabel}>Subtotal</Text>
+                <Text style={styles.summaryValue}>
+                  Rs. {pricingSummary.subtotal.toLocaleString()}
+                </Text>
+              </View>
+              <View style={styles.summaryLine}>
+                <Text style={styles.summaryLabel}>Discounts</Text>
+                <Text style={[styles.summaryValue, { color: "#10B981" }]}>
+                  - Rs. {pricingSummary.discount.toLocaleString()}
+                </Text>
+              </View>
+              <View style={[styles.summaryLine, styles.grandTotalLine]}>
+                <Text style={styles.grandTotalLabel}>Total Amount</Text>
+                <Text style={styles.grandTotalValue}>
+                  Rs. {pricingSummary.grandTotal.toLocaleString()}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.checkoutBtn}
+                activeOpacity={0.8}
+                onPress={handleProcessCheckoutPipeline}
+              >
+                <Text style={styles.checkoutBtnText}>PROCEED TO CHECKOUT</Text>
+              </TouchableOpacity>
             </View>
-          </MotiView>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyView}>
-            <Ionicons name="bag-handle-outline" size={64} color="#CBD5E1" />
-            <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
-            <Text style={styles.emptySubtitle}>
-              Items you add to your shopping cart will appear right here.
-            </Text>
-          </View>
-        }
-      />
-
-      {/* Persistent Price Summary Dashboard Layer */}
-      {cartItems.length > 0 && (
-        <View style={styles.checkoutFooter}>
-          <View style={styles.summaryLine}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>
-              Rs. {pricingSummary.subtotal.toLocaleString()}
-            </Text>
-          </View>
-          <View style={styles.summaryLine}>
-            <Text style={styles.summaryLabel}>Discounts</Text>
-            <Text style={[styles.summaryValue, { color: "#10B981" }]}>
-              - Rs. {pricingSummary.discount.toLocaleString()}
-            </Text>
-          </View>
-          <View style={[styles.summaryLine, styles.grandTotalLine]}>
-            <Text style={styles.grandTotalLabel}>Total Amount</Text>
-            <Text style={styles.grandTotalValue}>
-              Rs. {pricingSummary.grandTotal.toLocaleString()}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.checkoutBtn}
-            activeOpacity={0.8}
-            onPress={handleProcessCheckoutPipeline}
-          >
-            <Text style={styles.checkoutBtnText}>
-              PROCEED TO SECURE CHECKOUT
-            </Text>
-            <Ionicons
-              name="arrow-forward-heading"
-              size={16}
-              color="#FFFFFF"
-              style={styles.arrowSpacing}
-            />
-          </TouchableOpacity>
-        </View>
+          )}
+          <AuthGuardModal
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            title="Account Required"
+            subtitle="You can't update your cart without an account."
+            iconName="account-circle-outline"
+          />
+          {cartMessage && (
+            <CustomErrorMessage style={{ marginBottom: 50 }}>
+              {cartMessage}
+            </CustomErrorMessage>
+          )}
+        </>
       )}
     </View>
   );
@@ -164,9 +211,9 @@ const styles = StyleSheet.create({
     paddingBottom: 220,
   },
   sheetTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#0F172A",
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.textMain,
     marginBottom: 16,
     letterSpacing: -0.3,
   },
@@ -253,9 +300,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -278,7 +322,7 @@ const styles = StyleSheet.create({
   grandTotalLabel: { fontSize: 15, fontWeight: "800", color: "#0F172A" },
   grandTotalValue: { fontSize: 18, fontWeight: "900", color: "#0F172A" },
   checkoutBtn: {
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.accent,
     height: 54,
     borderRadius: 14,
     justifyContent: "center",

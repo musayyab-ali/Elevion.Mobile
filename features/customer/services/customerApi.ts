@@ -26,10 +26,21 @@ export const customerApi = {
     }
   },
 
-  getOrders: async (pageNumber: number = 1, pageSize: number = 10) => {
-    // Note: parameters are query params as per your image
-    const endpoint = `/Customer/orders?PageNumber=${pageNumber}&PageSize=${pageSize}`;
-    return await apiClient.get(endpoint);
+  // getOrders: async (pageNumber: number, pageSize: number) => {
+  //   // Note: parameters are query params as per your image
+  //   const endpoint = `/Customer/orders?PageSize=${pageSize}&PageNumber=${pageNumber}`;
+  //   return await apiClient.get(endpoint);
+  // },
+  getOrders: async (pageSize: number, pageNumber: number) => {
+    try {
+      const responce = await apiClient.get("/Customer/orders", {
+        params: { PageSize: pageSize, PageNumber: pageNumber },
+      });
+      return responce.data;
+    } catch (error: any) {
+      console.log("orders fetching error:", error);
+      throw error.response?.data || error.message;
+    }
   },
 
   getAddresses: async (pageSize = 10, pageNumber = 1) => {

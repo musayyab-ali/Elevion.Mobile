@@ -10,15 +10,17 @@ import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { cartApi, CartResponse } from "@/features/cart/services/cartApi";
 import { useAuth } from "./AuthContext";
-
+import { useRouter } from "expo-router";
 const GUEST_SESSION_KEY = "guest_cart_session_id";
 
 interface CartContextType {
   cartData: any | null;
   cartCount: number;
   loading: boolean;
+  serverError: boolean;
   processingIds: Set<number>;
-  apiMessage: string | null;
+  cartMessage: string | null;
+  setCartMessage: (msg: string | null) => void;
   fetchCart: () => Promise<void>;
   addItemToCart: (
     productId: number,
@@ -39,15 +41,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Extract both authenticated state and a settled flag from AuthContext
   // If your AuthContext doesn't have isAuthSettled, we add a fallback check below
   const { isAuthenticated, isAuthSettled } = useAuth() as any;
-
+  const router = useRouter();
   const [cartData, setCartData] = useState<CartResponse["Data"] | null>(null);
   const [cartCount, setCartCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  //  const [loading, setLoading] = useState<boolean>(false);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
-  const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [guestSessionId, setGuestSessionId] = useState<string | null>(null);
   const [isSessionReady, setIsSessionReady] = useState<boolean>(false);
+  const [serverError, setServerError] = useState<boolean>(false);
+  type LoadingState = {
+    fetching: boolean;
+    checkout: boolean;
+    deleting: boolean;
+  };
 
+  const [loading, setLoading] = useState<LoadingState>({
+    fetching: false,
+    checkout: false,
+    deleting: false,
+  });
+
+  const setActionLoading = (key: keyof LoadingState, value: boolean) => {
+    setLoading((prev) => ({ ...prev, [key]: value }));
+  };
   // 1. Initialize or load the tracking tracking session keys safely
   useEffect(() => {
     const initializeSessionId = async () => {
@@ -59,9 +76,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         setGuestSessionId(storedId);
       } catch (err) {
-        console.error("Failed to establish device tracking keys:", err);
+        console.log("Failed to establish device tracking keys:", err);
+        setCartMessage("You are not Eligible! Please Reload.");
       } finally {
         setIsSessionReady(true);
+        setTimeout(() => setCartMessage(null), 2000);
       }
     };
     initializeSessionId();
@@ -76,8 +95,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // 🛑 GATE 2: Wait until guest tracking keys are fully loaded from storage
     if (!isSessionReady) return;
-
-    setLoading(true);
+    setActionLoading("fetching", true);
+    // setLoading(true);
     try {
       let response: CartResponse;
       if (isAuthenticated) {
@@ -102,9 +121,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         setCartCount(0);
       }
     } catch (error: any) {
-      console.error("Cart Hydration Runtime Interruption:", error);
+      console.log("fetchCart error:", error);
+      setServerError(true);
     } finally {
-      setLoading(false);
+      setActionLoading("fetching", false);
     }
   }, [isAuthenticated, isAuthSettled, guestSessionId, isSessionReady]);
 
@@ -147,24 +167,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         if (result?.HttpStatusCode === 200 || result?.Data) {
-          await fetchCart(); // Refresh context values across active layout tabs
-          setApiMessage("Item appended successfully to your shopping bag.");
+          await fetchCart();
+
+          router.push("/(tabs)/category/cart");
           return true;
         }
         return false;
       } catch (error: any) {
-        console.error("Add to Bag Core Processing Exception:", error);
-        setApiMessage(
+        console.log("Add to cart error:", error);
+        setCartMessage(
           error?.Message || "Unable to update cart allocation values.",
         );
         return false;
       } finally {
+        setTimeout(() => setCartMessage(null), 2000);
         setProcessingIds((prev) => {
           const next = new Set(prev);
           next.delete(productDetailId);
           return next;
         });
-        setTimeout(() => setApiMessage(null), 4000);
       }
     },
     [isAuthenticated, guestSessionId, isSessionReady, fetchCart],
@@ -200,8 +221,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         await cartApi.updateQuantity(cartId, quantity);
       } catch (error) {
-        console.error("Failed to sync structural quantity updates:", error);
+        console.log("Failed to sync structural quantity updates:", error);
+        setCartMessage("There is somthing wrong! Check you connection.");
         fetchCart();
+      } finally {
+        setTimeout(() => setCartMessage(null), 2000);
       }
     },
     [fetchCart],
@@ -209,31 +233,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const removeCartItem = useCallback(
     async (cartId: number) => {
-      setCartData((prev) => {
-        if (!prev) return null;
-        const filteredList = prev.CartItemList.filter(
-          (item: any) => item.CartId !== cartId,
-        );
-        const newTotal = filteredList.reduce(
-          (sum: number, i: any) => sum + (i.TotalAmount || 0),
-          0,
-        );
-        return {
-          ...prev,
-          CartItemList: filteredList,
-          NetTotal: newTotal,
-          TotalPrice: newTotal,
-        };
-      });
-
+      // setLoading(true);
+      setActionLoading("deleting", true);
       try {
         const response = await cartApi.deleteItem(cartId);
-        if (response?.Data) {
-          setCartCount(response.Data.CartCount);
+        console.log("Delete item response:", response);
+        if (!response?.Data) {
+          setCartMessage("There is somthing wrong! Check you connection.");
         }
-      } catch (error) {
-        console.error("Cart deletion routine exception:", error);
+        setCartCount(response.Data.CartCount);
         fetchCart();
+      } catch (error) {
+        console.log("Cart deletion routine exception:", error);
+        setCartMessage("There is somthing wrong! Check you connection.");
+      } finally {
+        // setLoading(false);
+        setActionLoading("deleting", false);
+        setTimeout(() => setCartMessage(null), 2000);
       }
     },
     [fetchCart],
@@ -241,7 +257,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const executeCheckout = useCallback(
     async (attachments: string[] = []) => {
-      setLoading(true);
+      // setLoading(true);
+      setActionLoading("checkout", true);
       try {
         let checkoutResult;
         if (isAuthenticated) {
@@ -252,16 +269,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             attachments,
           );
         } else {
-          throw new Error(
-            "No tracking authentication signature context established.",
+          setCartMessage(
+            "You are not Eligible! No tracking authentication signature",
           );
         }
         return checkoutResult;
       } catch (error: any) {
-        console.error("Checkout execution exception:", error);
-        throw error;
+        console.log("Checkout execution exception:", error);
+        setCartMessage("There is somthing wrong! Check you connection.");
       } finally {
-        setLoading(false);
+        // setLoading(false);
+        setActionLoading("checkout", false);
+        setTimeout(() => setCartMessage(null), 2000);
       }
     },
     [isAuthenticated, guestSessionId],
@@ -273,7 +292,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       cartCount,
       loading,
       processingIds,
-      apiMessage,
+      cartMessage,
       fetchCart,
       addItemToCart,
       isAuthenticated,
@@ -281,13 +300,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       executeCheckout,
       removeCartItem,
       guestSessionId,
+      serverError,
     }),
     [
       cartData,
       cartCount,
       loading,
       processingIds,
-      apiMessage,
+      cartMessage,
       fetchCart,
       addItemToCart,
       isAuthenticated,
@@ -295,6 +315,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       executeCheckout,
       removeCartItem,
       guestSessionId,
+      serverError,
     ],
   );
 

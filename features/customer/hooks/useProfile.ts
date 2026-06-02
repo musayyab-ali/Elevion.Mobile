@@ -7,7 +7,7 @@ export const useProfile = () => {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const fetchProfile = async () => {
     setLoading(true);
     try {
@@ -17,9 +17,9 @@ export const useProfile = () => {
       }
     } catch (err: any) {
       setError(err.Message || "Failed to load profile");
-      setApiMessage("Failed to load profile");
+      setProfileMessage("Failed to load profile");
     } finally {
-      setTimeout(() => setApiMessage(null), 2000);
+      setTimeout(() => setProfileMessage(null), 2000);
       setLoading(false);
     }
   };
@@ -34,18 +34,17 @@ export const useProfile = () => {
       };
 
       const result = await customerApi.updateProfile(payload);
-      console.log(`result is : ${result}`);
       if (result?.Data) {
         setProfile(result.Data);
-        console.log(result.Data.FullName);
         await SecureStore.setItemAsync("user_name", result.Data.FullName);
         setIsEditing(false);
         return { success: true };
       }
     } catch (err: any) {
+      setProfileMessage("Failed to update profile");
       return { success: false, error: err.Message || "Update failed" };
     } finally {
-      //  setTimeout(() => setApiMessage(null), 2000);
+      setTimeout(() => setProfileMessage(null), 2000);
       setUpdating(false);
     }
   };
@@ -62,6 +61,7 @@ export const useProfile = () => {
     error,
     isEditing,
     setIsEditing,
-    apiMessage,
+    profileMessage,
+    setProfileMessage,
   };
 };

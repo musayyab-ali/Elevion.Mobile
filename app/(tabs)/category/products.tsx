@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   FlatList,
@@ -14,10 +14,16 @@ import { CategoryBreadcrumbs } from "@/features/shop/components/CategoryBreadcru
 import { useDiscovery } from "@/features/shop/hooks/useDiscovery";
 import { useWishlist } from "@/features/wishlist/hooks/useWishlist"; // Import the premium hook
 import ProductCard from "@/features/shop/components/ProductCard";
-
+import { AuthGuardModal } from "@/components/AuthGuardModal";
+import { useAuth } from "@/store/AuthContext";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
+import { useSharedWishlistData } from "@/store/WishlistContext";
 export default function ProductListScreen() {
+  const { isAuthenticated } = useAuth();
+  const { wishMessage } = useSharedWishlistData();
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
   const { width } = useWindowDimensions();
 
   const {
@@ -41,7 +47,7 @@ export default function ProductListScreen() {
     bannerProducts.length % calculatedColumns !== 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[0] }]}>
+    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
       <Stack.Screen
         options={{
           headerTitle: () => <CategoryBreadcrumbs breadcrumbs={breadcrumbs} />,
@@ -51,7 +57,7 @@ export default function ProductListScreen() {
           headerLeft: () => null,
         }}
       />
-
+      {wishMessage && <CustomErrorMessage>{wishMessage}</CustomErrorMessage>}
       {/* Premium Content Canvas Layer */}
       <View style={styles.contentCanvas}>
         <FlatList
@@ -91,9 +97,13 @@ export default function ProductListScreen() {
                   index={index} // Passed down to cleanly stagger layout animations
                   isWishlisted={isItemWishlisted}
                   isProcessing={isProcessing(item.ProductId)}
-                  onWishlistToggle={() =>
-                    toggleWishlist(item.ProductId, targetDetailId, item)
-                  }
+                  onWishlistToggle={() => {
+                    if (!isAuthenticated) {
+                      setModalVisible(true);
+                      return;
+                    }
+                    toggleWishlist(item.ProductId, targetDetailId, item);
+                  }}
                   onPress={() =>
                     router.push({
                       pathname: "/(tabs)/category/product-details",
@@ -114,6 +124,13 @@ export default function ProductListScreen() {
           }
         />
       </View>
+      <AuthGuardModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title="Account Required"
+        subtitle="Create an account to securely save items to your wishlist across all your devices."
+        iconName="heart"
+      />
     </View>
   );
 }

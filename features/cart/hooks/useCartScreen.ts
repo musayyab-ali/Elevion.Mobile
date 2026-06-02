@@ -3,14 +3,8 @@ import { useSharedCartData } from "@/store/CartContext";
 import { useRouter } from "expo-router";
 export function useCartScreen() {
   const router = useRouter();
-  const {
-    cartData,
-    loading,
-    updateCartItemQuantity,
-    removeCartItem,
-    executeCheckout,
-    apiMessage,
-  } = useSharedCartData();
+  const { cartData, updateCartItemQuantity, removeCartItem, executeCheckout } =
+    useSharedCartData();
 
   const cartItems = cartData?.CartItemList ?? [];
   const pricingSummary = {
@@ -35,7 +29,10 @@ export function useCartScreen() {
   const handleProcessCheckoutPipeline = async () => {
     try {
       const invoiceReceipt = await executeCheckout([]);
-
+      console.log(
+        "Checkout successful, received invoice receipt:",
+        invoiceReceipt,
+      );
       if (invoiceReceipt && invoiceReceipt.Data) {
         router.push({
           pathname: "/(tabs)/cart/checkout-summary",
@@ -57,8 +54,6 @@ export function useCartScreen() {
   return {
     cartItems,
     pricingSummary,
-    loading,
-    errorMessage: apiMessage,
     handleIncrement,
     handleDecrement,
     handleRemove: removeCartItem,

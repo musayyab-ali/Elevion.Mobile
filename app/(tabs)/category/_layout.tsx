@@ -1,48 +1,41 @@
 import { Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "@/constants/Theme";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { ScreenHeader } from "@/components/ScreenHeader";
+
 export default function CategoryStackLayout() {
   return (
-    // <SafeAreaView style={styles.safeContainer} edges={["top", "bottom"]}>
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: Colors.headerOne[0] },
-        headerShadowVisible: false,
-        headerTintColor: "#FFFFFF",
-        animation: "slide_from_right",
-        animationDuration: 250,
-      }}
-    >
-      <Stack.Screen name="[id]" options={{ headerShown: true }} />
-      <Stack.Screen name="products" options={{ headerShown: true }} />
+    <View style={styles.container}>
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          // 🌟 UPDATED: Intercept and pass down options.title OR options.headerTitle
+          header: ({ options, route }) => (
+            <ScreenHeader
+              title={options.title || route.name}
+              headerTitleComponent={
+                options.headerTitle ? (options.headerTitle as any)() : undefined
+              }
+            />
+          ),
+          animation: "slide_from_right",
+          animationDuration: 250,
+        }}
+      >
+        {/* Leave the definition open here; the header configuration will handle it dynamically */}
+        <Stack.Screen name="[id]" />
 
-      <Stack.Screen
-        name="cart"
-        options={{
-          title: "MY Cart",
-          headerShown: true,
-          // tabsBarStyle: { display: "none" },
-        }}
-      />
-      {/* PERFECT TAB BAR HIDING LOGIC */}
-      <Stack.Screen
-        name="product-details"
-        options={{
-          headerShown: true,
-          // This tells the native navigation context to hide the parent layout's bottom bar
-          tabsBarStyle: { display: "none" },
-        }}
-      />
-    </Stack>
-    // </SafeAreaView>
+        <Stack.Screen name="products" options={{ title: "Products" }} />
+        <Stack.Screen name="cart" options={{ title: "My Cart" }} />
+        <Stack.Screen
+          name="product-details"
+          options={{ title: "Product Details" }}
+        />
+      </Stack>
+    </View>
   );
 }
 
-// const styles = StyleSheet.create({
-//   safeContainer: {
-//     flex: 1,
-//     // 🌟 Set your primary background color here so your layout views never change color or flash white
-//     backgroundColor: Colors.headerOne[0],
-//   },
-// });
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+});

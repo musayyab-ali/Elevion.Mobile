@@ -18,11 +18,10 @@ export const wishlistApi = {
       const response = await apiClient.get("/Customer/wishlist", {
         params: { PageSize: pageSize, PageNumber: pageNumber },
       });
-      console.log("Wishlist API Response:", response.data);
+
       return response.data;
     } catch (error: any) {
-      console.log("fucked twice");
-      console.error("Wishlist API Error:", error);
+      console.log("Wishlist API Error:", error);
       throw error.response?.data || error.message;
     }
   },
@@ -39,6 +38,7 @@ export const wishlistApi = {
           params: { ProductId: productId, ProductDetailId: productDetailId },
         },
       );
+
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error.message;

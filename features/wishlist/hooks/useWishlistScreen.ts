@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "expo-router";
 import { useWishlist } from "./useWishlist";
-
-// Interface representation ensuring strong type-safety boundaries
 export interface WishlistItem {
   ProductId: number;
   ProductName: string;
@@ -20,7 +18,7 @@ export function useWishlistScreen() {
   const { wishlistMap, isProcessing, toggleWishlist, fetchWishlist } =
     useWishlist();
   const [loading, setLoading] = useState(true);
-
+  console.log(`tati is : `);
   // Sync / Hydrate latest backend state on initial screen paint context
   useEffect(() => {
     const hydrateWishlist = async () => {

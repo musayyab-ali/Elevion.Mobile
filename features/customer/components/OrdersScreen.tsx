@@ -44,7 +44,7 @@ export const OrdersScreen = () => {
           <Ionicons name="card-outline" size={16} color={Colors.tertiary} />
           <Text style={styles.paymentMethod}>{item.PaymentMethod}</Text>
         </View>
-        <Text style={styles.totalPrice}>${item.Total.toFixed(2)}</Text>
+        <Text style={styles.totalPrice}>${item.Total.toFixed(1)}</Text>
       </View>
     </View>
   );

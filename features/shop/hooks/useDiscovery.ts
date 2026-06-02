@@ -1,78 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { shopApi } from "../services/shopApi";
-// import { Category, Product, LandingPageData } from "../types/shopTypes";
-
-// // Static cache to store the tree and landing data globally
-// let masterCategoryTree: Category[] = [];
-// let landingPageProducts: LandingPageData[] = [];
-
-// export const useDiscovery = (categoryId?: string) => {
-//   const [subCategories, setSubCategories] = useState<Category[]>([]);
-//   const [bannerProducts, setBannerProducts] = useState<Product[]>([]);
-//   const [loading, setLoading] = useState(true);
-
-//   // Helper to find category children in the recursive tree
-//   const findChildrenInTree = (tree: Category[], id: number): Category[] => {
-//     if (!tree) return [];
-//     for (const node of tree) {
-//       if (node?.CategoryId === id) {
-//         return node?.children ?? []; // Use lowercase 'children' per your API response
-//       }
-//       if (node?.children && node.children.length > 0) {
-//         const found = findChildrenInTree(node.children as Category[], id);
-//         if (found.length > 0) return found;
-//       }
-//     }
-//     return [];
-//   };
-
-//   const loadDiscoveryData = async () => {
-//     setLoading(true);
-//     try {
-//       // 1. Initial Load of Global Data
-//       if (masterCategoryTree.length === 0 || landingPageProducts.length === 0) {
-//         const [treeRes, landingRes] = await Promise.all([
-//           shopApi.getCategories({ Status: 1 }),
-//           shopApi.getLandingPageProducts(),
-//         ]);
-//         masterCategoryTree = treeRes?.Data ?? [];
-//         landingPageProducts = landingRes?.Data ?? [];
-//       }
-
-//       if (!categoryId) {
-//         // --- HOME SCREEN LOGIC ---
-//         const featuredRes = await shopApi.getFeaturedProducts();
-//         setBannerProducts(featuredRes?.Data ?? []);
-//         // Show only top-level categories
-//         setSubCategories(masterCategoryTree);
-//       } else {
-//         // --- SUB-CATEGORY SCREEN LOGIC ---
-//         const numericId = Number(categoryId);
-
-//         // Find children locally from the pre-fetched tree
-//         const children = findChildrenInTree(masterCategoryTree, numericId);
-//         setSubCategories(children);
-
-//         // Find banner products from the pre-fetched landing data
-//         const categoryLanding = landingPageProducts.find(
-//           (item) => item?.Category?.CategoryId === numericId,
-//         );
-//         setBannerProducts(categoryLanding?.ProductList ?? []);
-//       }
-//     } catch (error) {
-//       console.error("Discovery Logic Error:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     loadDiscoveryData();
-//   }, [categoryId]);
-
-//   return { subCategories, bannerProducts, loading };
-// };
-
 import { useState, useEffect } from "react";
 import { shopApi } from "../services/shopApi";
 import { Category, Product, LandingPageData } from "../types/shopTypes";
@@ -111,11 +36,12 @@ const findPathAndNode = (
 export const useDiscovery = (categoryId?: string) => {
   const [subCategories, setSubCategories] = useState<Category[]>([]);
   const [bannerProducts, setBannerProducts] = useState<Product[]>([]);
+  // const [shopMessage, setShopMessage] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<
     { id: number; name: string; isLeaf: boolean }[]
   >([]);
   const [loading, setLoading] = useState(true);
-
+  const [serverError, setServerError] = useState(false);
   const loadDiscoveryData = async () => {
     setLoading(true);
     try {
@@ -155,9 +81,12 @@ export const useDiscovery = (categoryId?: string) => {
         setBannerProducts(categoryLanding?.ProductList ?? []);
       }
     } catch (error) {
-      console.error("Discovery Hook Runtime Error:", error);
+      console.log("Discovery Hook Runtime Error:", error);
+      //  setShopMessage("There is somthing wrong! Could not find Categories. ");
+      setServerError(true);
     } finally {
       setLoading(false);
+      // setTimeout(() => setShopMessage(null), 2000);
     }
   };
 
@@ -165,5 +94,12 @@ export const useDiscovery = (categoryId?: string) => {
     loadDiscoveryData();
   }, [categoryId]);
 
-  return { subCategories, bannerProducts, breadcrumbs, loading };
+  return {
+    subCategories,
+    bannerProducts,
+    breadcrumbs,
+    loading,
+    serverError,
+    loadDiscoveryData,
+  };
 };

@@ -10,4 +10,5 @@ export const Colors = {
   success: "#008000",
   container: "#001d3d",
   headerOne: ["#001d3d", "#003566"],
+  darkError: "#E11D48",
 };

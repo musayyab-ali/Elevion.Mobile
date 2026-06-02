@@ -11,9 +11,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Theme";
 import { useAddress } from "../hooks/useAddress";
+import { useAuth } from "@/store/AuthContext";
 
 interface Props {
   visible: boolean;
@@ -33,9 +35,11 @@ const INITIAL_FORM_STATE = {
 };
 
 export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
+  const { isAuthenticated } = useAuth();
   const { addresses, loading, handleSave, handleDelete } = useAddress();
   const [view, setView] = useState<"list" | "form">("list");
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Reset form whenever modal changes visibility context state parameters
   useEffect(() => {
@@ -56,6 +60,14 @@ export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
       setView("list");
       setFormData(INITIAL_FORM_STATE); // Clear state traces completely
     }
+  };
+
+  const handleAddAddressPress = () => {
+    if (!isAuthenticated) {
+      setModalVisible(true);
+      return;
+    }
+    setView("form");
   };
 
   return (
@@ -153,26 +165,24 @@ export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
               )}
               <TouchableOpacity
                 style={styles.addBtn}
-                onPress={() => setView("form")}
+                onPress={handleAddAddressPress}
               >
                 <Ionicons name="add" size={20} color="#fff" />
-                <Text style={styles.addBtnText}>
-                  Create New Profile Address
-                </Text>
+                <Text style={styles.addBtnText}>Create New Address</Text>
               </TouchableOpacity>
             </>
           ) : (
             /* FORM LOGIC CONTAINER SUBVIEW */
             <View style={styles.form}>
               <TextInput
-                placeholder="Full Name (e.g. Ali Khan)"
+                placeholder="Full Name"
                 placeholderTextColor="#94A3B8"
                 style={styles.input}
                 value={formData.FullName}
                 onChangeText={(t) => setFormData({ ...formData, FullName: t })}
               />
               <TextInput
-                placeholder="Phone Number (e.g. 03001234567)"
+                placeholder="Phone Number"
                 placeholderTextColor="#94A3B8"
                 style={styles.input}
                 keyboardType="phone-pad"
@@ -215,6 +225,13 @@ export const AddressModal = ({ visible, onClose, onSelectAddress }: Props) => {
           )}
         </KeyboardAvoidingView>
       </View>
+      <AuthGuardModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title="Account Required"
+        subtitle="Create an account to securely save your address across all your devices."
+        iconName="home-outline"
+      />
     </Modal>
   );
 };
@@ -289,7 +306,7 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { padding: 8, justifyContent: "center", alignItems: "center" },
   addBtn: {
-    backgroundColor: "#E11D48",
+    backgroundColor: Colors.darkError,
     marginHorizontal: 20,
     marginVertical: 16,
     padding: 16,
@@ -318,7 +335,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtn: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.accent,
     padding: 16,
     borderRadius: 12,
     width: "68%",

@@ -15,10 +15,16 @@ import { CategorySkeleton } from "./CategorySkeleton";
 import { FeaturedBanner } from "./FeaturedBanner";
 import { ShopHeader } from "./ShopHeader";
 import { useDiscovery } from "../hooks/useDiscovery";
-
+import { EmptyState } from "@/components/EmptyState";
 export const ShopHomeScreen = () => {
   const router = useRouter();
-  const { subCategories, bannerProducts, loading } = useDiscovery();
+  const {
+    subCategories,
+    bannerProducts,
+    loading,
+    serverError,
+    loadDiscoveryData,
+  } = useDiscovery();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -42,6 +48,10 @@ export const ShopHomeScreen = () => {
     }
   };
 
+  const handleRetryFetch = () => {
+    loadDiscoveryData();
+  };
+
   const handleProductPress = (product: any) => {
     router.push({
       pathname: "/(tabs)/category/product-details",
@@ -54,93 +64,93 @@ export const ShopHomeScreen = () => {
   const isOddRowAdjustmentNeeded =
     subCategories.length % calculatedColumns !== 0;
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.headerContainer, { paddingTop: insets.top + 15 }]}>
-          <View style={styles.skeletonText} />
-          <View
-            style={[styles.skeletonText, { width: "60%", marginTop: 10 }]}
+  return (
+    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
+      <ShopHeader />
+      {loading ? (
+        <View style={styles.contentCanvas}>
+          <View style={styles.skel}>
+            <CategorySkeleton style={{ width: "100%" }} />
+          </View>
+          <FlatList
+            data={[1, 2, 3, 4, 5, 6]}
+            numColumns={calculatedColumns}
+            key={calculatedColumns}
+            keyExtractor={(item) => `skeleton-${item}`}
+            columnWrapperStyle={styles.rowWrapper}
+            renderItem={() => (
+              <View
+                style={[
+                  styles.gridCell,
+                  { maxWidth: `${100 / calculatedColumns}%` },
+                ]}
+              >
+                <CategorySkeleton />
+              </View>
+            )}
           />
         </View>
-        <View style={styles.skel}>
-          <CategorySkeleton style={{ width: "100%" }} />
-        </View>
-        <FlatList
-          data={[1, 2, 3, 4, 5, 6]}
-          numColumns={calculatedColumns}
-          key={calculatedColumns}
-          keyExtractor={(item) => `skeleton-${item}`}
-          columnWrapperStyle={styles.rowWrapper}
-          renderItem={() => (
-            <View
-              style={[
-                styles.gridCell,
-                { maxWidth: `${100 / calculatedColumns}%` },
+      ) : (
+        <View style={styles.contentCanvas}>
+          {serverError ? (
+            <EmptyState
+              iconName="cloud-offline-outline"
+              title="Server Connection Interrupted"
+              description="We are having trouble synchronizing our collection. Please check your network and try again."
+              actionLabel="Retry Connection"
+              onActionPress={handleRetryFetch}
+            />
+          ) : (
+            <FlatList
+              data={subCategories}
+              numColumns={calculatedColumns}
+              key={calculatedColumns} // Re-bind grid dimensions smoothly upon device rotation
+              keyExtractor={(item) => item.CategoryId.toString()}
+              columnWrapperStyle={[
+                styles.rowWrapper,
+                isOddRowAdjustmentNeeded && { justifyContent: "flex-start" },
               ]}
-            >
-              <CategorySkeleton />
-            </View>
-          )}
-        />
-      </View>
-    );
-  }
-
-  return (
-    // Base layout uses the brand identity color to ground the header elements seamlessly
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[0] }]}>
-      {/* Brand Search & Branding Context Header Module */}
-      <ShopHeader />
-
-      {/* Premium Content Canvas containing layouts with top-rounded radiuses */}
-      <View style={styles.contentCanvas}>
-        <FlatList
-          data={subCategories}
-          numColumns={calculatedColumns}
-          key={calculatedColumns} // Re-bind grid dimensions smoothly upon device rotation
-          keyExtractor={(item) => item.CategoryId.toString()}
-          columnWrapperStyle={[
-            styles.rowWrapper,
-            isOddRowAdjustmentNeeded && { justifyContent: "flex-start" },
-          ]}
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <>
-              {bannerProducts.length > 0 && (
-                <View style={styles.bannerContainer}>
-                  <FeaturedBanner
-                    data={bannerProducts}
-                    onPress={handleProductPress}
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                <>
+                  {bannerProducts.length > 0 && (
+                    <View style={styles.bannerContainer}>
+                      <FeaturedBanner
+                        data={bannerProducts}
+                        onPress={handleProductPress}
+                      />
+                    </View>
+                  )}
+                  <Text style={styles.sectionTitle}>Explore Categories</Text>
+                </>
+              }
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.gridCell,
+                    { maxWidth: `${100 / calculatedColumns}%` },
+                  ]}
+                >
+                  <CategoryCard
+                    category={item}
+                    onPress={() => handleCategoryPress(item)}
                   />
                 </View>
               )}
-              <Text style={styles.sectionTitle}>Explore Categories</Text>
-            </>
-          }
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.gridCell,
-                { maxWidth: `${100 / calculatedColumns}%` },
-              ]}
-            >
-              <CategoryCard
-                category={item}
-                onPress={() => handleCategoryPress(item)}
-              />
-            </View>
+              ListEmptyComponent={
+                <EmptyState
+                  iconName="grid-outline"
+                  title="No Categories Available"
+                  description="Our premium seasonal catalogs are currently undergoing maintenance updates. Check back shortly for our fresh drops!"
+                  actionLabel="Refresh Catalog"
+                  onActionPress={handleRetryFetch}
+                />
+              }
+            />
           )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                No product categories available.
-              </Text>
-            </View>
-          }
-        />
-      </View>
+        </View>
+      )}
     </View>
   );
 };

@@ -6,7 +6,6 @@ export default function UnauthorizedLayout() {
   return (
     <SafeAreaView style={styles.safeContainer} edges={["top", "bottom"]}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="welcome" />
         <Stack.Screen
           name="login"
           options={{ headerShown: true, title: "Login" }}
