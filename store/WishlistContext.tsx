@@ -15,6 +15,7 @@ interface WishlistContextType {
   loading: boolean;
   setLoading: (loading: boolean) => void;
   refreshing: boolean;
+  serverError: boolean;
   setRefreshing: (refreshing: boolean) => void;
   wishMessage: string | null;
   setWishMessage: (msg: string | null) => void;
@@ -38,12 +39,11 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [wishMessage, setWishMessage] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
-
+  const [serverError, setServerError] = useState<boolean>(false);
   const fetchWishlist = useCallback(
     async (isRefresh = false) => {
       // 🛑 Hard stop if the explicit user security parameters are missing
       if (!isAuthenticated) {
-        console.log("oh god");
         setItems([]);
         return;
       }
@@ -56,9 +56,10 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
         setItems(result?.Data?.WishItemList ?? []);
       } catch (error) {
         console.log("Wishlist Fetch Core Exception:", error);
-        setWishMessage("Failed to retrieve your saved favorites catalog.");
+        setServerError(true);
+        // setWishMessage("Failed to retrieve your saved favorites catalog.");
       } finally {
-        setTimeout(() => setWishMessage(null), 2000);
+        // setTimeout(() => setWishMessage(null), 2000);
         setLoading(false);
         setRefreshing(false);
       }
@@ -88,8 +89,17 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       processingIds,
       setProcessingIds,
       fetchWishlist,
+      serverError,
     }),
-    [items, loading, refreshing, wishMessage, processingIds, fetchWishlist],
+    [
+      items,
+      loading,
+      refreshing,
+      wishMessage,
+      processingIds,
+      fetchWishlist,
+      serverError,
+    ],
   );
 
   return (

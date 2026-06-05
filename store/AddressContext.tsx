@@ -18,7 +18,9 @@ interface Address {
   IsDefault: boolean;
   Address: string;
   City: string;
+  Country: string;
   CityId: number;
+  CountryId: number;
   Longitude: string;
   Latitude: string;
 }

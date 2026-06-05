@@ -63,7 +63,8 @@ export const PaymentMethodsScreen = () => {
                   Code "{hook.appliedPromo.code}" Active
                 </Text>
                 <Text style={styles.badgeSecondaryText}>
-                  Discount saved Rs. {hook.appliedPromo.discount}
+                  Discount saved Rs.{" "}
+                  {hook.appliedPromo.discount.toLocaleString()}
                 </Text>
               </View>
               <TouchableOpacity onPress={hook.handleCancelPromo}>
@@ -133,7 +134,7 @@ export const PaymentMethodsScreen = () => {
                     {gw.Name || "Online Gateway Payment"}
                   </Text>
                   <Text style={styles.gatewaySubtextSubheading}>
-                    Secure routing handling credit instruments instantly
+                    Secure instant payment via encrypted gateway processing
                   </Text>
                 </View>
                 <Ionicons
@@ -142,7 +143,7 @@ export const PaymentMethodsScreen = () => {
                       ? "card"
                       : "globe-outline"
                   }
-                  size={24}
+                  size={22}
                   color={isSelected ? "#E11D48" : "#64748B"}
                 />
               </TouchableOpacity>
@@ -175,7 +176,7 @@ export const PaymentMethodsScreen = () => {
                   Cash On Delivery (COD)
                 </Text>
                 <Text style={styles.gatewaySubtextSubheading}>
-                  Pay with liquid physical currency right at your doorstep
+                  Pay with physical currency right at your doorstep upon receipt
                 </Text>
               </View>
               <Ionicons
@@ -241,10 +242,10 @@ export const PaymentMethodsScreen = () => {
         <TouchableOpacity
           style={[
             styles.masterSubmitCheckoutProcessingBtn,
-            hook.isProcessing && { opacity: 0.65 },
+            (hook.isProcessing || hook.isCanceling) && { opacity: 0.65 },
           ]}
           onPress={hook.handleProcessPayment}
-          disabled={hook.isProcessing}
+          disabled={hook.isProcessing || hook.isCanceling}
         >
           {hook.isProcessing ? (
             <ActivityIndicator size="small" color="#FFF" />
@@ -254,6 +255,27 @@ export const PaymentMethodsScreen = () => {
                 Authorize & Pay Invoice
               </Text>
               <Ionicons name="lock-closed" size={18} color="#FFF" />
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* 🚫 SECONDARY DECOUPLED ORDER CANCELLATION ENGINE TRIGER */}
+        <TouchableOpacity
+          style={[
+            styles.cancelOrderSecondaryBtn,
+            hook.isCanceling && { opacity: 0.5 },
+          ]}
+          onPress={hook.handleCancelEntireOrder}
+          disabled={hook.isProcessing || hook.isCanceling}
+        >
+          {hook.isCanceling ? (
+            <ActivityIndicator size="small" color="#EF4444" />
+          ) : (
+            <>
+              <Ionicons name="trash-bin-outline" size={16} color="#EF4444" />
+              <Text style={styles.cancelOrderActionTextLabel}>
+                Cancel and Discard Order
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -423,7 +445,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginTop: 8,
-    marginBottom: 48,
     shadowColor: "#E11D48",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -434,5 +455,23 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  // ➕ Added Cancellation Area Styling Properties Safely
+  cancelOrderSecondaryBtn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 14,
+    marginTop: 14,
+    marginBottom: 48,
+    alignSelf: "center",
+  },
+  cancelOrderActionTextLabel: {
+    color: "#EF4444",
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
 });

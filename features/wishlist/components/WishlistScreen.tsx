@@ -19,6 +19,8 @@ import { AppButton } from "@/components/AppButton";
 import { useWishlist } from "../hooks/useWishlist";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { PremiumGuestGate } from "@/components/PremiumGuestGate";
+import { EmptyState } from "@/components/EmptyState";
+import { useSharedWishlistData } from "@/store/WishlistContext";
 const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
 const FALLBACK_PLACEHOLDER =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
@@ -35,7 +37,12 @@ export const WishlistScreen = () => {
     handleRemoveItem,
   } = useWishlistScreen();
   const { wishMessage } = useWishlist();
+  const { serverError, fetchWishlist } = useSharedWishlistData();
   const calculatedColumns = width > 900 ? 4 : width > 600 ? 3 : 2;
+  const handleRetryFetch = () => {
+    fetchWishlist();
+  };
+
   if (!isAuthenticated) {
     return <PremiumGuestGate screenType="wishlist" />;
   }
@@ -71,110 +78,134 @@ export const WishlistScreen = () => {
         {loading ? (
           renderSkeletons()
         ) : (
-          <FlatList
-            data={wishlistItems}
-            numColumns={calculatedColumns}
-            key={calculatedColumns}
-            keyExtractor={(item) => `wish-${item.ProductId}`}
-            contentContainerStyle={styles.listContent}
-            columnWrapperStyle={styles.rowWrapper}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={
-              wishlistItems.length > 0 ? (
-                <Text style={styles.savedCounterText}>
-                  Your Collection ({wishlistItems.length} items saved)
-                </Text>
-              ) : null
-            }
-            renderItem={({ item, index }) => {
-              const imageUri = item.ImageName
-                ? `${IMAGE_BASE_URL}${item.ImageName}`
-                : FALLBACK_PLACEHOLDER;
-              const processingState = isProcessing(item.ProductId);
+          <>
+            {serverError ? (
+              <EmptyState
+                iconName="cloud-offline-outline"
+                title="Server Connection Interrupted"
+                description="We are having trouble synchronizing our collection. Please check your network and try again."
+                actionLabel="Retry Connection"
+                onActionPress={handleRetryFetch}
+              />
+            ) : (
+              <FlatList
+                data={wishlistItems}
+                numColumns={calculatedColumns}
+                key={calculatedColumns}
+                keyExtractor={(item) => `wish-${item.ProductId}`}
+                contentContainerStyle={styles.listContent}
+                columnWrapperStyle={styles.rowWrapper}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                  wishlistItems.length > 0 ? (
+                    <Text style={styles.savedCounterText}>
+                      Your Collection ({wishlistItems.length} items saved)
+                    </Text>
+                  ) : null
+                }
+                renderItem={({ item, index }) => {
+                  const imageUri = item.ImageName
+                    ? `${IMAGE_BASE_URL}${item.ImageName}`
+                    : FALLBACK_PLACEHOLDER;
+                  const processingState = isProcessing(item.ProductId);
 
-              return (
-                <MotiView
-                  from={{ opacity: 0, scale: 0.95, translateY: 10 }}
-                  animate={{ opacity: 1, scale: 1, translateY: 0 }}
-                  transition={{
-                    type: "timing",
-                    duration: 350,
-                    delay: index * 50,
-                  }}
-                  style={[
-                    styles.gridCell,
-                    { maxWidth: `${100 / calculatedColumns}%` },
-                  ]}
-                >
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    onPress={() => handleNavigateToDetails(item.ProductId)}
-                    style={styles.productCard}
-                  >
-                    {/* Media Frame wrapper */}
-                    <View style={styles.imageWrapper}>
-                      <Image
-                        source={{ uri: imageUri }}
-                        style={styles.productImage}
-                      />
-
-                      {/* Interactive absolute delete heart badge layer module */}
+                  return (
+                    <MotiView
+                      from={{ opacity: 0, scale: 0.95, translateY: 10 }}
+                      animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                      transition={{
+                        type: "timing",
+                        duration: 350,
+                        delay: index * 50,
+                      }}
+                      style={[
+                        styles.gridCell,
+                        { maxWidth: `${100 / calculatedColumns}%` },
+                      ]}
+                    >
                       <TouchableOpacity
-                        style={styles.removeFloatingButton}
-                        activeOpacity={0.7}
-                        disabled={processingState}
-                        onPress={() => handleRemoveItem(item.ProductId)}
+                        activeOpacity={0.9}
+                        onPress={() => handleNavigateToDetails(item.ProductId)}
+                        style={styles.productCard}
                       >
-                        {processingState ? (
-                          <ActivityIndicator size="small" color="#EF4444" />
-                        ) : (
-                          <Ionicons name="heart" size={18} color="#EF4444" />
-                        )}
-                      </TouchableOpacity>
+                        {/* Media Frame wrapper */}
+                        <View style={styles.imageWrapper}>
+                          <Image
+                            source={{ uri: imageUri }}
+                            style={styles.productImage}
+                          />
 
-                      {!item.InStock && (
-                        <View style={styles.outOfStockOverlay}>
-                          <Text style={styles.outOfStockText}>
-                            Out of Stock
+                          {/* Interactive absolute delete heart badge layer module */}
+                          <TouchableOpacity
+                            style={styles.removeFloatingButton}
+                            activeOpacity={0.7}
+                            disabled={processingState}
+                            onPress={() => handleRemoveItem(item.ProductId)}
+                          >
+                            {processingState ? (
+                              <ActivityIndicator size="small" color="#EF4444" />
+                            ) : (
+                              <Ionicons
+                                name="heart"
+                                size={18}
+                                color="#EF4444"
+                              />
+                            )}
+                          </TouchableOpacity>
+
+                          {!item.InStock && (
+                            <View style={styles.outOfStockOverlay}>
+                              <Text style={styles.outOfStockText}>
+                                Out of Stock
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* Metadata summary text boundaries */}
+                        <View style={styles.detailsBlock}>
+                          <Text style={styles.productName} numberOfLines={1}>
+                            {item.ProductName}
+                          </Text>
+                          <Text style={styles.priceString} numberOfLines={1}>
+                            {item.MinPrice === item.MaxPrice
+                              ? `Rs. ${item.MinPrice.toLocaleString()}`
+                              : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
                           </Text>
                         </View>
-                      )}
+                      </TouchableOpacity>
+                    </MotiView>
+                  );
+                }}
+                ListEmptyComponent={
+                  // <EmptyState
+                  //   iconName="grid-outline"
+                  //   title="No Categories Available"
+                  //   description="Our premium seasonal catalogs are currently undergoing maintenance updates. Check back shortly for our fresh drops!"
+                  //   actionLabel="Refresh Catalog"
+                  //   onActionPress={handleRetryFetch}
+                  // />
+                  <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIconCircle}>
+                      <Ionicons
+                        name="heart-dislike-outline"
+                        size={38}
+                        color="#94A3B8"
+                      />
                     </View>
-
-                    {/* Metadata summary text boundaries */}
-                    <View style={styles.detailsBlock}>
-                      <Text style={styles.productName} numberOfLines={1}>
-                        {item.ProductName}
-                      </Text>
-                      <Text style={styles.priceString} numberOfLines={1}>
-                        {item.MinPrice === item.MaxPrice
-                          ? `Rs. ${item.MinPrice.toLocaleString()}`
-                          : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </MotiView>
-              );
-            }}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <View style={styles.emptyIconCircle}>
-                  <Ionicons
-                    name="heart-dislike-outline"
-                    size={38}
-                    color="#94A3B8"
-                  />
-                </View>
-                <Text style={styles.emptyTitle}>Your Wishlist is Empty</Text>
-                <Text style={styles.emptySubtitle}>
-                  Tap the heart icon on any premium item collection catalog to
-                  save your favorites here.
-                </Text>
-              </View>
-            }
-          />
+                    <Text style={styles.emptyTitle}>
+                      Your Wishlist is Empty
+                    </Text>
+                    <Text style={styles.emptySubtitle}>
+                      Tap the heart icon on any premium item collection catalog
+                      to save your favorites here.
+                    </Text>
+                  </View>
+                }
+              />
+            )}
+          </>
         )}
-        {/* {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>} */}
         {wishMessage && <CustomErrorMessage>{wishMessage}</CustomErrorMessage>}
       </View>
     </View>

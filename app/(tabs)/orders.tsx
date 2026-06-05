@@ -1,5 +1,6 @@
-import { OrdersScreen } from "../../features/customer/components/OrdersScreen";
+// import { OrdersScreen } from "../../features/customer/components/OrdersScreen";
+import { OrdersHistoryScreen } from "@/features/cart/components/OrdersHistoryScreen";
 
 export default function Orders() {
-  return <OrdersScreen />;
+  return <OrdersHistoryScreen />;
 }

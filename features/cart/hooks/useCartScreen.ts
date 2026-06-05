@@ -40,15 +40,13 @@ export function useCartScreen() {
         });
       }
     } catch (err: any) {
-      console.log("Checkout process stopped due to API or validation errors.");
-
       // ✅ Extract the exact server response error if available
-      const serverMessage =
+      let serverMessage =
         err?.response?.data?.Message ||
         err?.message ||
         "Something went wrong processing your order.";
 
-      Alert.alert("Checkout Error", serverMessage);
+      console.log("Checkout error:", serverMessage);
     }
   };
   return {

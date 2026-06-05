@@ -20,6 +20,10 @@ interface CartContextType {
   serverError: boolean;
   processingIds: Set<number>;
   cartMessage: string | null;
+  deleteLoading: {
+    active: boolean;
+    cartId: number | null;
+  };
   setCartMessage: (msg: string | null) => void;
   fetchCart: () => Promise<void>;
   addItemToCart: (
@@ -31,6 +35,10 @@ interface CartContextType {
   removeCartItem: (cartId: number) => Promise<void>;
   executeCheckout: (attachments?: string[]) => Promise<any>;
   isAuthenticated: boolean;
+  isCartBannerDismissed: boolean;
+  showCartBanner: boolean;
+  dismissCartBanner: () => Promise<void>;
+  markCartAsVisited: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -53,13 +61,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   type LoadingState = {
     fetching: boolean;
     checkout: boolean;
-    deleting: boolean;
   };
 
   const [loading, setLoading] = useState<LoadingState>({
     fetching: false,
     checkout: false,
-    deleting: false,
+  });
+  // 🌟 Pass the exact object shape directly into the useState generic wrapper
+  const [deleteLoading, setDeleteLoading] = useState<{
+    active: boolean;
+    cartId: number | null;
+  }>({
+    active: false,
+    cartId: null, // Clean initialization without nasty inline type castings
   });
 
   const setActionLoading = (key: keyof LoadingState, value: boolean) => {
@@ -87,6 +101,44 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   console.log(`fuck me : ${guestSessionId}`);
+
+  const [isCartBannerDismissed, setIsCartBannerDismissed] =
+    useState<boolean>(false);
+
+  // 1. Load the user's manual dismissal preference on bootup sequence
+  useEffect(() => {
+    async function loadBannerState() {
+      try {
+        const state = await SecureStore.getItemAsync("CART_BANNER_DISMISSED");
+        setIsCartBannerDismissed(state === "true");
+      } catch (e) {
+        console.error("Failed to read cart banner metrics:", e);
+      }
+    }
+    loadBannerState();
+  }, []);
+
+  // 2. Banner business rule: Show if items exist AND user hasn't explicitly hit 'X'
+  const showCartBanner =
+    cartData?.CartItemList?.length > 0 && !isCartBannerDismissed;
+
+  // Call this when user adds an item to cart
+  const triggerBannerOnNewAddition = async () => {
+    setIsCartBannerDismissed(false);
+    await SecureStore.setItemAsync("CART_BANNER_DISMISSED", "false");
+  };
+
+  // User manually closes the banner via the close button
+  const dismissCartBanner = async () => {
+    setIsCartBannerDismissed(true);
+    await SecureStore.setItemAsync("CART_BANNER_DISMISSED", "true");
+  };
+
+  // Automatically clears banner permanently when they land on the actual Cart Screen
+  const markCartAsVisited = async () => {
+    setIsCartBannerDismissed(true);
+    await SecureStore.setItemAsync("CART_BANNER_DISMISSED", "true");
+  };
 
   // 2. Fetch cart contents with conditional gates
   const fetchCart = useCallback(async () => {
@@ -168,8 +220,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (result?.HttpStatusCode === 200 || result?.Data) {
           await fetchCart();
-
-          router.push("/(tabs)/category/cart");
+          await triggerBannerOnNewAddition();
+          // router.push("/(tabs)/category/cart");
           return true;
         }
         return false;
@@ -222,7 +274,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         await cartApi.updateQuantity(cartId, quantity);
       } catch (error) {
         console.log("Failed to sync structural quantity updates:", error);
-        setCartMessage("There is somthing wrong! Check you connection.");
+        setCartMessage(
+          error?.Message || "There is something wrong! Check your connection.",
+        );
         fetchCart();
       } finally {
         setTimeout(() => setCartMessage(null), 2000);
@@ -233,31 +287,71 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const removeCartItem = useCallback(
     async (cartId: number) => {
-      // setLoading(true);
-      setActionLoading("deleting", true);
+      // 🌟 1. Store the exact item ID currently being deleted
+      setDeleteLoading({ active: true, cartId: cartId });
+
       try {
         const response = await cartApi.deleteItem(cartId);
         console.log("Delete item response:", response);
+
         if (!response?.Data) {
-          setCartMessage("There is somthing wrong! Check you connection.");
+          setCartMessage("There is something wrong! Check your connection.");
+          return;
         }
+
+        // Update global count tracking cleanly
         setCartCount(response.Data.CartCount);
-        fetchCart();
+        setCartData((prevItems) => {
+          if (!prevItems) return prevItems;
+
+          // If your array key is named differently (e.g., Data or items), swap 'CartItems' with that key name
+          const currentItems = prevItems?.CartItemList || [];
+
+          return {
+            ...prevItems,
+            CartItemList: currentItems.filter(
+              (item: any) => item.CartId !== cartId,
+            ),
+          };
+        });
       } catch (error) {
         console.log("Cart deletion routine exception:", error);
-        setCartMessage("There is somthing wrong! Check you connection.");
+        setCartMessage("There is something wrong! Check your connection.");
       } finally {
-        // setLoading(false);
-        setActionLoading("deleting", false);
+        // 🌟 3. Clear the explicit loading ID state by passing null
+        setDeleteLoading({ active: false, cartId: null });
         setTimeout(() => setCartMessage(null), 2000);
       }
     },
-    [fetchCart],
+    [setCartData, setCartCount], // Removed fetchCart dependency entirely
   );
+
+  // const removeCartItem = useCallback(
+  //   async (cartId: number) => {
+  //     // setLoading(true);
+  //     setActionLoading("deleting", true);
+  //     try {
+  //       const response = await cartApi.deleteItem(cartId);
+  //       console.log("Delete item response:", response);
+  //       if (!response?.Data) {
+  //         setCartMessage("There is somthing wrong! Check you connection.");
+  //       }
+  //       setCartCount(response.Data.CartCount);
+  //       fetchCart();
+  //     } catch (error) {
+  //       console.log("Cart deletion routine exception:", error);
+  //       setCartMessage("There is somthing wrong! Check you connection.");
+  //     } finally {
+  //       // setLoading(false);
+  //       setActionLoading("deleting", false);
+  //       setTimeout(() => setCartMessage(null), 2000);
+  //     }
+  //   },
+  //   [fetchCart],
+  // );
 
   const executeCheckout = useCallback(
     async (attachments: string[] = []) => {
-      // setLoading(true);
       setActionLoading("checkout", true);
       try {
         let checkoutResult;
@@ -276,9 +370,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         return checkoutResult;
       } catch (error: any) {
         console.log("Checkout execution exception:", error);
-        setCartMessage("There is somthing wrong! Check you connection.");
+        setCartMessage(
+          error?.Message || "Something went wrong processing your order.",
+        );
       } finally {
-        // setLoading(false);
         setActionLoading("checkout", false);
         setTimeout(() => setCartMessage(null), 2000);
       }
@@ -301,6 +396,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       removeCartItem,
       guestSessionId,
       serverError,
+      showCartBanner,
+      isCartBannerDismissed,
+      dismissCartBanner,
+      markCartAsVisited,
+      deleteLoading,
     }),
     [
       cartData,
@@ -316,6 +416,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       removeCartItem,
       guestSessionId,
       serverError,
+      showCartBanner,
+      isCartBannerDismissed,
+      dismissCartBanner,
+      markCartAsVisited,
+      deleteLoading,
     ],
   );
 

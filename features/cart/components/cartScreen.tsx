@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { useSharedCartData } from "@/store/CartContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { EmptyState } from "@/components/EmptyState";
+import { useIsFocused } from "@react-navigation/native";
 const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
 
 export const CartScreen = () => {
@@ -30,9 +31,23 @@ export const CartScreen = () => {
     handleProcessCheckoutPipeline,
   } = useCartScreen();
 
-  const { cartMessage, loading, serverError, fetchCart } = useSharedCartData();
+  const {
+    cartMessage,
+    loading,
+    serverError,
+    fetchCart,
+    markCartAsVisited,
+    deleteLoading,
+  } = useSharedCartData();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      markCartAsVisited();
+    }
+  }, [isFocused]);
   const handleRetryFetch = () => {
     fetchCart();
   };
@@ -88,7 +103,10 @@ export const CartScreen = () => {
                     <Text style={styles.productName} numberOfLines={1}>
                       {item.ProductName}
                     </Text>
-                    {!loading.deleting ? (
+                    {!(
+                      deleteLoading.active &&
+                      deleteLoading.cartId === item.CartId
+                    ) ? (
                       <TouchableOpacity
                         onPress={() => handleRemove(item.CartId)}
                       >
@@ -174,9 +192,12 @@ export const CartScreen = () => {
               <TouchableOpacity
                 style={styles.checkoutBtn}
                 activeOpacity={0.8}
+                disabled={loading.checkout}
                 onPress={handleProcessCheckoutPipeline}
               >
-                <Text style={styles.checkoutBtnText}>PROCEED TO CHECKOUT</Text>
+                <Text style={styles.checkoutBtnText}>
+                  {loading.checkout ? "Processing..." : "PROCEED TO CHECKOUT"}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -188,9 +209,7 @@ export const CartScreen = () => {
             iconName="account-circle-outline"
           />
           {cartMessage && (
-            <CustomErrorMessage style={{ marginBottom: 50 }}>
-              {cartMessage}
-            </CustomErrorMessage>
+            <CustomErrorMessage>{cartMessage}</CustomErrorMessage>
           )}
         </>
       )}

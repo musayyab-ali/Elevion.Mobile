@@ -1,169 +1,3 @@
-// import { useState, useEffect, useCallback, useMemo } from "react";
-// import { Alert } from "react-native";
-// import { useRouter } from "expo-router";
-// import apiClient from "../../../services/api/apiClient"; // Adjust this path to your apiClient
-// import { useAddress } from "@/features/customer/hooks/useAddress";
-
-// interface AddressForm {
-//   fullName: string;
-//   phone: string;
-//   address: string;
-//   city: string;
-// }
-
-// export interface DeliveryOption {
-//   DeliveryTypeId: number;
-//   Name: string;
-//   DisplayName: string;
-//   EstimatedDays: number;
-//   Charge: number;
-// }
-
-// export function useCheckoutSummary(checkoutData: any) {
-//   const router = useRouter();
-//   const { addresses } = useAddress(); // Accesses user saved database addresses
-//   console.log(addresses);
-//   // Shipping form tracking state
-//   const [addressForm, setAddressForm] = useState<AddressForm>({
-//     fullName: checkoutData?.ShippingDetail?.FullName || "",
-//     phone: checkoutData?.ShippingDetail?.Phone || "",
-//     address: checkoutData?.ShippingDetail?.Address || "",
-//     city: checkoutData?.ShippingDetail?.City || "",
-//   });
-
-//   const [isAddressSaved, setIsAddressSaved] = useState<boolean>(
-//     !!checkoutData?.ShippingDetail?.Address &&
-//       !!checkoutData?.ShippingDetail?.FullName,
-//   );
-
-//   // Delivery options tracking configurations
-//   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
-//   const [selectedOption, setSelectedOption] = useState<DeliveryOption | null>(
-//     null,
-//   );
-//   const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
-//   const [showSavedAddresses, setShowSavedAddresses] = useState<boolean>(false);
-
-//   // Fetch structural delivery methods from API backend
-//   const fetchDeliveryOptions = useCallback(async () => {
-//     setLoadingOptions(true);
-//     try {
-//       const response = await apiClient.get(
-//         "/Setting/delivery/services/options",
-//       );
-//       if (response.data?.Data) {
-//         console.log("Fetched Delivery Options:", response.data.Data);
-//         setDeliveryOptions(response.data.Data);
-//         // Default select the first available tier option
-//         if (response.data.Data.length > 0) {
-//           setSelectedOption(response.data.Data[0]);
-//         }
-//       }
-//     } catch (error) {
-//       console.error("Failed loading backend courier variations:", error);
-//     } finally {
-//       setLoadingOptions(false);
-//     }
-//   }, []);
-
-//   useEffect(() => {
-//     fetchDeliveryOptions();
-//   }, [fetchDeliveryOptions]);
-
-//   // Bind address details automatically upon selection
-//   const handleSelectSavedAddress = (addr: any) => {
-//     setAddressForm({
-//       fullName:
-//         addr?.FullName || checkoutData?.ShippingDetail?.FullName || "Customer",
-//       phone: addr?.PhoneNumber || "",
-//       address: addr?.Address || "",
-//       city: addr?.City || "",
-//     });
-//     setShowSavedAddresses(false);
-//   };
-
-//   const handleSaveAddress = () => {
-//     if (
-//       !addressForm.fullName ||
-//       !addressForm.phone ||
-//       !addressForm.address
-//       //   !addressForm.city
-//     ) {
-//       Alert.alert(
-//         "Missing Fields",
-//         "Please populate all structural delivery parameters safely.",
-//       );
-//       return;
-//     }
-//     setIsAddressSaved(true);
-//   };
-
-//   // Dynamic Grand Total computation loop mapping reactive delivery method allocations
-//   const subtotal = useMemo(() => {
-//     return (
-//       checkoutData?.OrderTotalPrice ||
-//       checkoutData?.CartItemDtos?.TotalPrice ||
-//       0
-//     );
-//   }, [checkoutData]);
-
-//   const deliveryCharge = useMemo(() => {
-//     return selectedOption
-//       ? selectedOption.Charge
-//       : checkoutData?.DeliveryCharges || 0;
-//   }, [selectedOption, checkoutData]);
-
-//   const grandTotal = useMemo(() => {
-//     return subtotal + deliveryCharge;
-//   }, [subtotal, deliveryCharge]);
-
-//   const handleProceedToPayment = () => {
-//     if (!isAddressSaved) {
-//       Alert.alert(
-//         "Shipping Required",
-//         "Please provide and save your shipping address information before proceeding.",
-//       );
-//       return;
-//     }
-//     if (!selectedOption) {
-//       Alert.alert(
-//         "Delivery Tier Missing",
-//         "Please select a courier dispatch framework option.",
-//       );
-//       return;
-//     }
-
-//     router.push({
-//       pathname: "/(tabs)/cart/payment-methods",
-//       params: {
-//         orderAmount: String(grandTotal),
-//         shippingDetails: JSON.stringify(addressForm),
-//         deliveryOption: JSON.stringify(selectedOption),
-//       },
-//     });
-//   };
-
-//   return {
-//     addressForm,
-//     setAddressForm,
-//     isAddressSaved,
-//     setIsAddressSaved,
-//     deliveryOptions,
-//     selectedOption,
-//     setSelectedOption,
-//     loadingOptions,
-//     savedAddresses: addresses || [],
-//     showSavedAddresses,
-//     setShowSavedAddresses,
-//     subtotal,
-//     deliveryCharge,
-//     grandTotal,
-//     handleSelectSavedAddress,
-//     handleSaveAddress,
-//     handleProceedToPayment,
-//   };
-// }
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -190,10 +24,10 @@ export interface DeliveryOption {
 
 export function useCheckoutSummary(checkoutData: any) {
   const router = useRouter();
-
+  console.log("Received checkout data in hook:", checkoutData);
   const { addresses } = useAddress(); // Grabs real database-saved customer records
   const { guestSessionId } = useSharedCartData();
-
+  const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
   console.log(`tati is : ${guestSessionId}`);
   // Shipping form data mapping
   const [addressForm, setAddressForm] = useState<AddressForm>({
@@ -211,8 +45,12 @@ export function useCheckoutSummary(checkoutData: any) {
   );
 
   // Core instruction parameters
-  const [specialInstructions, setSpecialInstructions] = useState("");
-  const [deliveryInstructions, setDeliveryInstructions] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState(
+    "There is nothing better than the Babar Azam's Cover drive",
+  );
+  const [deliveryInstructions, setDeliveryInstructions] = useState(
+    "Oh Gone Surely Gone Yes Absolute Bump",
+  );
 
   // Courier state management
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
@@ -263,8 +101,8 @@ export function useCheckoutSummary(checkoutData: any) {
     if (
       !addressForm.fullName ||
       !addressForm.phone ||
-      !addressForm.address
-      // !addressForm.city
+      !addressForm.address ||
+      !addressForm.city
     ) {
       Alert.alert(
         "Incomplete Parameters",
@@ -315,18 +153,21 @@ export function useCheckoutSummary(checkoutData: any) {
 
     // Build the request payload matching the Swagger specification precisely
     const orderPayload: CreateOrderPayload = {
-      IsGiftOrder: false,
+      IsGiftOrder: true,
       ShippingDetail: {
         FullName: addressForm.fullName,
         EmailAddress: addressForm.email,
         Phone: addressForm.phone,
         Country: "Pakistan",
         CityId: checkoutData?.CityId || 0,
+        // CityId: 1,
         Address: addressForm.address,
-        City: addressForm.city,
-        AddressBookId: addressForm.addressBookId,
-        Longitude: "0.0",
-        Latitude: "0.0",
+        City: addressForm.city || "",
+        // City: "Lahore",
+        AddressBookId: addressForm.addressBookId || 0,
+        // AddressBookId: 0,
+        Longitude: "34.33765",
+        Latitude: "74.33789",
       },
       BillingDetail: {
         FullName: checkoutData?.BillingDetail?.FullName || addressForm.fullName,
@@ -334,7 +175,7 @@ export function useCheckoutSummary(checkoutData: any) {
         EmailAddress:
           checkoutData?.BillingDetail?.EmailAddress || addressForm.email,
       },
-      SessionId: guestSessionId,
+      SessionId: guestSessionId || "",
       BranchId: checkoutData?.BranchId || 0,
       DeliveryDate: new Date().toISOString(),
       IsAddNewAddress: addressForm.addressBookId === 0,
@@ -344,10 +185,15 @@ export function useCheckoutSummary(checkoutData: any) {
       OrderSource: 1, // Native App standard designation flag
       CityId: checkoutData?.CityId || 0,
       CountryId: checkoutData?.CountryId || 0,
+      // CityId: 1,
+      // CountryId: 169,
     };
 
     try {
-      console.log("Submitting Order with Payload:", orderPayload);
+      console.log(
+        "Submitting Cleaned Order Payload:",
+        JSON.stringify(orderPayload, null, 2),
+      );
       const response = await orderApi.createOrder(orderPayload);
       console.log("Order Creation Response:", response);
       if (response?.HttpStatusCode === 200 || response?.Data?.OrderId) {
@@ -359,19 +205,19 @@ export function useCheckoutSummary(checkoutData: any) {
           params: { orderId: String(generatedOrderId) },
         });
       } else {
-        Alert.alert(
-          "Order Failure",
-          response?.Message || "Database could not construct order entry.",
+        setCheckoutMessage(
+          response?.Message ||
+            "Unexpected response from order processing. Please try again.",
         );
       }
     } catch (error: any) {
-      console.error("Order Transaction Exception Block:", error);
-      Alert.alert(
-        "Error Handling",
+      console.log("Order Transaction Exception Block:", error);
+      setCheckoutMessage(
         error?.response?.data?.Message ||
           "Network failed processing checkout session.",
       );
     } finally {
+      setTimeout(() => setCheckoutMessage(null), 2000);
       setIsSubmittingOrder(false);
     }
   };
@@ -397,5 +243,6 @@ export function useCheckoutSummary(checkoutData: any) {
     handleSelectSavedAddress,
     handleSaveAddress,
     handleProceedToPayment,
+    checkoutMessage,
   };
 }

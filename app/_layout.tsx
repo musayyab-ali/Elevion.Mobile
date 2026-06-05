@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Colors } from "../constants/Theme";
 import * as SecureStore from "expo-secure-store";
+import { GlobalCartBanner } from "@/components/GlobalCartBanner";
 
 // 🔒 Hold the native app splash screen locked over the screen
 SplashScreen.preventAutoHideAsync();
@@ -75,6 +76,7 @@ function RootStack() {
           options={{ animation: "slide_from_bottom" }}
         />
       </Stack>
+      <GlobalCartBanner />
     </SafeAreaProvider>
   );
 }
