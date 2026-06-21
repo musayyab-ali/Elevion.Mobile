@@ -63,7 +63,7 @@ export default function WelcomeScreen() {
       await SecureStore.setItemAsync("HAS_LAUNCHED", "true");
       router.replace("/(tabs)");
     } catch (error) {
-      console.error("Could not write onboarding tokens:", error);
+      console.log("Could not write onboarding tokens:", error);
       router.replace("/(tabs)");
     }
   };

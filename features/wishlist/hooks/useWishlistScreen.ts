@@ -27,7 +27,7 @@ export function useWishlistScreen() {
           await fetchWishlist();
         }
       } catch (error) {
-        console.error("Failed to sync latest wishlist state:", error);
+        console.log("Failed to sync latest wishlist state:", error);
       } finally {
         setLoading(false);
       }
@@ -42,7 +42,7 @@ export function useWishlistScreen() {
       ProductName: item.ProductName || item.Name || "Premium Product",
       MinPrice: item.MinPrice || item.Price || 0,
       MaxPrice: item.MaxPrice || item.Price || 0,
-      ImageName: item.ImageName || "",
+      ProductImage: item.ProductImage || "",
       IsNewProduct: item.IsNewProduct || false,
       IsFeaturedProduct: item.IsFeaturedProduct || false,
       InStock: item.InStock ?? true,

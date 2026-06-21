@@ -1,21 +1,23 @@
 import { Tabs, useSegments } from "expo-router";
-import { Ionicons } from "@expo/vector-icons"; // Clean modern import bundle fallback
+import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Theme";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWindowDimensions, ViewStyle } from "react-native";
+import {
+  useWindowDimensions,
+  ViewStyle,
+  View,
+  Text,
+  StyleSheet,
+} from "react-native";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
-
-  // 🌟 ARCHITECTURAL FIX: Use useSegments to reactively monitor nested routes
   const segments = useSegments();
   const checkTabBarHiddenState = () => {
     const currentSubRoute = segments[segments.length - 1];
-
-    // 🌟 Ensure ALL variations of your deep screen targets hide the bottom bar
     const hiddenScreens = [
       "product-details",
       "cart",
@@ -25,25 +27,53 @@ export default function TabLayout() {
 
     return hiddenScreens.includes(currentSubRoute);
   };
-
   const isTabBarHidden = checkTabBarHiddenState();
-
-  // 📐 Construct clean structural bar styling layout tracking properties
   const strictTabBarStyle: ViewStyle = {
-    backgroundColor: Colors.white,
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-    height: 56 + insets.bottom,
-    paddingBottom: insets.bottom > 0 ? insets.bottom - 4 : 4,
-    paddingTop: 6,
+    borderTopColor: "#F1F5F9",
+    height: 64 + insets.bottom, // Optimized clearance padding height
+    paddingBottom: insets.bottom > 0 ? insets.bottom + 2 : 8,
+    paddingTop: 10,
     position: "relative",
     bottom: 0,
     left: 0,
     right: 0,
     width: "100%",
-    // 🌟 RE-RENDER PREVENTION: Conditionally append display parameters cleanly without re-calculating formulas
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 8,
     display: isTabBarHidden ? "none" : "flex",
   };
+
+  const renderPremiumIcon = (
+    focused: boolean,
+    activeIcon: keyof typeof Ionicons.glyphMap,
+    inactiveIcon: keyof typeof Ionicons.glyphMap,
+  ) => (
+    <View style={[styles.iconWrapper]}>
+      <Ionicons
+        name={focused ? activeIcon : inactiveIcon}
+        size={isTablet ? 24 : 22}
+        color={focused ? Colors.accent : "#94A3B8"}
+      />
+    </View>
+  );
+  const renderPremiumLabel = (focused: boolean, label: string) => (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit={false}
+      style={[
+        styles.tabLabel,
+        { fontSize: isTablet ? 12 : 11 },
+        focused ? styles.labelActive : styles.labelInactive,
+      ]}
+    >
+      {label}
+    </Text>
+  );
 
   return (
     <Tabs
@@ -60,23 +90,20 @@ export default function TabLayout() {
         },
         tabBarTransparent: false,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: Colors.headerOne[0],
+        tabBarActiveTintColor: "#0F172A",
         tabBarInactiveTintColor: "#94A3B8",
         tabBarActiveBackgroundColor: "transparent",
-
-        // Inject clean computed static style properties safely
         tabBarStyle: strictTabBarStyle,
+        tabBarShowLabel: true,
 
         tabBarItemStyle: {
-          height: 48,
-          marginHorizontal: 0,
-          marginVertical: 0,
-          borderRadius: 0,
+          height: 54,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 0,
         },
         tabBarLabelStyle: {
-          fontSize: isTablet ? 13 : 11,
-          fontWeight: "600",
-          marginTop: 2,
+          marginTop: 4, // Clean vertical rhythm baseline
         },
         tabBarIconStyle: {
           marginBottom: 0,
@@ -88,36 +115,36 @@ export default function TabLayout() {
         options={{
           title: "Home",
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={isTablet ? 26 : 22} color={color} />
-          ),
+          tabBarIcon: ({ focused }) =>
+            renderPremiumIcon(focused, "home-sharp", "home-outline"),
+          tabBarLabel: ({ focused }) => renderPremiumLabel(focused, "Home"),
         }}
       />
       <Tabs.Screen
         name="wishlist"
         options={{
           title: "Saved",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="heart" size={isTablet ? 26 : 22} color={color} />
-          ),
+          tabBarIcon: ({ focused }) =>
+            renderPremiumIcon(focused, "heart-sharp", "heart-outline"),
+          tabBarLabel: ({ focused }) => renderPremiumLabel(focused, "Saved"),
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="receipt" size={isTablet ? 26 : 22} color={color} />
-          ),
+          tabBarIcon: ({ focused }) =>
+            renderPremiumIcon(focused, "receipt-sharp", "receipt-outline"),
+          tabBarLabel: ({ focused }) => renderPremiumLabel(focused, "Orders"),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={isTablet ? 26 : 22} color={color} />
-          ),
+          tabBarIcon: ({ focused }) =>
+            renderPremiumIcon(focused, "person-sharp", "person-outline"),
+          tabBarLabel: ({ focused }) => renderPremiumLabel(focused, "Profile"),
         }}
       />
 
@@ -146,3 +173,28 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+    height: 32, // explicit spatial limits to prevent squeezing
+  },
+
+  tabLabel: {
+    letterSpacing: -0.2,
+    textAlign: "center",
+    includeFontPadding: false, // Disables unexpected Android line padding
+  },
+  labelActive: {
+    color: "#0F172A",
+    fontWeight: "800",
+  },
+  labelInactive: {
+    color: "#94A3B8",
+    fontWeight: "600",
+  },
+});

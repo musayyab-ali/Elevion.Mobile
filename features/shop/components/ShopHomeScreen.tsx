@@ -1,156 +1,248 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   FlatList,
   Text,
   StyleSheet,
   useWindowDimensions,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CategoryCard } from "./CategoryCard";
 import { Colors } from "../../../constants/Theme";
 import { CategorySkeleton } from "./CategorySkeleton";
 import { FeaturedBanner } from "./FeaturedBanner";
 import { ShopHeader } from "./ShopHeader";
+import { HomeProductMiniCard } from "./HomeProductMiniCard";
 import { useDiscovery } from "../hooks/useDiscovery";
 import { EmptyState } from "@/components/EmptyState";
+import { ProductMiniSkeleton } from "./ProductMiniSkeleton";
+import { CategorySkeletonHorizontal } from "./CategorySkeletonHorizintal";
+import { WelcomeModal } from "@/components/WelcomeModal";
 export const ShopHomeScreen = () => {
   const router = useRouter();
   const {
     subCategories,
     bannerProducts,
+    homeSections,
     loading,
     serverError,
     loadDiscoveryData,
   } = useDiscovery();
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  const handleCategoryPress = (category: any) => {
-    if (category?.IsLeafNode) {
+  const handleCategoryPress = useCallback(
+    (category: any) => {
+      if (category?.IsLeafNode) {
+        router.push({
+          pathname: "/(tabs)/category/products",
+          params: {
+            categoryId: category.CategoryId,
+            categoryName: category.Name,
+          },
+        });
+      } else {
+        router.push({
+          pathname: "/(tabs)/category/[id]",
+          params: { id: category.CategoryId.toString(), name: category.Name },
+        });
+      }
+    },
+    [router],
+  );
+
+  const handleProductPress = useCallback(
+    (product: any) => {
       router.push({
-        pathname: "/(tabs)/category/products",
-        params: {
-          categoryId: category.CategoryId,
-          categoryName: category.Name,
-        },
+        pathname: "/(tabs)/category/product-details",
+        params: { productId: product.ProductId },
       });
-    } else {
-      router.push({
-        pathname: "/(tabs)/category/[id]",
-        params: {
-          id: category.CategoryId.toString(),
-          name: category.Name,
-        },
-      });
-    }
-  };
+    },
+    [router],
+  );
 
-  const handleRetryFetch = () => {
-    loadDiscoveryData();
-  };
+  // Optimized Render Function for Child Products Horizontal Row List
+  const renderProductRow = useCallback(
+    ({ item }: { item: any }) => (
+      <HomeProductMiniCard product={item} onPress={handleProductPress} />
+    ),
+    [handleProductPress],
+  );
 
-  const handleProductPress = (product: any) => {
-    router.push({
-      pathname: "/(tabs)/category/product-details",
-      params: { productId: product.ProductId },
-    });
-  };
+  // Master Render Function for Dynamic Parent Category Layout Sections
+  const renderCategoryBlockSection = useCallback(
+    ({ item }: { item: any }) => {
+      const sectionCategory = item?.Category;
+      const sectionCategoryName = sectionCategory?.CategoryName;
+      const productsList = item?.ProductList ?? [];
 
-  // Modern Cross-Platform Responsive Column Matrix Rules
-  const calculatedColumns = width > 900 ? 4 : width > 600 ? 3 : 2;
-  const isOddRowAdjustmentNeeded =
-    subCategories.length % calculatedColumns !== 0;
+      if (productsList.length === 0) return null;
+
+      return (
+        <View style={styles.sectionBlockContainer}>
+          {/* Dynamic Category Section Title Header */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>
+              {sectionCategoryName || "Special Collection"}
+            </Text>
+            <TouchableOpacity
+              style={styles.seeAllButton}
+              onPress={() => handleCategoryPress(sectionCategory)}
+            >
+              <Text style={styles.seeAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Horizontal Layer Specialized Virtualization Track */}
+          <FlatList
+            data={productsList}
+            horizontal
+            renderItem={renderProductRow}
+            keyExtractor={(product) => `section-prod-${product.ProductId}`}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalTrackPadding}
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={3}
+            removeClippedSubviews={true}
+          />
+        </View>
+      );
+    },
+    [renderProductRow, handleCategoryPress],
+  );
+
+  if (loading) {
+    return (
+      <View
+        style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}
+      >
+        {/* Persistent App Header Navigation Bar */}
+        <ShopHeader />
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.skeletonCanvasScroll}
+        >
+          {/* Top Level Hero Commercial Promotional Banner Slot */}
+          <View style={styles.bannerSkeletonWrapper}>
+            <CategorySkeleton style={{ width: "100%" }} />
+            {/* Note: If your original component was actually named HomeBannerSkeleton, swap this line directly back to it! */}
+          </View>
+
+          {/* Circular Category Section Row Header & Cards Track */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderLine}>
+              <Text style={styles.sectionTitlePlaceholder}>
+                Explore Categories
+              </Text>
+            </View>
+            <CategorySkeletonHorizontal />
+          </View>
+
+          {/* Premium E-Commerce Product Carousel Sections Grid */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderLine}>
+              <Text style={styles.sectionTitlePlaceholder}>Trending Drops</Text>
+            </View>
+            <ProductMiniSkeleton />
+          </View>
+
+          {/* Secondary Shelf Grid Section Replicas */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderLine}>
+              <Text style={styles.sectionTitlePlaceholder}>
+                Recommended Just For You
+              </Text>
+            </View>
+            <ProductMiniSkeleton />
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
       <ShopHeader />
-      {loading ? (
+
+      {serverError ? (
         <View style={styles.contentCanvas}>
-          <View style={styles.skel}>
-            <CategorySkeleton style={{ width: "100%" }} />
-          </View>
-          <FlatList
-            data={[1, 2, 3, 4, 5, 6]}
-            numColumns={calculatedColumns}
-            key={calculatedColumns}
-            keyExtractor={(item) => `skeleton-${item}`}
-            columnWrapperStyle={styles.rowWrapper}
-            renderItem={() => (
-              <View
-                style={[
-                  styles.gridCell,
-                  { maxWidth: `${100 / calculatedColumns}%` },
-                ]}
-              >
-                <CategorySkeleton />
-              </View>
-            )}
+          <EmptyState
+            iconName="cloud-offline-outline"
+            title="Server Connection Interrupted"
+            description="We are having trouble synchronizing our collection. Please check your network and try again."
+            actionLabel="Retry Connection"
+            onActionPress={loadDiscoveryData}
           />
         </View>
       ) : (
         <View style={styles.contentCanvas}>
-          {serverError ? (
-            <EmptyState
-              iconName="cloud-offline-outline"
-              title="Server Connection Interrupted"
-              description="We are having trouble synchronizing our collection. Please check your network and try again."
-              actionLabel="Retry Connection"
-              onActionPress={handleRetryFetch}
-            />
-          ) : (
-            <FlatList
-              data={subCategories}
-              numColumns={calculatedColumns}
-              key={calculatedColumns} // Re-bind grid dimensions smoothly upon device rotation
-              keyExtractor={(item) => item.CategoryId.toString()}
-              columnWrapperStyle={[
-                styles.rowWrapper,
-                isOddRowAdjustmentNeeded && { justifyContent: "flex-start" },
-              ]}
-              contentContainerStyle={styles.scrollContainer}
-              showsVerticalScrollIndicator={false}
-              ListHeaderComponent={
-                <>
-                  {bannerProducts.length > 0 && (
-                    <View style={styles.bannerContainer}>
-                      <FeaturedBanner
-                        data={bannerProducts}
-                        onPress={handleProductPress}
-                      />
-                    </View>
-                  )}
+          {/* 🏆 MASTER FIX: Outer Frame converted to a standalone Vertical FlatList.
+            Everything else sits cleanly inside the ListHeaderComponent layout scope.
+          */}
+          <FlatList
+            data={homeSections}
+            renderItem={renderCategoryBlockSection}
+            keyExtractor={(item, index) =>
+              `home-section-${item?.Category?.CategoryId || index}`
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+            removeClippedSubviews={true}
+            initialNumToRender={3}
+            maxToRenderPerBatch={3}
+            windowSize={5}
+            ListHeaderComponent={
+              <>
+                {/* 1. Feature Carousel Banners */}
+                {bannerProducts.length > 0 && (
+                  <View style={styles.bannerContainer}>
+                    <FeaturedBanner
+                      data={bannerProducts}
+                      onPress={handleProductPress}
+                    />
+                  </View>
+                )}
+
+                {/* 2. Primary Top Categories Row Header Section */}
+                <View style={styles.sectionHeaderRow}>
                   <Text style={styles.sectionTitle}>Explore Categories</Text>
-                </>
-              }
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.gridCell,
-                    { maxWidth: `${100 / calculatedColumns}%` },
-                  ]}
-                >
-                  <CategoryCard
-                    category={item}
-                    onPress={() => handleCategoryPress(item)}
-                  />
                 </View>
-              )}
-              ListEmptyComponent={
-                <EmptyState
-                  iconName="grid-outline"
-                  title="No Categories Available"
-                  description="Our premium seasonal catalogs are currently undergoing maintenance updates. Check back shortly for our fresh drops!"
-                  actionLabel="Refresh Catalog"
-                  onActionPress={handleRetryFetch}
+
+                {/* 3. Horizontal Parent Channels Track */}
+                <FlatList
+                  data={subCategories}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => `parent-cat-${item.CategoryId}`}
+                  contentContainerStyle={styles.horizontalTrackPadding}
+                  renderItem={({ item }) => (
+                    <CategoryCard
+                      category={item}
+                      onPress={() => handleCategoryPress(item)}
+                    />
+                  )}
                 />
-              }
-            />
-          )}
+
+                <View style={styles.dividerLine} />
+              </>
+            }
+            ListEmptyComponent={
+              <EmptyState
+                iconName="grid-outline"
+                title="No Products Available"
+                description="Our premium seasonal catalogs are currently undergoing maintenance updates."
+                actionLabel="Refresh Catalog"
+                onActionPress={loadDiscoveryData}
+              />
+            }
+          />
         </View>
       )}
+      <WelcomeModal />
     </View>
   );
 };
@@ -159,73 +251,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  /* The Content Canvas Masks Underlying Header Layers with Professional Rounded Cutouts */
   contentCanvas: {
     flex: 1,
     backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     overflow: "hidden",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4,
   },
   scrollContainer: {
-    paddingTop: 16,
-    paddingBottom: 110, // Gives standard breathing space clearance over your absolute tab bar
+    paddingBottom: 130, // Safe padding over absolute tabs
   },
   bannerContainer: {
-    marginHorizontal: 16,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 4,
+    width: "100%",
+    backgroundColor: "transparent",
+    marginBottom: 8,
   },
-  rowWrapper: {
+  sectionBlockContainer: {
+    marginBottom: 10,
+    marginTop: 6,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-  },
-  gridCell: {
-    flex: 1,
-    padding: 6,
-    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginTop: 14,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: "800",
-    color: "#1E293B",
-    paddingHorizontal: 18,
-    marginTop: 22,
-    marginBottom: 10,
+    color: "#0F172A",
     letterSpacing: -0.3,
   },
-  emptyContainer: {
-    marginTop: 80,
-    alignItems: "center",
-    justifyContent: "center",
+  viewAllLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Colors.headerOne[0],
+    paddingLeft: 10,
   },
-  emptyText: {
-    color: "#94A3B8",
-    fontSize: 15,
-    fontWeight: "500",
+  horizontalTrackPadding: {
+    paddingHorizontal: 14,
+    paddingBottom: 6,
   },
-  /* Skeleton Loading Styles */
-  headerContainer: {
-    backgroundColor: Colors.headerOne[0],
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    marginBottom: 20,
+  seeAllButton: {
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  skeletonText: {
-    height: 15,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 4,
-    width: "40%",
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  dividerLine: {
+    height: 1,
+    backgroundColor: "#EDF2F7",
+    marginHorizontal: 20,
+    marginTop: 22,
+    marginBottom: 8,
   },
   skel: {
     marginTop: 20,
     marginHorizontal: 20,
     marginBottom: 15,
+  },
+
+  skeletonCanvasScroll: {
+    paddingBottom: 40,
+    backgroundColor: "#F8FAFC",
+  },
+  bannerSkeletonWrapper: {
+    marginVertical: 20,
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  sectionContainer: {
+    marginTop: 18,
+    marginBottom: 10,
+  },
+  sectionHeaderLine: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  sectionTitlePlaceholder: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#94A3B8", // Subtle editorial text placeholder tone
+    letterSpacing: -0.2,
   },
 });

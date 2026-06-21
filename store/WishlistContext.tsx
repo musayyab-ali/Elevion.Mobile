@@ -40,6 +40,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   const [wishMessage, setWishMessage] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [serverError, setServerError] = useState<boolean>(false);
+
   const fetchWishlist = useCallback(
     async (isRefresh = false) => {
       // 🛑 Hard stop if the explicit user security parameters are missing
@@ -52,14 +53,12 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       else setLoading(true);
 
       try {
-        const result = await wishlistApi.getWishlist(100, 1);
+        const result = await wishlistApi.getWishlist(10, 1);
         setItems(result?.Data?.WishItemList ?? []);
       } catch (error) {
         console.log("Wishlist Fetch Core Exception:", error);
         setServerError(true);
-        // setWishMessage("Failed to retrieve your saved favorites catalog.");
       } finally {
-        // setTimeout(() => setWishMessage(null), 2000);
         setLoading(false);
         setRefreshing(false);
       }

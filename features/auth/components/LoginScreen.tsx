@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import { Colors } from "../../../constants/Theme";
-import { AppButton } from "../../../components/AppButton";
-import { AppInput } from "../../../components/AppInput";
+import { Colors } from "@/constants/Theme";
+import { AppButton } from "@/components/AppButton";
+import { AppInput } from "@/components/AppInput";
 import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useLogin } from "../hooks/useLogin";
@@ -21,8 +22,14 @@ const isTablet = SCREEN_WIDTH > 600;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { handleLogin, checkUserExists, loading, showPassword, apiMessage } =
-    useLogin();
+  const {
+    handleLogin,
+    checkUserExists,
+    loading,
+    showPassword,
+    apiMessage,
+    isSuccess,
+  } = useLogin();
 
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -34,86 +41,134 @@ export default function LoginScreen() {
       handleLogin(userName, password);
     }
   };
+
+  // if (!isSuccess) {
+  //   return (
+  //     <View style={styles.responsiveWrapper}>
+  //       <View style={styles.successWrapper}>
+  //         <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+  //         <Text style={styles.successTitle}>Login Successful!</Text>
+  //         <Text style={styles.successSub}>
+  //           We are redirecting you to our Homepage
+  //         </Text>
+  //         <ActivityIndicator
+  //           size="small"
+  //           color="#0077b6"
+  //           style={{ marginTop: 20 }}
+  //         />
+  //       </View>
+  //     </View>
+  //   );
+  // }
+  console.log("success status :", isSuccess);
   return (
-    <AuthContainer title="Login to Account" apiMessage={apiMessage}>
+    <AuthContainer
+      title="Login to Account"
+      apiMessage={apiMessage}
+      // celebration={isCelebration}
+    >
       <View style={styles.responsiveWrapper}>
-        {/* Logo Section */}
-        <MotiView
-          from={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "timing", duration: 800 }}
-          style={styles.logoContainer}
-        >
-          <Image
-            source={require("../../../assets/images/gemini-logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </MotiView>
-
-        {/* Step 1: Username Input */}
-        {!showPassword && (
-          <MotiView
-            from={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <AppInput
-              label="Username"
-              placeholder="Enter your username"
-              value={userName}
-              onChangeText={setUserName}
-              editable={!showPassword}
+        {isSuccess ? (
+          <View style={styles.successWrapper}>
+            <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+            <Text style={styles.successTitle}>Login Successful!</Text>
+            <Text style={styles.successSub}>
+              We are redirecting you to our Homepage
+            </Text>
+            <ActivityIndicator
+              size="small"
+              color="#0077b6"
+              style={{ marginTop: 20 }}
             />
-          </MotiView>
-        )}
-
-        {/* Step 2: Password Input (Appears after checkUserExists) */}
-        {showPassword && (
-          <MotiView from={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <View style={styles.inputWrapper}>
-              <AppInput
-                label="Password"
-                placeholder="********"
-                secureTextEntry={!isPasswordVisible}
-                value={password}
-                onChangeText={setPassword}
+          </View>
+        ) : (
+          <>
+            <MotiView
+              from={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: 800 }}
+              style={styles.logoContainer}
+            >
+              <Image
+                source={require("../../../assets/images/gemini-logo.png")}
+                style={styles.logo}
+                resizeMode="contain"
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            </MotiView>
+
+            {/* Step 1: Username Input */}
+            {!showPassword && (
+              <MotiView
+                from={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
               >
-                <Ionicons
-                  name={isPasswordVisible ? "eye-off" : "eye"}
-                  size={20}
-                  color="#64748b"
+                <AppInput
+                  label="Username"
+                  placeholder="Enter your username"
+                  value={userName}
+                  onChangeText={setUserName}
+                  editable={!showPassword}
                 />
+              </MotiView>
+            )}
+
+            {/* Step 2: Password Input (Appears after checkUserExists) */}
+            {showPassword && (
+              <MotiView
+                from={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <View style={styles.inputWrapper}>
+                  <AppInput
+                    label="Password"
+                    placeholder="********"
+                    secureTextEntry={!isPasswordVisible}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                  >
+                    <Ionicons
+                      name={isPasswordVisible ? "eye-off" : "eye"}
+                      size={20}
+                      color="#64748b"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => router.push("/(unauthorized)/forgot-password")}
+                  style={styles.forgotPasswordContainer}
+                >
+                  <Text style={styles.forgotPasswordText}>
+                    Forgot Password?
+                  </Text>
+                </TouchableOpacity>
+              </MotiView>
+            )}
+
+            <AppButton
+              title={
+                loading ? "Processing..." : showPassword ? "LOGIN" : "NEXT"
+              }
+              onPress={onPrimaryAction}
+              style={styles.loginBtn}
+            />
+
+            <View style={styles.footer}>
+              <TouchableOpacity
+                onPress={() => router.push("/(unauthorized)/register")}
+              >
+                <Text style={styles.footerText}>
+                  New here?{" "}
+                  <Text style={styles.footerLink}>Create Account</Text>
+                </Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              onPress={() => router.push("/(unauthorized)/forgot-password")}
-              style={styles.forgotPasswordContainer}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </MotiView>
+          </>
         )}
-
-        <AppButton
-          title={loading ? "Processing..." : showPassword ? "LOGIN" : "NEXT"}
-          onPress={onPrimaryAction}
-          style={styles.loginBtn}
-        />
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            onPress={() => router.push("/(unauthorized)/register")}
-          >
-            <Text style={styles.footerText}>
-              New here? <Text style={styles.footerLink}>Create Account</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </AuthContainer>
   );
@@ -125,6 +180,26 @@ const styles = StyleSheet.create({
     maxWidth: 500, // Tablet optimization
     paddingHorizontal: 24,
     paddingTop: 30,
+  },
+
+  successWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#1E293B",
+    marginTop: 15,
+    textAlign: "center",
+  },
+  successSub: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 20,
   },
 
   // Logo Styles

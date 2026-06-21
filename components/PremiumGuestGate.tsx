@@ -3,29 +3,38 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
+import { Colors } from "@/constants/Theme";
 
 // Define the component properties
 interface PremiumGuestGateProps {
-  screenType: "wishlist" | "profile";
+  screenType: "wishlist" | "orders" | "profile";
 }
 
 // Centralized configuration data for each screen type
 const SCREEN_CONFIG = {
   wishlist: {
     icon: "heart" as const,
-    iconColor: "#EF4444",
+    iconColor: Colors.darkError,
     badgeText: "MEMBER PRIVILEGE",
     title: "Elevate Your Experience",
     subtitle:
-      "Join our premium shopping community to curate personalized collections, sync your favorites across devices, and unlock real-time flash drop alerts.",
+      "Join our premium shopping community to curate personalized collections.",
+  },
+  orders: {
+    icon: "list" as const,
+    iconColor: Colors.headerOne[0], // Elegant brand blue accent for profile context
+    badgeText: "GO TO AUTHORIZED ACCESS",
+    title: "Track Your Orders",
+    subtitle:
+      "Sign in to track real-time order history, manage payment profiles, and order details with ease.",
   },
   profile: {
     icon: "person" as const,
-    iconColor: "#3B82F6", // Elegant brand blue accent for profile context
+    iconColor: Colors.primary, // Elegant brand blue accent for profile context
     badgeText: "EXCLUSIVE ACCESS",
     title: "Unlock Your Profile",
     subtitle:
-      "Sign in to securely manage your delivery addresses, track real-time order history, manage payment profiles, and customize app configurations.",
+      "Sign in to securely manage your profile and customize app configurations.",
   },
 };
 
@@ -94,7 +103,12 @@ export function PremiumGuestGate({ screenType }: PremiumGuestGateProps) {
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => router.push("/(unauthorized)/login")}
-          style={styles.premiumAuthPill}
+          style={[
+            styles.premiumAuthPill,
+            screenType === "wishlist" && { backgroundColor: Colors.darkError },
+            screenType === "orders" && { backgroundColor: Colors.headerOne[0] },
+            screenType === "profile" && { backgroundColor: Colors.primary },
+          ]}
         >
           <Text style={styles.premiumAuthPillText}>
             Sign In / Create Account
@@ -203,9 +217,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   premiumGuestTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "900",
-    color: "#0F172A",
+    color: Colors.headerOne[0],
     textAlign: "center",
     marginBottom: 12,
     letterSpacing: -0.5,
@@ -220,7 +234,7 @@ const styles = StyleSheet.create({
   },
   premiumAuthPill: {
     flexDirection: "row",
-    backgroundColor: "#0F172A",
+    // backgroundColor: Colors.primary,
     width: "100%",
     paddingLeft: 24,
     paddingRight: 8,

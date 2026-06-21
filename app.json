@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "The Link",
-    "slug": "The Link",
+    "slug": "The-Link",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/gemini-logo.png",
@@ -32,6 +32,7 @@
       "output": "static",
       "favicon": "./assets/images/gemini-logo.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -43,14 +44,20 @@
           "backgroundColor": "#ffffff",
           "dark": {
             "backgroundColor": "#000000"
-          },
+          }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
           "android": {
             "usesCleartextTraffic": true
           }
         }
-      ],
-      "expo-secure-store"
+      ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

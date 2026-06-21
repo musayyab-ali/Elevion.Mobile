@@ -9,7 +9,7 @@ export const useOtp = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-
+  const [isCelebration, setIsCelebration] = useState(false);
   // Inside useOtp.ts
 
   const verifyOtp = async (
@@ -30,27 +30,24 @@ export const useOtp = () => {
     try {
       const result = await authApi.verifyOtp({
         otp,
-        // phoneNumber,
         userName,
         phoneCode,
       });
-      // CRITICAL: Extract the token from the response
-      // Based on your API: result.Data.AccessToken
-      console.log("OTP Verification Result:", result.Data);
-      console.log(
-        "OTP Verification Result AccessToken:",
-        result.Data.AccessToken,
-      );
-      const tokenData = { AccessToken: result.Data.AccessToken };
+
+      const tokenData = {
+        AccessToken: result.Data.AccessToken,
+        UserName: userName,
+      };
 
       // 1. Save to SecureStore and update global state
       await saveAuth(tokenData);
-      setIsSuccess(true); // Triggers your beautiful new CelebrationOverlay
+      setIsCelebration(true);
+      setIsSuccess(true);
 
       setTimeout(() => {
-        setIsSuccess(false);
-        router.replace("/(tabs)/index");
-      }, 4500);
+        setIsCelebration(false);
+        router.replace("/(tabs)");
+      }, 4000);
 
       return { success: true };
     } catch (error: any) {
@@ -78,5 +75,13 @@ export const useOtp = () => {
     }
   };
 
-  return { verifyOtp, resendOtp, loading, apiMessage, isSuccess, resetLoading };
+  return {
+    verifyOtp,
+    resendOtp,
+    loading,
+    apiMessage,
+    isSuccess,
+    isCelebration,
+    resetLoading,
+  };
 };

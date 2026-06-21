@@ -112,7 +112,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         const state = await SecureStore.getItemAsync("CART_BANNER_DISMISSED");
         setIsCartBannerDismissed(state === "true");
       } catch (e) {
-        console.error("Failed to read cart banner metrics:", e);
+        console.log("Failed to read cart banner metrics:", e);
       }
     }
     loadBannerState();
@@ -221,7 +221,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         if (result?.HttpStatusCode === 200 || result?.Data) {
           await fetchCart();
           await triggerBannerOnNewAddition();
-          // router.push("/(tabs)/category/cart");
           return true;
         }
         return false;
@@ -284,7 +283,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [fetchCart],
   );
-
   const removeCartItem = useCallback(
     async (cartId: number) => {
       // 🌟 1. Store the exact item ID currently being deleted
@@ -301,17 +299,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Update global count tracking cleanly
         setCartCount(response.Data.CartCount);
+
         setCartData((prevItems) => {
           if (!prevItems) return prevItems;
 
-          // If your array key is named differently (e.g., Data or items), swap 'CartItems' with that key name
           const currentItems = prevItems?.CartItemList || [];
+          // Filter out the deleted item
+          const updatedList = currentItems.filter(
+            (item: any) => item.CartId !== cartId,
+          );
+
+          // 🔥 FIX: Recalculate totals dynamically so pricing summary updates immediately!
+          const newTotal = updatedList.reduce(
+            (sum: number, i: any) => sum + (i.TotalAmount || 0),
+            0,
+          );
 
           return {
             ...prevItems,
-            CartItemList: currentItems.filter(
-              (item: any) => item.CartId !== cartId,
-            ),
+            CartItemList: updatedList,
+            NetTotal: newTotal,
+            TotalPrice: newTotal,
           };
         });
       } catch (error) {
@@ -323,31 +331,47 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         setTimeout(() => setCartMessage(null), 2000);
       }
     },
-    [setCartData, setCartCount], // Removed fetchCart dependency entirely
+    [setCartData, setCartCount],
   );
-
   // const removeCartItem = useCallback(
   //   async (cartId: number) => {
-  //     // setLoading(true);
-  //     setActionLoading("deleting", true);
+  //     // 🌟 1. Store the exact item ID currently being deleted
+  //     setDeleteLoading({ active: true, cartId: cartId });
+
   //     try {
   //       const response = await cartApi.deleteItem(cartId);
   //       console.log("Delete item response:", response);
+
   //       if (!response?.Data) {
-  //         setCartMessage("There is somthing wrong! Check you connection.");
+  //         setCartMessage("There is something wrong! Check your connection.");
+  //         return;
   //       }
+
+  //       // Update global count tracking cleanly
   //       setCartCount(response.Data.CartCount);
-  //       fetchCart();
+  //       setCartData((prevItems) => {
+  //         if (!prevItems) return prevItems;
+
+  //         // If your array key is named differently (e.g., Data or items), swap 'CartItems' with that key name
+  //         const currentItems = prevItems?.CartItemList || [];
+
+  //         return {
+  //           ...prevItems,
+  //           CartItemList: currentItems.filter(
+  //             (item: any) => item.CartId !== cartId,
+  //           ),
+  //         };
+  //       });
   //     } catch (error) {
   //       console.log("Cart deletion routine exception:", error);
-  //       setCartMessage("There is somthing wrong! Check you connection.");
+  //       setCartMessage("There is something wrong! Check your connection.");
   //     } finally {
-  //       // setLoading(false);
-  //       setActionLoading("deleting", false);
+  //       // 🌟 3. Clear the explicit loading ID state by passing null
+  //       setDeleteLoading({ active: false, cartId: null });
   //       setTimeout(() => setCartMessage(null), 2000);
   //     }
   //   },
-  //   [fetchCart],
+  //   [setCartData, setCartCount], // Removed fetchCart dependency entirely
   // );
 
   const executeCheckout = useCallback(

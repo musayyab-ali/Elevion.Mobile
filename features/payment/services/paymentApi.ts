@@ -48,69 +48,60 @@ export const paymentApi = {
     return response.data;
   },
 
-  // Cancel Customer Order completely before payment authorization triggers
-  cancelCustomerOrder: async (orderId: number) => {
-    const formData = new FormData(); // strictly mapped to multipart/form-data requirements
+  cancelCustomerOrder: async (orderId: string) => {
+    const formData = new FormData();
+
+    // 🌟 FIX: Swagger marks 'files' array as a REQUIRED part of the request body.
+    // We append an empty blob/string to satisfy the multipart structural requirement.
+    formData.append("files", "");
+
     const response = await apiClient.post(
       `/Order/CancelCustomerOrder`,
       formData,
       {
         params: { OrderId: orderId },
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       },
     );
     return response.data;
   },
 
-  verifyPayment: async (invoiceId: string) => {
+  verifyPayment: async (invoiceId: string | number) => {
+    // If the server expects an Int64, ensure it's parsed to a numeric value
+    const numericId = Number(invoiceId);
+
+    // Wrap in requestDto context since the server threw a validation error asking for it
     const response = await apiClient.post("/Payment/VerifyPayment", {
-      InvoiceId: invoiceId,
+      InvoiceId: numericId,
+      requestDto: {
+        InvoiceId: numericId,
+      },
     });
     return response.data;
   },
 
-  // 2. Alternative Fallback Transaction Log Verification Engine
-  verifyLogPayment: async (invoiceLogId: string) => {
+  verifyLogPayment: async (invoiceLogId: string | number) => {
+    const numericLogId = Number(invoiceLogId);
     const response = await apiClient.post("/Payment/VerifyLogPayment", {
-      InvoiceLogId: invoiceLogId,
+      InvoiceLogId: numericLogId,
+      requestDto: {
+        InvoiceLogId: numericLogId,
+      },
     });
     return response.data;
   },
 
-  // checkOrderPaymentStatus: async (orderId: number) => {
-  //   const response = await apiClient.post(
-  //     `/Payment/CheckOrderPaymentStatus`,
-  //     null,
-  //     {
-  //       params: { orderId },
-  //     },
-  //   );
-  //   return response.data;
-  // },
-
-  // checkOrderPaymentStatus: async (orderId: number) => {
-  //   // Creating a FormData instance safely satisfies the multi-part/array expectation on the backend
-  //   const data = new FormData();
-
-  //   const response = await apiClient.post(
-  //     `/Payment/CheckOrderPaymentStatus`,
-  //     data,
-  //     {
-  //       params: { orderId },
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     },
-  //   );
-  //   return response.data;
-  // },
-
-  checkOrderPaymentStatus: async (orderId: number) => {
+  checkOrderPaymentStatus: async (orderId: number, formData: FormData) => {
     const response = await apiClient.post(
       `/Payment/CheckOrderPaymentStatus`,
-      [], // Send an empty array directly in the JSON body payload to satisfy files * array<string>
+      formData, // Pass the native form data payload here directly
       {
         params: { orderId },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       },
     );
     return response.data;

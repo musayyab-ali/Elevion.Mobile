@@ -10,10 +10,6 @@ export const customerApi = {
     }
   },
 
-  /**
-   * Updates user profile information.
-   * @param profileData - The updated profile object
-   */
   updateProfile: async (profileData: any) => {
     try {
       const response = await apiClient.put(
@@ -26,11 +22,6 @@ export const customerApi = {
     }
   },
 
-  // getOrders: async (pageNumber: number, pageSize: number) => {
-  //   // Note: parameters are query params as per your image
-  //   const endpoint = `/Customer/orders?PageSize=${pageSize}&PageNumber=${pageNumber}`;
-  //   return await apiClient.get(endpoint);
-  // },
   getOrders: async (pageSize: number, pageNumber: number) => {
     try {
       const responce = await apiClient.get("/Customer/orders", {
@@ -47,6 +38,34 @@ export const customerApi = {
     return await apiClient.get(
       `/Customer/addresses?PageSize=${pageSize}&PageNumber=${pageNumber}`,
     );
+  },
+
+  getCountries: async () => {
+    return await apiClient.get("/Common/countries");
+  },
+
+  getStates: async (countryId: string | number) => {
+    return await apiClient.get(`/Common/states`, {
+      params: { CountryId: countryId },
+    });
+  },
+
+  getCities: async (stateId: string | number) => {
+    return await apiClient.get(`/Common/cities`, {
+      params: { StateId: stateId },
+    });
+  },
+
+  getAreas: async (cityId: string | number) => {
+    return await apiClient.get(`/Common/areas`, {
+      params: { CityId: cityId },
+    });
+  },
+
+  getBranches: async (cityId: string | number) => {
+    return await apiClient.get(`/Common/branches`, {
+      params: { CityId: cityId },
+    });
   },
 
   saveAddress: async (addressData: any) => {
@@ -71,9 +90,28 @@ export const customerApi = {
     return await apiClient.get(`/Customer/reviews/all`);
   },
 
-  // Get rating distribution for a specific product
   getProductRatings: async (productId: number) => {
     return await apiClient.get(`/Customer/ratings?productId=${productId}`);
+  },
+
+  // 2. FIXED: Aligned exactly with Swagger's PascalCase configuration parameters
+  getDetailedReviews: async (
+    productId: number,
+    pageNumber = 1,
+    pageSize = 10,
+  ) => {
+    return await apiClient.get(
+      `/Product/ratings?ProductId=${productId}&IsApproved=true&PageNumber=${pageNumber}&PageSize=${pageSize}&SortBy="thelink"`,
+    );
+  },
+
+  // 3. Submits your user review data payload object structure
+  saveProductRating: async (payload: {
+    Rating: number;
+    Review: string;
+    ProductId: number;
+  }) => {
+    return await apiClient.post(`/Product/save/rating`, payload);
   },
 
   deactivateAccount: async () => {

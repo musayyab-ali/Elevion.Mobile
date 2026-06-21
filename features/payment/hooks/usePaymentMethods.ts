@@ -1,12 +1,338 @@
+// import { useState, useEffect, useCallback } from "react";
+// import { Alert, Linking } from "react-native";
+// import { useRouter } from "expo-router";
+// import { paymentApi } from "../services/paymentApi";
+
+// export function usePaymentMethods(orderId: string) {
+//   const router = useRouter();
+
+//   // Core Order Structural States
+//   const [loading, setLoading] = useState(true);
+//   const [orderData, setOrderData] = useState<any>(null);
+//   const [gateways, setGateways] = useState<any[]>([]);
+//   const [selectedGatewayId, setSelectedGatewayId] = useState<number | null>(
+//     null,
+//   );
+//   const [isCODAvailable, setIsCODAvailable] = useState(false);
+
+//   // Marketing & Reward Operations States
+//   const [promoCode, setPromoCode] = useState("");
+//   const [appliedPromo, setAppliedPromo] = useState<{
+//     id: number;
+//     discount: number;
+//     code: string;
+//   } | null>(null);
+//   const [pointsToRedeem, setPointsToRedeem] = useState("");
+//   const [pointsApplied, setPointsApplied] = useState(false);
+//   const [isProcessing, setIsProcessing] = useState(false);
+//   const [isCanceling, setIsCanceling] = useState(false);
+//   // 🌟 Status state to show validation errors or success directly on the UI screens
+//   const [cancelMessage, setCancelMessage] = useState<{
+//     type: "success" | "error" | null;
+//     text: string;
+//   }>({ type: null, text: "" });
+
+//   // Controlled UI State instead of Alert.alert
+//   const [isCancelConfirmVisible, setIsCancelConfirmVisible] = useState(false);
+//   const [activeCancelOrderId, setActiveCancelOrderId] = useState<string | null>(
+//     null,
+//   );
+//   // Inside your useCustomerOrders hook:
+//   const triggerCancelConfirmation = (orderId: string) => {
+//     setActiveCancelOrderId(orderId);
+//     setIsCancelConfirmVisible(true);
+//     setCancelMessage({ type: null, text: "" }); // Reset errors on fresh interaction
+//   };
+
+//   // Calculations Node State
+//   const [totals, setTotals] = useState({
+//     subtotal: 0,
+//     deliveryCharges: 0,
+//     discount: 0,
+//     grandTotal: 0,
+//   });
+
+//   const loadPaymentSetup = useCallback(async () => {
+//     if (!orderId) return;
+//     setLoading(true);
+//     try {
+//       const res = await paymentApi.getPaymentSetup(orderId);
+//       if (
+//         (res?.HttpStatusCode === 200 || res?.HttpStatusCode === 100) &&
+//         res?.Data
+//       ) {
+//         const orderDto = res.Data.OrderDto;
+
+//         setOrderData(orderDto);
+//         setGateways(res.Data.PaymentGateways || []);
+//         setIsCODAvailable(orderDto?.IsCODPaymentEnable || false);
+
+//         // Map invoice totals cleanly from the core backend model calculations
+//         setTotals({
+//           subtotal: orderDto?.OrderAmount || 0,
+//           deliveryCharges: orderDto?.DeliveryCharges || 0,
+//           discount: orderDto?.NetDiscount || 0,
+//           grandTotal: orderDto?.NetAmount || 0,
+//         });
+
+//         // Retain visual input state if a promo coupon is already attached to this order session
+//         if (orderDto?.PromoCode) {
+//           setAppliedPromo({
+//             id: orderDto?.PromoCodeCampaignId || 0,
+//             discount: orderDto?.PromoCodeValue || 0,
+//             code: orderDto?.PromoCode,
+//           });
+//         }
+//       }
+//     } catch (err) {
+//       console.log(
+//         "🛑 Failed to load invoice matrix layout configuration:",
+//         err,
+//       );
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [orderId]);
+
+//   useEffect(() => {
+//     loadPaymentSetup();
+//   }, [loadPaymentSetup]);
+
+//   const handleApplyPromo = async () => {
+//     if (!promoCode.trim()) return;
+//     try {
+//       const res = await paymentApi.redeemPromo(
+//         promoCode.trim(),
+//         Number(orderId),
+//       );
+//       // Swagger documentation maps success payload arrays to HttpStatusCode 100
+//       if (
+//         (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) &&
+//         res?.Data
+//       ) {
+//         setAppliedPromo({
+//           id: res.Data.CampaignId,
+//           discount: res.Data.TotalDiscount,
+//           code: res.Data.Code,
+//         });
+//         Alert.alert("Success", res.Message || `Promo applied successfully!`);
+//         await loadPaymentSetup(); // Re-sync entire grand totals object
+//       } else {
+//         Alert.alert(
+//           "Invalid Promo",
+//           res?.Message || "Code could not be processed against entries.",
+//         );
+//       }
+//     } catch (err: any) {
+//       Alert.alert(
+//         "Promo Error",
+//         err?.response?.data?.Message || "Failed to validate coupon code.",
+//       );
+//     }
+//   };
+
+//   const handleCancelPromo = async () => {
+//     if (!appliedPromo) return;
+//     try {
+//       const res = await paymentApi.cancelPromo(
+//         Number(orderId),
+//         appliedPromo.id,
+//       );
+//       if (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) {
+//         setAppliedPromo(null);
+//         setPromoCode("");
+//         Alert.alert("Removed", "Promo coupon detached successfully.");
+//         await loadPaymentSetup();
+//       }
+//     } catch (err) {
+//       Alert.alert("Error", "Failed to clear active coupon code.");
+//     }
+//   };
+
+//   const handleApplyPoints = async () => {
+//     const points = parseInt(pointsToRedeem);
+//     if (isNaN(points) || points <= 0) {
+//       Alert.alert(
+//         "Invalid Format",
+//         "Please input a positive non-zero integer point query.",
+//       );
+//       return;
+//     }
+//     try {
+//       const res = await paymentApi.redeemPoints(points, Number(orderId));
+//       if (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) {
+//         setPointsApplied(true);
+//         Alert.alert(
+//           "Points Redeemed",
+//           res.Message || "Loyalty points applied against total amount.",
+//         );
+//         await loadPaymentSetup();
+//       } else {
+//         Alert.alert(
+//           "Redeem Refused",
+//           res?.Message || "Points allocation rejected.",
+//         );
+//       }
+//     } catch (err: any) {
+//       Alert.alert(
+//         "Points Error",
+//         err?.response?.data?.Detail ||
+//           "Insufficient points or execution mismatch.",
+//       );
+//     }
+//   };
+
+//   const handleProcessPayment = async () => {
+//     if (selectedGatewayId === null) {
+//       Alert.alert(
+//         "Selection Missing",
+//         "Please select your preferred checkout payment method.",
+//       );
+//       return;
+//     }
+
+//     setIsProcessing(true);
+//     try {
+//       // 🌟 STEP 1: Handle Cash on Delivery Route cleanly immediately
+//       if (selectedGatewayId === 0) {
+//         // For COD, we can skip Stripe hooks and send them straight to confirmation
+//         router.replace({
+//           pathname: "/(tabs)/cart/order-confirmation",
+//           params: { orderId: String(orderId), isCod: "true" },
+//         });
+//         return;
+//       }
+
+//       // 🌟 STEP 2: Request the active Payment Gateway Invoice URL from your server
+//       const activeGateway = gateways.find((g) => g.PGId === selectedGatewayId);
+//       const payload = {
+//         OrderId: Number(orderId),
+//         OrderAmount: totals.grandTotal,
+//         TenantPaymentGatewayId: selectedGatewayId,
+//         PaymentGateway: activeGateway ? activeGateway.PGId : 1,
+//       };
+//       console.log("🔍 PayInvoice Payload:", payload);
+//       const res = await paymentApi.payInvoice(payload);
+//       console.log("📥 Verified PayInvoice Response Matrix:", res);
+
+//       if (res?.StatusCode === 200 && res?.Data) {
+//         const transaction = res.Data.Transaction;
+//         const redirectUrl = transaction?.PaymentPortal || transaction?.BillUrl;
+
+//         // Passing base order identifier as tracking key fallback
+//         const numericInvoiceId = String(orderId);
+
+//         if (redirectUrl) {
+//           const supported = await Linking.canOpenURL(redirectUrl);
+//           if (supported) {
+//             await Linking.openURL(redirectUrl);
+
+//             router.replace({
+//               pathname: "/(tabs)/cart/order-confirmation",
+//               params: {
+//                 orderId: String(orderId),
+//                 invoiceId: numericInvoiceId,
+//               },
+//             });
+//             return;
+//           }
+//         }
+//       } else {
+//         Alert.alert(
+//           "Invoice Refused",
+//           res?.Message || "Failed to process target order invoice.",
+//         );
+//       }
+//     } catch (err: any) {
+//       console.error("🚨 Critical Payment Error:", err);
+//       Alert.alert(
+//         "Payment Failed",
+//         err?.response?.data?.Message ||
+//           "Error parsing invoice execution context.",
+//       );
+//     } finally {
+//       setIsProcessing(false);
+//     }
+//   };
+//   const executeOrderCancellation = async (onCompletion?: () => void) => {
+//     if (!activeCancelOrderId) return;
+
+//     setIsCanceling(true);
+//     setCancelMessage({ type: null, text: "" });
+
+//     try {
+//       const res = await paymentApi.cancelCustomerOrder(activeCancelOrderId);
+
+//       if (res?.HttpStatusCode === 200 || res?.Type === "Success") {
+//         setCancelMessage({
+//           type: "success",
+//           text: res.Message || "The order has been cancelled successfully.",
+//         });
+
+//         setIsCancelConfirmVisible(false);
+//         if (onCompletion) onCompletion();
+//       } else {
+//         const errorMsg =
+//           res.Errors?.[0]?.Message ||
+//           res.Message ||
+//           "Cancellation request rejected by server application logic.";
+
+//         setCancelMessage({ type: "error", text: errorMsg });
+//       }
+//     } catch (err: any) {
+//       console.error("Cancellation Endpoint Error Context:", err);
+//       setCancelMessage({
+//         type: "error",
+//         text: "System communication exception. Failed to connect with server payload gateway.",
+//       });
+//     } finally {
+//       setIsCanceling(false);
+//     }
+//   };
+
+//   return {
+//     loading,
+//     totals,
+//     gateways,
+//     selectedGatewayId,
+//     setSelectedGatewayId,
+//     isCODAvailable,
+//     promoCode,
+//     setPromoCode,
+//     appliedPromo,
+//     pointsToRedeem,
+//     setPointsToRedeem,
+//     pointsApplied,
+//     isProcessing,
+//     isCanceling,
+//     handleApplyPromo,
+//     handleCancelPromo,
+//     handleApplyPoints,
+//     handleProcessPayment,
+//     cancelMessage,
+//     setCancelMessage,
+//     isCancelConfirmVisible,
+//     setIsCancelConfirmVisible,
+//     triggerCancelConfirmation,
+//     executeOrderCancellation,
+//   };
+// }
+
 import { useState, useEffect, useCallback } from "react";
-import { Alert, Linking } from "react-native";
+import { Platform, Keyboard, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import { paymentApi } from "../services/paymentApi";
+import { orderApi } from "@/features/cart/services/orderApi";
+// 🌟 Highly organized localized notification interface
+export interface ScreenNotification {
+  type: "success" | "error" | null;
+  text: string;
+}
 
 export function usePaymentMethods(orderId: string) {
   const router = useRouter();
 
-  // Core Order Structural States
+  // Core Structural Application States
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);
   const [gateways, setGateways] = useState<any[]>([]);
@@ -14,6 +340,9 @@ export function usePaymentMethods(orderId: string) {
     null,
   );
   const [isCODAvailable, setIsCODAvailable] = useState(false);
+
+  // Keyboard Dynamic Visibility State
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Marketing & Reward Operations States
   const [promoCode, setPromoCode] = useState("");
@@ -24,16 +353,87 @@ export function usePaymentMethods(orderId: string) {
   } | null>(null);
   const [pointsToRedeem, setPointsToRedeem] = useState("");
   const [pointsApplied, setPointsApplied] = useState(false);
+
+  // Status state engines replacing legacy Alerts
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
-  // Calculations Node State
+  // Professional, non-obtrusive inline visual feedback states
+  const [promoNotification, setPromoNotification] =
+    useState<ScreenNotification>({ type: null, text: "" });
+  const [pointsNotification, setPointsNotification] =
+    useState<ScreenNotification>({ type: null, text: "" });
+  const [generalNotification, setGeneralNotification] =
+    useState<ScreenNotification>({ type: null, text: "" });
+  const [cancelMessage, setCancelMessage] = useState<ScreenNotification>({
+    type: null,
+    text: "",
+  });
+
+  // Controlled UI State Overlay For Confirmations
+  const [isCancelConfirmVisible, setIsCancelConfirmVisible] = useState(false);
+  const [activeCancelOrderId, setActiveCancelOrderId] = useState<string | null>(
+    null,
+  );
+  const [cancellationReasons, setCancellationReasons] = useState<any[]>([]);
+  const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [loadingReasons, setLoadingReasons] = useState(false);
+
+  // Calculations Struct Nodes
   const [totals, setTotals] = useState({
     subtotal: 0,
     deliveryCharges: 0,
     discount: 0,
     grandTotal: 0,
   });
+
+  // --- KEYBOARD LISTENER SETUP ---
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showListener = Keyboard.addListener(showEvent, () =>
+      setIsKeyboardVisible(true),
+    );
+    const hideListener = Keyboard.addListener(hideEvent, () =>
+      setIsKeyboardVisible(false),
+    );
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  // const triggerCancelConfirmation = (targetOrderId: string) => {
+  //   setActiveCancelOrderId(targetOrderId);
+  //   setIsCancelConfirmVisible(true);
+  //   setCancelMessage({ type: null, text: "" });
+  // };
+  const triggerCancelConfirmation = async (targetOrderId: string) => {
+    setActiveCancelOrderId(targetOrderId);
+    setSelectedReason(null); // Reset selection on a clean state interaction
+    setIsCancelConfirmVisible(true);
+    setCancelMessage({ type: null, text: "" });
+    setLoadingReasons(true);
+
+    try {
+      const res = await orderApi.getOrderCancellationReasons();
+      // Safely map through Axios wrapper tracking your 'Data' array array structure
+      if (res?.data?.Data) {
+        setCancellationReasons(res.data.Data.filter((r: any) => !r.Disabled));
+      }
+    } catch (err) {
+      console.log(
+        "Failed fetching dynamic cancel structural items context logs:",
+        err,
+      );
+    } finally {
+      setLoadingReasons(false);
+    }
+  };
 
   const loadPaymentSetup = useCallback(async () => {
     if (!orderId) return;
@@ -50,7 +450,6 @@ export function usePaymentMethods(orderId: string) {
         setGateways(res.Data.PaymentGateways || []);
         setIsCODAvailable(orderDto?.IsCODPaymentEnable || false);
 
-        // Map invoice totals cleanly from the core backend model calculations
         setTotals({
           subtotal: orderDto?.OrderAmount || 0,
           deliveryCharges: orderDto?.DeliveryCharges || 0,
@@ -58,7 +457,6 @@ export function usePaymentMethods(orderId: string) {
           grandTotal: orderDto?.NetAmount || 0,
         });
 
-        // Retain visual input state if a promo coupon is already attached to this order session
         if (orderDto?.PromoCode) {
           setAppliedPromo({
             id: orderDto?.PromoCodeCampaignId || 0,
@@ -68,10 +466,11 @@ export function usePaymentMethods(orderId: string) {
         }
       }
     } catch (err) {
-      console.error(
-        "🛑 Failed to load invoice matrix layout configuration:",
-        err,
-      );
+      console.log("🛑 Failed to load invoice configuration matrix:", err);
+      setGeneralNotification({
+        type: "error",
+        text: "Could not sync payment allocations with the server.",
+      });
     } finally {
       setLoading(false);
     }
@@ -82,13 +481,19 @@ export function usePaymentMethods(orderId: string) {
   }, [loadPaymentSetup]);
 
   const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return;
+    if (!promoCode.trim()) {
+      setPromoNotification({
+        type: "error",
+        text: "Please enter a valid promo code.",
+      });
+      return;
+    }
+    setPromoNotification({ type: null, text: "" });
     try {
       const res = await paymentApi.redeemPromo(
         promoCode.trim(),
         Number(orderId),
       );
-      // Swagger documentation maps success payload arrays to HttpStatusCode 100
       if (
         (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) &&
         res?.Data
@@ -98,24 +503,30 @@ export function usePaymentMethods(orderId: string) {
           discount: res.Data.TotalDiscount,
           code: res.Data.Code,
         });
-        Alert.alert("Success", res.Message || `Promo applied successfully!`);
-        await loadPaymentSetup(); // Re-sync entire grand totals object
+        setPromoNotification({
+          type: "success",
+          text: res.Message || "Promo code matched successfully!",
+        });
+        await loadPaymentSetup();
       } else {
-        Alert.alert(
-          "Invalid Promo",
-          res?.Message || "Code could not be processed against entries.",
-        );
+        setPromoNotification({
+          type: "error",
+          text: res?.Message || "Code could not be verified against entries.",
+        });
       }
     } catch (err: any) {
-      Alert.alert(
-        "Promo Error",
-        err?.response?.data?.Message || "Failed to validate coupon code.",
-      );
+      setPromoNotification({
+        type: "error",
+        text:
+          err?.response?.data?.Message ||
+          "Failed to validate structural coupon code.",
+      });
     }
   };
 
   const handleCancelPromo = async () => {
     if (!appliedPromo) return;
+    setPromoNotification({ type: null, text: "" });
     try {
       const res = await paymentApi.cancelPromo(
         Number(orderId),
@@ -124,86 +535,77 @@ export function usePaymentMethods(orderId: string) {
       if (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) {
         setAppliedPromo(null);
         setPromoCode("");
-        Alert.alert("Removed", "Promo coupon detached successfully.");
+        setPromoNotification({
+          type: "success",
+          text: "Promo coupon detached successfully.",
+        });
         await loadPaymentSetup();
+
+        setTimeout(() => setPromoNotification({ type: null, text: "" }), 3500);
       }
     } catch (err) {
-      Alert.alert("Error", "Failed to clear active coupon code.");
+      setPromoNotification({
+        type: "error",
+        text: "Failed to clear active coupon code.",
+      });
     }
   };
 
   const handleApplyPoints = async () => {
     const points = parseInt(pointsToRedeem);
     if (isNaN(points) || points <= 0) {
-      Alert.alert(
-        "Invalid Format",
-        "Please input a positive non-zero integer point query.",
-      );
+      setPointsNotification({
+        type: "error",
+        text: "Please enter a positive non-zero point value.",
+      });
       return;
     }
+    setPointsNotification({ type: null, text: "" });
     try {
       const res = await paymentApi.redeemPoints(points, Number(orderId));
       if (res?.HttpStatusCode === 100 || res?.HttpStatusCode === 200) {
         setPointsApplied(true);
-        Alert.alert(
-          "Points Redeemed",
-          res.Message || "Loyalty points applied against total amount.",
-        );
+        setPointsNotification({
+          type: "success",
+          text: res.Message || "Loyalty points deducted from bill.",
+        });
         await loadPaymentSetup();
       } else {
-        Alert.alert(
-          "Redeem Refused",
-          res?.Message || "Points allocation rejected.",
-        );
+        setPointsNotification({
+          type: "error",
+          text: res?.Message || "Points allocation rejected.",
+        });
       }
     } catch (err: any) {
-      Alert.alert(
-        "Points Error",
-        err?.response?.data?.Detail ||
-          "Insufficient points or execution mismatch.",
-      );
+      setPointsNotification({
+        type: "error",
+        text:
+          err?.response?.data?.Detail ||
+          "Insufficient points balance or logic error.",
+      });
     }
   };
 
   const handleProcessPayment = async () => {
     if (selectedGatewayId === null) {
-      Alert.alert(
-        "Selection Missing",
-        "Please select your preferred checkout payment method.",
-      );
+      setGeneralNotification({
+        type: "error",
+        text: "Please pick a checkout payment method to proceed.",
+      });
       return;
     }
-
+    setGeneralNotification({ type: null, text: "" });
     setIsProcessing(true);
+
     try {
-      // 🌟 STEP 1: Confirm and lock the order variables on the backend first
-      const confirmationPayload = {
-        OrderId: Number(orderId),
-        RedeemPoints: pointsApplied ? Number(pointsToRedeem) : 0,
-        CampaignId: appliedPromo ? Number(appliedPromo.id) : 0,
-      };
-
-      console.log(
-        "🔒 Sending Order Confirmation Payload:",
-        confirmationPayload,
-      );
-      const confirmRes = await paymentApi.confirmOrder(confirmationPayload);
-
-      // Check for success types based on your swagger 100/200 return signatures
-      if (
-        confirmRes?.HttpStatusCode !== 100 &&
-        confirmRes?.HttpStatusCode !== 200 &&
-        confirmRes?.Type !== "Success"
-      ) {
-        Alert.alert(
-          "Order Lock Failed",
-          confirmRes?.Message || "Could not lock order parameters.",
-        );
-        setIsProcessing(false);
+      if (selectedGatewayId === 0) {
+        router.replace({
+          pathname: "/(tabs)/cart/order-confirmation",
+          params: { orderId: String(orderId), isCod: "true" },
+        });
         return;
       }
 
-      // 🌟 STEP 2: Process the payment gateway payload invoice generation
       const activeGateway = gateways.find((g) => g.PGId === selectedGatewayId);
       const payload = {
         OrderId: Number(orderId),
@@ -212,171 +614,129 @@ export function usePaymentMethods(orderId: string) {
         PaymentGateway: activeGateway ? activeGateway.PGId : 1,
       };
 
+      console.log("sending payment gateway payload: ", payload);
+
       const res = await paymentApi.payInvoice(payload);
-      console.log("📥 Verified PayInvoice Response Matrix:", res);
 
       if (res?.StatusCode === 200 && res?.Data) {
         const transaction = res.Data.Transaction;
         const redirectUrl = transaction?.PaymentPortal || transaction?.BillUrl;
-        const transactionId = transaction?.TransactionID;
+        const numericInvoiceId = String(orderId);
 
         if (redirectUrl) {
           const supported = await Linking.canOpenURL(redirectUrl);
           if (supported) {
             await Linking.openURL(redirectUrl);
-
             router.replace({
               pathname: "/(tabs)/cart/order-confirmation",
-              params: {
-                orderId: String(orderId),
-                invoiceId: String(transactionId),
-              },
+              params: { orderId: String(orderId), invoiceId: numericInvoiceId },
             });
             return;
           }
         }
-
-        // COD Fallback Route
-        router.replace({
-          pathname: "/(tabs)/cart/order-confirmation",
-          params: { orderId: String(orderId), isCod: "true" },
-        });
-      } else {
-        Alert.alert(
-          "Execution Denied",
-          res?.Message || "Failed to process target order invoice.",
-        );
       }
+      setGeneralNotification({
+        type: "error",
+        text: res?.Message || "Failed to process payment gateway allocation.",
+      });
     } catch (err: any) {
-      console.error("🚨 Critical Payment Error:", err);
-      Alert.alert(
-        "Payment Failed",
-        err?.response?.data?.Message ||
-          "Error parsing invoice execution context.",
-      );
+      setGeneralNotification({
+        type: "error",
+        text:
+          err?.response?.data?.Message ||
+          "Error parsing invoice redirection token pipeline.",
+      });
     } finally {
+      setTimeout(() => {
+        setGeneralNotification({ type: null, text: "" });
+      }, 3000);
       setIsProcessing(false);
     }
   };
 
-  // const handleProcessPayment = async () => {
-  //   if (selectedGatewayId === null) {
-  //     Alert.alert(
-  //       "Selection Missing",
-  //       "Please select your preferred checkout payment method.",
-  //     );
-  //     return;
-  //   }
+  // const executeOrderCancellation = async (onCompletion?: () => void) => {
+  //   if (!activeCancelOrderId) return;
+  //   setIsCanceling(true);
+  //   setCancelMessage({ type: null, text: "" });
 
-  //   setIsProcessing(true);
   //   try {
-  //     const activeGateway = gateways.find((g) => g.PGId === selectedGatewayId);
-  //     const payload = {
-  //       OrderId: Number(orderId),
-  //       OrderAmount: totals.grandTotal,
-  //       TenantPaymentGatewayId: selectedGatewayId,
-  //       PaymentGateway: activeGateway ? activeGateway.PGId : 1,
-  //     };
-
-  //     const res = await paymentApi.payInvoice(payload);
-  //     console.log("📥 Verified PayInvoice Production Matrix Response:", res);
-
-  //     // ✅ FIXED: Check against 200 status code per Swagger spec documentation
-  //     if (res?.StatusCode === 200 && res?.Data) {
-  //       const transaction = res.Data.Transaction;
-
-  //       // ✅ FIXED: Fallback sequence reading PaymentPortal if BillUrl comes back null
-  //       const redirectUrl = transaction?.PaymentPortal || transaction?.BillUrl;
-  //       const transactionId = transaction?.TransactionID;
-
-  //       if (redirectUrl) {
-  //         const supported = await Linking.canOpenURL(redirectUrl);
-  //         if (supported) {
-  //           // Open up the premium external secure checkout payment engine screen link
-  //           await Linking.openURL(redirectUrl);
-
-  //           // Redirect the mobile view layer to track authorization validations
-  //           router.replace({
-  //             pathname: "/(tabs)/cart/order-confirmation",
-  //             params: {
-  //               orderId: String(orderId),
-  //               invoiceId: String(transactionId),
-  //             },
-  //           });
-  //           return;
-  //         }
-  //       }
-
-  //       // Handling Cash On Delivery or standard local workflow operations directly
-  //       router.replace({
-  //         pathname: "/(tabs)/cart/order-confirmation",
-  //         params: { orderId: String(orderId), isCod: "true" },
+  //     const res = await paymentApi.cancelCustomerOrder(activeCancelOrderId);
+  //     if (res?.HttpStatusCode === 200 || res?.Type === "Success") {
+  //       setCancelMessage({
+  //         type: "success",
+  //         text: res.Message || "The order has been cancelled successfully.",
   //       });
+  //       setIsCancelConfirmVisible(false);
+  //       if (onCompletion) onCompletion();
   //     } else {
-  //       Alert.alert(
-  //         "Execution Denied",
-  //         res?.Message || "Failed to process target order invoice.",
-  //       );
+  //       const errorMsg =
+  //         res.Errors?.[0]?.Message ||
+  //         res.Message ||
+  //         "Cancellation request rejected.";
+  //       setCancelMessage({ type: "error", text: errorMsg });
   //     }
   //   } catch (err: any) {
-  //     console.error("🚨 Critical Payment Error:", err);
-  //     Alert.alert(
-  //       "Payment Failed",
-  //       err?.response?.data?.Message ||
-  //         "Error parsing invoice execution context.",
-  //     );
+  //     setCancelMessage({
+  //       type: "error",
+  //       text: "Network exception occurred during discard pipeline initialization.",
+  //     });
   //   } finally {
-  //     setIsProcessing(false);
+  //     setIsCanceling(false);
+  //     setTimeout(() => setCancelMessage({ type: null, text: "" }), 3000);
   //   }
   // };
-  const handleCancelEntireOrder = async () => {
-    Alert.alert(
-      "Cancel and Discard Order",
-      "Are you sure you want to completely cancel this order session? This action cannot be undone.",
-      [
-        { text: "No, Keep Order", style: "cancel" },
-        {
-          text: "Yes, Cancel Order",
-          style: "destructive",
-          onPress: async () => {
-            setIsCanceling(true);
-            try {
-              const res = await paymentApi.cancelCustomerOrder(Number(orderId));
-              if (
-                res?.HttpStatusCode === 100 ||
-                res?.HttpStatusCode === 200 ||
-                res?.Type === "Success"
-              ) {
-                Alert.alert(
-                  "Order Cancelled",
-                  res.Message || "Order discarded successfully.",
-                  [
-                    {
-                      text: "OK",
-                      onPress: () => router.replace("/(tabs)/category/cart"),
-                    },
-                  ],
-                );
-              } else {
-                Alert.alert(
-                  "Cancellation Error",
-                  res?.Message || "Order cancellation rejected by server.",
-                );
-              }
-            } catch (err: any) {
-              Alert.alert(
-                "System Error",
-                "Failed to process cancellation request framework parameters.",
-              );
-            } finally {
-              setIsCanceling(false);
-            }
-          },
-        },
-      ],
-    );
-  };
+  const executeOrderCancellation = async (onCompletion?: () => void) => {
+    if (!activeCancelOrderId) return;
+    if (!selectedReason) {
+      setCancelMessage({
+        type: "error",
+        text: "Please select a reason for cancellation.",
+      });
+      return;
+    }
 
+    setIsCanceling(true);
+    setCancelMessage({ type: null, text: "" });
+
+    try {
+      // Pass both order identity and structural payload value down to server gateway mapping logic
+      const res = await orderApi.cancelCustomerOrder(
+        activeCancelOrderId,
+        selectedReason,
+      );
+      const dataPayload = res?.data || res;
+
+      if (
+        dataPayload?.HttpStatusCode === 200 ||
+        dataPayload?.Type === "Success"
+      ) {
+        setCancelMessage({
+          type: "success",
+          text:
+            dataPayload.Message || "The order has been cancelled successfully.",
+        });
+
+        setTimeout(() => {
+          setIsCancelConfirmVisible(false);
+          if (onCompletion) onCompletion();
+        }, 1500);
+      } else {
+        const errorMsg =
+          dataPayload?.Message ||
+          "Cancellation request rejected by server application logic.";
+        setCancelMessage({ type: "error", text: errorMsg });
+      }
+    } catch (err: any) {
+      console.log("Cancellation Endpoint Error Context:", err);
+      setCancelMessage({
+        type: "error",
+        text: "System communication exception. Failed to connect with server payload gateway.",
+      });
+    } finally {
+      setIsCanceling(false);
+      setTimeout(() => setCancelMessage({ type: null, text: "" }), 3000);
+    }
+  };
   return {
     loading,
     totals,
@@ -392,10 +752,23 @@ export function usePaymentMethods(orderId: string) {
     pointsApplied,
     isProcessing,
     isCanceling,
+    isKeyboardVisible,
+    promoNotification,
+    pointsNotification,
+    generalNotification,
+    cancelMessage,
+    isCancelConfirmVisible,
+    setIsCancelConfirmVisible,
+    triggerCancelConfirmation,
+    executeOrderCancellation,
     handleApplyPromo,
     handleCancelPromo,
     handleApplyPoints,
     handleProcessPayment,
-    handleCancelEntireOrder,
+
+    cancellationReasons,
+    selectedReason,
+    setSelectedReason,
+    loadingReasons,
   };
 }

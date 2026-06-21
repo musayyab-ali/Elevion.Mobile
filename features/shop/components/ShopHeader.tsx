@@ -10,18 +10,19 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../../constants/Theme";
 import { AddressModal } from "@/features/customer/components/AddressModal";
 import { useAddress } from "@/features/customer/hooks/useAddress";
 import { LinearGradient } from "expo-linear-gradient";
-
+import { useAuth } from "@/store/AuthContext";
 const { width } = Dimensions.get("window");
 
 export const ShopHeader = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [userName, setUserName] = useState("Customer");
   const { activeAddress, saveActiveAddress, loading } = useAddress();
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -50,18 +51,34 @@ export const ShopHeader = () => {
     return () => animationLoop.stop();
   }, [blinkAnim]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const refreshVisibleUserData = async () => {
+        try {
+          // const name = await SecureStore.getItemAsync("user_name");
+          const name = user?.UserName;
+          if (name) setUserName(name);
+        } catch (err) {
+          console.log("Error loading username from SecureStore", err);
+        }
+      };
+
+      refreshVisibleUserData();
+    }, []),
+  );
+
   // 2. Read Secure Cache User Registration Data Separately
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const name = await SecureStore.getItemAsync("user_name");
-        if (name) setUserName(name);
-      } catch (err) {
-        console.log("Error loading username from SecureStore", err);
-      }
-    };
-    getUserData();
-  }, []);
+  // useEffect(() => {
+  //   const getUserData = async () => {
+  //     try {
+  //       const name = await SecureStore.getItemAsync("user_name");
+  //       if (name) setUserName(name);
+  //     } catch (err) {
+  //       console.log("Error loading username from SecureStore", err);
+  //     }
+  //   };
+  //   getUserData();
+  // }, []);
 
   return (
     <LinearGradient

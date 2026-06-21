@@ -15,7 +15,15 @@ import { Colors } from "../../../constants/Theme";
 
 const AllReviewsScreen = () => {
   const router = useRouter();
-  const { reviews, loading, refresh } = useReviews();
+
+  // Explicitly fetch everything using the 'all' endpoint modifier configuration
+  const { reviews, loading, refresh } = useReviews("all");
+  const handlePressDetails = (productId: number) => {
+    router.push({
+      pathname: "/(tabs)/category/product-details",
+      params: { productId: String(productId) },
+    });
+  };
 
   if (loading && reviews.length === 0) {
     return (
@@ -30,7 +38,12 @@ const AllReviewsScreen = () => {
       <FlatList
         data={reviews}
         keyExtractor={(item, index) => item.ProductId.toString() + index}
-        renderItem={({ item }) => <ReviewItem item={item} />}
+        renderItem={({ item }) => (
+          <ReviewItem
+            item={item}
+            onPressDetails={() => handlePressDetails(item.ProductId)}
+          />
+        )}
         contentContainerStyle={styles.listContent}
         onRefresh={refresh}
         refreshing={loading}

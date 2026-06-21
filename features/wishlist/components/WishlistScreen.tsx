@@ -4,26 +4,27 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Image,
+  ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
 import { MotiView } from "moti";
+import { LinearGradient } from "expo-linear-gradient"; // Ensure expo-linear-gradient is installed
+import { Skeleton } from "moti/skeleton";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Colors } from "@/constants/Theme";
 import { useWishlistScreen } from "../hooks/useWishlistScreen";
 import { useAuth } from "@/store/AuthContext";
-import { AppButton } from "@/components/AppButton";
 import { useWishlist } from "../hooks/useWishlist";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { PremiumGuestGate } from "@/components/PremiumGuestGate";
 import { EmptyState } from "@/components/EmptyState";
 import { useSharedWishlistData } from "@/store/WishlistContext";
-const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
-const FALLBACK_PLACEHOLDER =
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
+
+const PLACEHOLDER_IMAGE_BANNER =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/No-Image-Placeholder-banner.svg/1280px-No-Image-Placeholder-banner.svg.png";
 
 export const WishlistScreen = () => {
   const { isAuthenticated } = useAuth();
@@ -38,7 +39,6 @@ export const WishlistScreen = () => {
   } = useWishlistScreen();
   const { wishMessage } = useWishlist();
   const { serverError, fetchWishlist } = useSharedWishlistData();
-  const calculatedColumns = width > 900 ? 4 : width > 600 ? 3 : 2;
   const handleRetryFetch = () => {
     fetchWishlist();
   };
@@ -47,33 +47,38 @@ export const WishlistScreen = () => {
     return <PremiumGuestGate screenType="wishlist" />;
   }
 
-  // Stupendous Luxury Skeleton Loading State Shimmer Module
+  // 1:1 Matching Immersive Horizontal Banner Shimmer
   const renderSkeletons = () => (
-    <View style={styles.gridContainer}>
-      {Array.from({ length: 2 }).map((_, index) => (
-        <View
-          key={`skel-${index}`}
-          style={[styles.gridCell, { maxWidth: `${100 / calculatedColumns}%` }]}
+    <View style={styles.skeletonContainer}>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <MotiView
+          key={`skel-banner-${index}`}
+          from={{ opacity: 0.6 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            type: "timing",
+            duration: 900,
+            loop: true,
+            repeatReverse: true,
+          }}
+          style={styles.skeletonBannerCard}
         >
-          <MotiView
-            from={{ opacity: 0.4 }}
-            animate={{ opacity: 0.8 }}
-            transition={{ type: "timing", duration: 800, loop: true }}
-            style={styles.skeletonCard}
-          >
-            <View style={styles.skeletonImage} />
-            <View style={styles.skeletonTextLine} />
-            <View style={[styles.skeletonTextLine, { width: "60%" }]} />
-          </MotiView>
-        </View>
+          <Skeleton colorMode="light" width="100%" height="100%" radius={24} />
+          {/* Mock Floating Content Elements */}
+          <View style={styles.skeletonAbsoluteContent}>
+            <View style={{ gap: 8 }}>
+              <Skeleton colorMode="light" width={180} height={18} radius={6} />
+              <Skeleton colorMode="light" width={100} height={14} radius={4} />
+            </View>
+            <Skeleton colorMode="light" width={40} height={40} radius={20} />
+          </View>
+        </MotiView>
       ))}
     </View>
   );
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: Colors.headerOne?.[1] }]}
-    >
+    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
       <View style={styles.contentCanvas}>
         {loading ? (
           renderSkeletons()
@@ -90,115 +95,124 @@ export const WishlistScreen = () => {
             ) : (
               <FlatList
                 data={wishlistItems}
-                numColumns={calculatedColumns}
-                key={calculatedColumns}
                 keyExtractor={(item) => `wish-${item.ProductId}`}
                 contentContainerStyle={styles.listContent}
-                columnWrapperStyle={styles.rowWrapper}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                   wishlistItems.length > 0 ? (
-                    <Text style={styles.savedCounterText}>
-                      Your Collection ({wishlistItems.length} items saved)
-                    </Text>
+                    <View style={styles.headerTextContainer}>
+                      <Text style={styles.savedCounterSubtext}>
+                        {wishlistItems.length}{" "}
+                        {wishlistItems.length === 1
+                          ? "Premium Masterpiece"
+                          : "Premium Masterpieces"}
+                      </Text>
+                    </View>
                   ) : null
                 }
                 renderItem={({ item, index }) => {
-                  const imageUri = item.ImageName
-                    ? `${IMAGE_BASE_URL}${item.ImageName}`
-                    : FALLBACK_PLACEHOLDER;
+                  const imageUri = item.ProductImage
+                    ? item?.ProductImage
+                    : PLACEHOLDER_IMAGE_BANNER;
                   const processingState = isProcessing(item.ProductId);
 
                   return (
                     <MotiView
-                      from={{ opacity: 0, scale: 0.95, translateY: 10 }}
+                      from={{ opacity: 0, scale: 0.95, translateY: 30 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={{
                         type: "timing",
-                        duration: 350,
-                        delay: index * 50,
+                        duration: 500,
+                        delay: index * 60,
                       }}
-                      style={[
-                        styles.gridCell,
-                        { maxWidth: `${100 / calculatedColumns}%` },
-                      ]}
                     >
                       <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => handleNavigateToDetails(item.ProductId)}
-                        style={styles.productCard}
+                        style={styles.bannerWrapper}
                       >
-                        {/* Media Frame wrapper */}
-                        <View style={styles.imageWrapper}>
-                          <Image
-                            source={{ uri: imageUri }}
-                            style={styles.productImage}
-                          />
-
-                          {/* Interactive absolute delete heart badge layer module */}
-                          <TouchableOpacity
-                            style={styles.removeFloatingButton}
-                            activeOpacity={0.7}
-                            disabled={processingState}
-                            onPress={() => handleRemoveItem(item.ProductId)}
+                        {/* Image Fills Entire Background Card */}
+                        <ImageBackground
+                          source={{ uri: imageUri }}
+                          style={styles.backgroundImage}
+                          imageStyle={styles.backgroundImageRadius}
+                        >
+                          {/* Premium Cinematic Scrim Gradient Overlay */}
+                          <LinearGradient
+                            colors={[
+                              "rgba(15, 23, 42, 0.1)",
+                              "rgba(15, 23, 42, 0.85)",
+                            ]}
+                            style={styles.gradientOverlay}
                           >
-                            {processingState ? (
-                              <ActivityIndicator size="small" color="#EF4444" />
-                            ) : (
-                              <Ionicons
-                                name="heart"
-                                size={18}
-                                color="#EF4444"
-                              />
+                            {/* Stock Level Luxury Accent Badge */}
+                            {!item.InStock && (
+                              <View style={styles.outOfStockBadge}>
+                                <Text style={styles.outOfStockText}>
+                                  Archived / Out of Stock
+                                </Text>
+                              </View>
                             )}
-                          </TouchableOpacity>
 
-                          {!item.InStock && (
-                            <View style={styles.outOfStockOverlay}>
-                              <Text style={styles.outOfStockText}>
-                                Out of Stock
-                              </Text>
+                            {/* Core Typography & Bottom Alignment Layer */}
+                            <View style={styles.bottomMetaContainer}>
+                              <View style={styles.textContainer}>
+                                <Text
+                                  style={styles.productName}
+                                  numberOfLines={1}
+                                >
+                                  {item.ProductName}
+                                </Text>
+                                <Text
+                                  style={styles.priceString}
+                                  numberOfLines={1}
+                                >
+                                  {item.MinPrice === item.MaxPrice
+                                    ? `Rs. ${item.MinPrice.toLocaleString()}`
+                                    : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
+                                </Text>
+                              </View>
+
+                              {/* Interactive Action Heart Wrapper */}
+                              <TouchableOpacity
+                                style={styles.removeFloatingButton}
+                                activeOpacity={0.8}
+                                disabled={processingState}
+                                onPress={() => handleRemoveItem(item.ProductId)}
+                              >
+                                {processingState ? (
+                                  <ActivityIndicator
+                                    size="small"
+                                    color="#FFFFFF"
+                                  />
+                                ) : (
+                                  <Ionicons
+                                    name="heart"
+                                    size={20}
+                                    color="#FF3B30"
+                                  />
+                                )}
+                              </TouchableOpacity>
                             </View>
-                          )}
-                        </View>
-
-                        {/* Metadata summary text boundaries */}
-                        <View style={styles.detailsBlock}>
-                          <Text style={styles.productName} numberOfLines={1}>
-                            {item.ProductName}
-                          </Text>
-                          <Text style={styles.priceString} numberOfLines={1}>
-                            {item.MinPrice === item.MaxPrice
-                              ? `Rs. ${item.MinPrice.toLocaleString()}`
-                              : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
-                          </Text>
-                        </View>
+                          </LinearGradient>
+                        </ImageBackground>
                       </TouchableOpacity>
                     </MotiView>
                   );
                 }}
                 ListEmptyComponent={
-                  // <EmptyState
-                  //   iconName="grid-outline"
-                  //   title="No Categories Available"
-                  //   description="Our premium seasonal catalogs are currently undergoing maintenance updates. Check back shortly for our fresh drops!"
-                  //   actionLabel="Refresh Catalog"
-                  //   onActionPress={handleRetryFetch}
-                  // />
                   <View style={styles.emptyContainer}>
                     <View style={styles.emptyIconCircle}>
                       <Ionicons
-                        name="heart-dislike-outline"
-                        size={38}
+                        name="heart-outline"
+                        size={32}
                         color="#94A3B8"
                       />
                     </View>
-                    <Text style={styles.emptyTitle}>
-                      Your Wishlist is Empty
-                    </Text>
+                    <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
                     <Text style={styles.emptySubtitle}>
-                      Tap the heart icon on any premium item collection catalog
-                      to save your favorites here.
+                      Begin cultivating your aesthetic archive by saving items
+                      from the main editorial collection collections.
                     </Text>
                   </View>
                 }
@@ -216,202 +230,160 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  guestContainer: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 45,
-    backgroundColor: "rgba(0, 180, 216, 0.1)", // Smooth soft transparency accent
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  guestTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#1E293B",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  guestSubtitle: {
-    fontSize: 15,
-    color: "#64748B",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-  authBtn: {
-    width: "100%",
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.accent,
-  },
-  navBarTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
   contentCanvas: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: "#F8FAFC", // High contrast background context canvas
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     overflow: "hidden",
   },
   listContent: {
-    paddingTop: 20,
+    paddingTop: 28,
     paddingBottom: 120,
-  },
-  rowWrapper: {
-    justifyContent: "flex-start",
-    paddingHorizontal: 10,
-  },
-  gridCell: {
-    flex: 1,
-    padding: 6,
-  },
-  savedCounterText: {
-    fontSize: 12,
-    color: Colors.tertiary,
-    fontWeight: "700",
     paddingHorizontal: 16,
-    marginBottom: 14,
+  },
+  headerTextContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+
+  savedCounterSubtext: {
+    fontSize: 14,
+    color: Colors.darkError,
+    fontWeight: "600",
+    marginTop: 2,
     textTransform: "uppercase",
-    letterSpacing: 0.6,
+    letterSpacing: 0.5,
   },
-  productCard: {
+  bannerWrapper: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    height: 180, // Substantial lookbook banner presentation height
+    marginBottom: 16,
+    borderRadius: 24,
+    backgroundColor: "#E2E8F0",
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  imageWrapper: {
-    width: "100%",
-    aspectRatio: 1.1,
-    backgroundColor: "#F1F5F9",
-    position: "relative",
-  },
-  productImage: {
+  backgroundImage: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
   },
-  removeFloatingButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    zIndex: 4,
+  backgroundImageRadius: {
+    borderRadius: 24,
   },
-  outOfStockOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
+  gradientOverlay: {
+    flex: 1,
+    borderRadius: 24,
+    justifyContent: "space-between",
+    padding: 18,
+  },
+  outOfStockBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(239, 68, 68, 0.9)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   outOfStockText: {
-    backgroundColor: "#EF4444",
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "800",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  detailsBlock: {
-    padding: 12,
+  bottomMetaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: "auto", // Forces layout convergence directly into the shaded baseline zone
+  },
+  textContainer: {
+    flex: 1,
+    marginRight: 16,
   },
   productName: {
-    color: "#0F172A",
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 4,
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    textShadowColor: "rgba(0, 0, 0, 0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   priceString: {
-    color: "#0284C7",
-    fontSize: 12,
+    color: "#38BDF8", // Brilliant premium skylight blue typography signature
+    fontSize: 15,
     fontWeight: "700",
+    marginTop: 4,
   },
-  /* Empty State Presentation Layouts */
+  removeFloatingButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    backdropFilter: "blur(10px)", // For iOS compliance matching web engine standards
+  },
+  /* Empty States definitions */
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 120,
-    paddingHorizontal: 44,
+    paddingHorizontal: 40,
   },
   emptyIconCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: "#F1F5F9",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#1E293B",
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: "#94A3B8",
-    textAlign: "center",
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-  /* Shimmer Skeleton Architecture Elements */
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    padding: 10,
-  },
-  skeletonCard: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 8,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-  skeletonImage: {
-    width: "100%",
-    aspectRatio: 1.1,
-    backgroundColor: "#E2E8F0",
-    borderRadius: 12,
-    marginBottom: 10,
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 8,
   },
-  skeletonTextLine: {
-    height: 12,
-    backgroundColor: "#E2E8F0",
-    borderRadius: 4,
-    marginBottom: 6,
-    width: "85%",
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 22,
+    fontWeight: "500",
+  },
+  /* Full Width Symmetric Shimmer Modules */
+  skeletonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 50,
+  },
+  skeletonBannerCard: {
+    width: "100%",
+    height: 180,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 16,
+    position: "relative",
+
+    paddingTop: 25,
+  },
+  skeletonAbsoluteContent: {
+    position: "absolute",
+    bottom: 18,
+    left: 18,
+    right: 18,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });

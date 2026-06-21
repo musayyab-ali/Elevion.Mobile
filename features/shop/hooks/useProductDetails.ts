@@ -29,7 +29,7 @@ export const useProductDetails = (productId: string | undefined) => {
           setSelectedVariant(defaultVariant);
         }
       } catch (error) {
-        console.error("Error fetching product details:", error);
+        console.log("Error fetching product details:", error);
       } finally {
         setLoading(false);
       }

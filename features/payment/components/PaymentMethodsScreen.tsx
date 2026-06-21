@@ -1,4 +1,597 @@
-import React from "react";
+// import React, { useState } from "react";
+// import {
+//   StyleSheet,
+//   Text,
+//   View,
+//   ScrollView,
+//   TextInput,
+//   TouchableOpacity,
+//   ActivityIndicator,
+//   KeyboardAvoidingView,
+//   Platform,
+// } from "react-native";
+// import { useLocalSearchParams, router } from "expo-router";
+// import { Ionicons } from "@expo/vector-icons";
+// import { usePaymentMethods } from "../hooks/usePaymentMethods";
+// import { OrderCancelModal } from "@/components/OrderCancelModal";
+
+// export const PaymentMethodsScreen = () => {
+//   const { orderId } = useLocalSearchParams();
+//   const hook = usePaymentMethods(orderId as string);
+//   if (hook.loading) {
+//     return (
+//       <View style={styles.centerWrapper}>
+//         <ActivityIndicator size="large" color="#E11D48" />
+//         <Text style={styles.loadingText}>
+//           Initializing Payment Configuration...
+//         </Text>
+//       </View>
+//     );
+//   }
+
+//   return (
+//     <KeyboardAvoidingView
+//       behavior={Platform.OS === "ios" ? "padding" : "height"}
+//       style={{ flex: 1, backgroundColor: "#F8FAFC" }}
+//     >
+//       {hook.cancelMessage.type === "error" && (
+//         <View style={styles.stateNotificationBannerError}>
+//           <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+//           <Text style={styles.stateNotificationTextError}>
+//             {hook.cancelMessage.text}
+//           </Text>
+//         </View>
+//       )}
+
+//       {hook.cancelMessage.type === "success" && (
+//         <View style={styles.stateNotificationBannerSuccess}>
+//           <Ionicons name="checkmark-circle-outline" size={18} color="#16A34A" />
+//           <Text style={styles.stateNotificationTextSuccess}>
+//             {hook.cancelMessage.text}
+//           </Text>
+//         </View>
+//       )}
+//       {/* 🚫 PROFESSIONAL CONFIRMATION OVERLAY FOR CANCELLATION */}
+
+//       <OrderCancelModal
+//         visible={hook.isCancelConfirmVisible}
+//         isLoading={hook.isCanceling}
+//         errorMessage={
+//           hook.cancelMessage.type === "error" ? hook.cancelMessage.text : ""
+//         }
+//         onConfirm={async () => {
+//           if (hook.executeOrderCancellation) {
+//             await hook.executeOrderCancellation();
+//           }
+//           hook.setIsCancelConfirmVisible(false);
+//           router.back();
+//           // Auto refreshes data view records array
+//         }}
+//         onCancel={() => hook.setIsCancelConfirmVisible(false)}
+//       />
+
+//       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+//         {/* 📦 INVOICE CONTEXT BANNER CARD */}
+//         <View style={styles.orderSummaryCard}>
+//           <View style={styles.summaryHeaderRow}>
+//             <View style={styles.iconBadge}>
+//               <Ionicons name="document-text" size={20} color="#E11D48" />
+//             </View>
+//             <View>
+//               <Text style={styles.summarySubLabel}>Processing Payment For</Text>
+//               <Text style={styles.summaryMainLabel}>Order ID: #{orderId}</Text>
+//             </View>
+//           </View>
+//         </View>
+
+//         {/* 🎫 PROMO COUPON DECK SECTION */}
+//         <View style={styles.card}>
+//           <Text style={styles.sectionHeaderTitle}>Have a Promo Coupon?</Text>
+//           {!hook.appliedPromo ? (
+//             <View style={styles.promoFormInputRow}>
+//               <TextInput
+//                 placeholder="Enter Promo Code (e.g. SAVE20)"
+//                 placeholderTextColor="#94A3B8"
+//                 style={styles.promoTextInputField}
+//                 value={hook.promoCode}
+//                 onChangeText={hook.setPromoCode}
+//                 autoCapitalize="characters"
+//                 useTextInput
+//               />
+//               <TouchableOpacity
+//                 style={styles.promoSubmitBtn}
+//                 onPress={hook.handleApplyPromo}
+//               >
+//                 <Text style={styles.promoSubmitBtnText}>Apply</Text>
+//               </TouchableOpacity>
+//             </View>
+//           ) : (
+//             <View style={styles.activePromoBadgeRow}>
+//               <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+//               <View style={{ flex: 1, marginLeft: 8 }}>
+//                 <Text style={styles.badgePrimaryText}>
+//                   Code "{hook.appliedPromo.code}" Active
+//                 </Text>
+//                 <Text style={styles.badgeSecondaryText}>
+//                   Discount saved Rs.{" "}
+//                   {hook.appliedPromo.discount.toLocaleString()}
+//                 </Text>
+//               </View>
+//               <TouchableOpacity onPress={hook.handleCancelPromo}>
+//                 <Text style={styles.removePromoActionLinkText}>Remove</Text>
+//               </TouchableOpacity>
+//             </View>
+//           )}
+//         </View>
+
+//         {/* 💎 LOYALTY POINTS BLOCK VALUE REFINER */}
+//         <View style={styles.card}>
+//           <Text style={styles.sectionHeaderTitle}>
+//             Redeem Store Reward Points
+//           </Text>
+//           <View style={styles.promoFormInputRow}>
+//             <TextInput
+//               placeholder="Number of points to spend"
+//               placeholderTextColor="#94A3B8"
+//               keyboardType="number-pad"
+//               style={styles.promoTextInputField}
+//               value={hook.pointsToRedeem}
+//               onChangeText={hook.setPointsToRedeem}
+//               editable={!hook.pointsApplied}
+//             />
+//             <TouchableOpacity
+//               style={[
+//                 styles.pointsRedeemButton,
+//                 hook.pointsApplied && { backgroundColor: "#10B981" },
+//               ]}
+//               onPress={hook.handleApplyPoints}
+//               disabled={hook.pointsApplied}
+//             >
+//               <Text style={styles.promoSubmitBtnText}>
+//                 {hook.pointsApplied ? "Applied" : "Redeem"}
+//               </Text>
+//             </TouchableOpacity>
+//           </View>
+//         </View>
+
+//         {/* 💳 NATIVE SELECTABLE PAYMENT CHANNELS DECK */}
+//         <Text style={styles.mainTitleHeaderLabel}>Select Payment Method</Text>
+
+//         <View style={styles.gatewayDeckGroupContainer}>
+//           {hook.gateways?.map((gw) => {
+//             const isSelected = hook.selectedGatewayId === gw.PGId;
+//             return (
+//               <TouchableOpacity
+//                 key={gw.PGId}
+//                 activeOpacity={0.8}
+//                 style={[
+//                   styles.gatewaySelectionCardRow,
+//                   isSelected && styles.selectedGatewayActiveBorderCard,
+//                 ]}
+//                 onPress={() => hook.setSelectedGatewayId(gw.PGId)}
+//               >
+
+//                 <View
+//                   style={[
+//                     styles.outerRadioRingCircle,
+//                     isSelected && styles.activeOuterRadioRingCircle,
+//                   ]}
+//                 >
+//                   {isSelected && (
+//                     <View style={styles.innerRadioFilledDotNode} />
+//                   )}
+//                 </View>
+//                 <View style={styles.gatewayMetaDescriptionColumn}>
+//                   <Text style={styles.gatewayNameLabelText}>
+//                     {gw.Name || "Online Gateway Payment"}
+//                   </Text>
+//                   <Text style={styles.gatewaySubtextSubheading}>
+//                     Secure instant payment via encrypted gateway processing
+//                   </Text>
+//                 </View>
+//                 <Ionicons
+//                   name={
+//                     gw.Name?.toLowerCase().includes("card")
+//                       ? "card"
+//                       : "globe-outline"
+//                   }
+//                   size={22}
+//                   color={isSelected ? "#E11D48" : "#64748B"}
+//                 />
+//               </TouchableOpacity>
+//             );
+//           })}
+
+//           {/* 💵 CASH ON DELIVERY CONDITIONAL TRAY */}
+//           {hook.isCODAvailable && (
+//             <TouchableOpacity
+//               activeOpacity={0.8}
+//               style={[
+//                 styles.gatewaySelectionCardRow,
+//                 hook.selectedGatewayId === 0 &&
+//                   styles.selectedGatewayActiveBorderCard,
+//               ]}
+//               onPress={() => hook.setSelectedGatewayId(0)}
+//             >
+//               <View
+//                 style={[
+//                   styles.outerRadioRingCircle,
+//                   hook.selectedGatewayId === 0 &&
+//                     styles.activeOuterRadioRingCircle,
+//                 ]}
+//               >
+//                 {hook.selectedGatewayId === 0 && (
+//                   <View style={styles.innerRadioFilledDotNode} />
+//                 )}
+//               </View>
+//               <View style={styles.gatewayMetaDescriptionColumn}>
+//                 <Text style={styles.gatewayNameLabelText}>
+//                   Cash On Delivery (COD)
+//                 </Text>
+//                 <Text style={styles.gatewaySubtextSubheading}>
+//                   Pay with physical currency right at your doorstep upon receipt
+//                 </Text>
+//               </View>
+//               <Ionicons
+//                 name="cash-outline"
+//                 size={24}
+//                 color={hook.selectedGatewayId === 0 ? "#E11D48" : "#64748B"}
+//               />
+//             </TouchableOpacity>
+//           )}
+//         </View>
+
+//         {/* 📊 INTERACTIVE INVOICE BILLING BREAKDOWN */}
+//         <View style={styles.card}>
+//           <Text style={styles.sectionHeaderTitle}>Final Payment Invoice</Text>
+//           <View style={styles.pricingSummaryCalculationRowItem}>
+//             <Text style={styles.summaryItemTitleDescriptionLabel}>
+//               Order Subtotal
+//             </Text>
+//             <Text style={styles.summaryItemNumericValueText}>
+//               Rs. {hook.totals?.subtotal?.toLocaleString() || "0"}
+//             </Text>
+//           </View>
+//           <View style={styles.pricingSummaryCalculationRowItem}>
+//             <Text style={styles.summaryItemTitleDescriptionLabel}>
+//               Courier Delivery Fees
+//             </Text>
+//             <Text style={styles.summaryItemNumericValueText}>
+//               Rs. {hook.totals?.deliveryCharges?.toLocaleString() || "0"}
+//             </Text>
+//           </View>
+//           {hook.totals?.discount > 0 && (
+//             <View style={styles.pricingSummaryCalculationRowItem}>
+//               <Text
+//                 style={[
+//                   styles.summaryItemTitleDescriptionLabel,
+//                   { color: "#10B981" },
+//                 ]}
+//               >
+//                 Applied Deductions
+//               </Text>
+//               <Text
+//                 style={[
+//                   styles.summaryItemNumericValueText,
+//                   { color: "#10B981" },
+//                 ]}
+//               >
+//                 - Rs. {hook.totals.discount.toLocaleString()}
+//               </Text>
+//             </View>
+//           )}
+//           <View style={styles.decorativeDividingBreakline} />
+//           <View style={styles.pricingSummaryCalculationRowItem}>
+//             <Text style={styles.masterInvoiceGrandTotalLabel}>
+//               Net Outstanding Amount
+//             </Text>
+//             <Text style={styles.masterInvoiceGrandTotalValueText}>
+//               Rs. {hook.totals?.grandTotal?.toLocaleString() || "0"}
+//             </Text>
+//           </View>
+//         </View>
+
+//         {/* 🚀 SUBMIT INVOICE CALL TO ACTION */}
+//         <TouchableOpacity
+//           style={[
+//             styles.masterSubmitCheckoutProcessingBtn,
+//             (hook.isProcessing || hook.isCanceling) && { opacity: 0.65 },
+//           ]}
+//           onPress={hook.handleProcessPayment}
+//           disabled={hook.isProcessing || hook.isCanceling}
+//         >
+//           {hook.isProcessing ? (
+//             <ActivityIndicator size="small" color="#FFF" />
+//           ) : (
+//             <>
+//               <Text style={styles.masterSubmitCheckoutProcessingBtnTextLabel}>
+//                 Authorize & Pay Invoice
+//               </Text>
+//               <Ionicons name="lock-closed" size={18} color="#FFF" />
+//             </>
+//           )}
+//         </TouchableOpacity>
+
+//         {/* 🚫 SECONDARY DECOUPLED ORDER CANCELLATION ENGINE TRIGGER */}
+//         <TouchableOpacity
+//           style={[
+//             styles.cancelOrderSecondaryBtn,
+//             hook.isCanceling && { opacity: 0.5 },
+//           ]}
+//           // onPress={confirmCancellation}
+//           disabled={hook.isProcessing || hook.isCanceling}
+//           onPress={() => hook.triggerCancelConfirmation(orderId?.toString())}
+//         >
+//           <Ionicons name="trash-bin-outline" size={16} color="#EF4444" />
+//           <Text style={styles.cancelOrderActionTextLabel}>
+//             Cancel and Discard Order
+//           </Text>
+//         </TouchableOpacity>
+//       </ScrollView>
+//     </KeyboardAvoidingView>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: { flex: 1, padding: 16 },
+//   centerWrapper: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#F8FAFC",
+//   },
+//   loadingText: {
+//     marginTop: 12,
+//     fontSize: 14,
+//     fontWeight: "600",
+//     color: "#64748B",
+//   },
+//   orderSummaryCard: {
+//     backgroundColor: "#FFF",
+//     borderRadius: 16,
+//     padding: 16,
+//     marginBottom: 16,
+//     borderWidth: 1,
+//     borderColor: "#E2E8F0",
+//     borderLeftWidth: 5,
+//     borderLeftColor: "#E11D48",
+//   },
+//   summaryHeaderRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 12,
+//   },
+//   iconBadge: {
+//     backgroundColor: "#FFF1F2",
+//     padding: 8,
+//     borderRadius: 12,
+//   },
+//   summarySubLabel: {
+//     fontSize: 12,
+//     color: "#64748B",
+//     fontWeight: "500",
+//   },
+//   summaryMainLabel: {
+//     fontSize: 15,
+//     fontWeight: "700",
+//     color: "#0F172A",
+//     marginTop: 1,
+//   },
+//   card: {
+//     backgroundColor: "#FFF",
+//     borderRadius: 16,
+//     padding: 16,
+//     marginBottom: 16,
+//     borderWidth: 1,
+//     borderColor: "#E2E8F0",
+//     ...Platform.select({
+//       ios: {
+//         shadowColor: "#0F172A",
+//         shadowOffset: { width: 0, height: 2 },
+//         shadowOpacity: 0.03,
+//         shadowRadius: 6,
+//       },
+//       android: { elevation: 1 },
+//     }),
+//   },
+//   sectionHeaderTitle: {
+//     fontSize: 12,
+//     fontWeight: "800",
+//     color: "#475569",
+//     marginBottom: 12,
+//     textTransform: "uppercase",
+//     letterSpacing: 0.6,
+//   },
+//   mainTitleHeaderLabel: {
+//     fontSize: 16,
+//     fontWeight: "800",
+//     color: "#0F172A",
+//     marginTop: 8,
+//     marginBottom: 14,
+//     marginLeft: 2,
+//     letterSpacing: -0.3,
+//   },
+//   promoFormInputRow: { flexDirection: "row", gap: 10 },
+//   promoTextInputField: {
+//     flex: 1,
+//     backgroundColor: "#F8FAFC",
+//     borderWidth: 1,
+//     borderColor: "#E2E8F0",
+//     borderRadius: 12,
+//     paddingHorizontal: 14,
+//     paddingVertical: 12,
+//     fontSize: 14,
+//     color: "#1E293B",
+//     fontWeight: "600",
+//   },
+//   promoSubmitBtn: {
+//     backgroundColor: "#0F172A",
+//     borderRadius: 12,
+//     paddingHorizontal: 20,
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+//   pointsRedeemButton: {
+//     backgroundColor: "#64748B",
+//     borderRadius: 12,
+//     paddingHorizontal: 18,
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+//   promoSubmitBtnText: { color: "#FFF", fontWeight: "700", fontSize: 14 },
+//   activePromoBadgeRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#ECFDF5",
+//     borderWidth: 1,
+//     borderColor: "#A7F3D0",
+//     padding: 12,
+//     borderRadius: 12,
+//   },
+//   badgePrimaryText: { fontSize: 14, fontWeight: "700", color: "#065F46" },
+//   badgeSecondaryText: { fontSize: 12, color: "#047857", marginTop: 2 },
+//   removePromoActionLinkText: {
+//     color: "#EF4444",
+//     fontWeight: "700",
+//     fontSize: 13,
+//   },
+//   gatewayDeckGroupContainer: { gap: 12, marginBottom: 20 },
+//   gatewaySelectionCardRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#FFF",
+//     borderWidth: 1,
+//     borderColor: "#E2E8F0",
+//     borderRadius: 16,
+//     padding: 16,
+//     gap: 12,
+//   },
+//   selectedGatewayActiveBorderCard: {
+//     borderColor: "#E11D48",
+//     backgroundColor: "#FFF1F2",
+//   },
+//   outerRadioRingCircle: {
+//     width: 20,
+//     height: 20,
+//     borderRadius: 10,
+//     borderWidth: 2,
+//     borderColor: "#CBD5E1",
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+//   activeOuterRadioRingCircle: { borderColor: "#E11D48" },
+//   innerRadioFilledDotNode: {
+//     width: 10,
+//     height: 10,
+//     borderRadius: 5,
+//     backgroundColor: "#E11D48",
+//   },
+//   gatewayMetaDescriptionColumn: { flex: 1 },
+//   gatewayNameLabelText: { fontSize: 15, fontWeight: "700", color: "#1E293B" },
+//   gatewaySubtextSubheading: {
+//     fontSize: 12,
+//     color: "#64748B",
+//     marginTop: 3,
+//     lineHeight: 16,
+//   },
+//   pricingSummaryCalculationRowItem: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     paddingVertical: 6,
+//   },
+//   summaryItemTitleDescriptionLabel: {
+//     fontSize: 14,
+//     color: "#64748B",
+//     fontWeight: "500",
+//   },
+//   summaryItemNumericValueText: {
+//     fontSize: 14,
+//     fontWeight: "600",
+//     color: "#334155",
+//   },
+//   decorativeDividingBreakline: {
+//     height: 1,
+//     backgroundColor: "#E2E8F0",
+//     marginVertical: 12,
+//     borderStyle: "dashed",
+//   },
+//   masterInvoiceGrandTotalLabel: {
+//     fontSize: 15,
+//     fontWeight: "800",
+//     color: "#1E293B",
+//   },
+//   masterInvoiceGrandTotalValueText: {
+//     fontSize: 18,
+//     fontWeight: "800",
+//     color: "#E11D48",
+//   },
+//   masterSubmitCheckoutProcessingBtn: {
+//     backgroundColor: "#E11D48",
+//     borderRadius: 16,
+//     paddingVertical: 16,
+//     flexDirection: "row",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     gap: 8,
+//     marginTop: 8,
+//   },
+//   masterSubmitCheckoutProcessingBtnTextLabel: {
+//     color: "#FFF",
+//     fontSize: 16,
+//     fontWeight: "700",
+//   },
+//   cancelOrderSecondaryBtn: {
+//     flexDirection: "row",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     gap: 6,
+//     paddingVertical: 14,
+//     marginTop: 20,
+//     marginBottom: 48,
+//     alignSelf: "center",
+//   },
+//   cancelOrderActionTextLabel: {
+//     color: "#EF4444",
+//     fontSize: 14,
+//     fontWeight: "700",
+//   },
+//   stateNotificationBannerError: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 8,
+//     padding: 12,
+//     backgroundColor: "#FEF2F2",
+//     marginHorizontal: 16,
+//     marginTop: 10,
+//     borderRadius: 12,
+//     borderWidth: 1,
+//     borderColor: "#FEE2E2",
+//   },
+//   stateNotificationTextError: {
+//     color: "#EF4444",
+//     fontWeight: "600",
+//     fontSize: 13,
+//   },
+//   stateNotificationBannerSuccess: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 8,
+//     padding: 12,
+//     backgroundColor: "#F0FDF4",
+//     marginHorizontal: 16,
+//     marginTop: 10,
+//     borderRadius: 12,
+//     borderWidth: 1,
+//     borderColor: "#DCFCE7",
+//   },
+//   stateNotificationTextSuccess: {
+//     color: "#16A34A",
+//     fontWeight: "600",
+//     fontSize: 13,
+//   },
+// });
+
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,283 +602,622 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { usePaymentMethods } from "../hooks/usePaymentMethods";
+import { OrderCancelModal } from "@/components/OrderCancelModal";
+import { orderApi } from "@/features/cart/services/orderApi";
+import { paymentApi } from "../services/paymentApi";
+import { useCustomerOrders } from "@/features/cart/hooks/useCustomerOrders";
 
 export const PaymentMethodsScreen = () => {
   const { orderId } = useLocalSearchParams();
   const hook = usePaymentMethods(orderId as string);
+  const { fetchOrders } = useCustomerOrders();
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [isAlreadyPaid, setIsAlreadyPaid] = useState(false);
+  const [orderMeta, setOrderMeta] = useState<any>(null);
+  const [errorLog, setErrorLog] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (orderId) {
+      verifyInvoiceLockStatus();
+    } else {
+      setErrorLog(
+        "Missing a valid contextual context order identity context parameter.",
+      );
+      setCheckingStatus(false);
+    }
+  }, [orderId]);
+
+  const verifyInvoiceLockStatus = async () => {
+    try {
+      setCheckingStatus(true);
+      setErrorLog(null);
+
+      const formData = new FormData();
+      formData.append("files", "");
+
+      const statusRes = await paymentApi.checkOrderPaymentStatus(
+        Number(orderId),
+        formData,
+      );
+      console.log("📥 checkOrderPaymentStatus Payload Response:", statusRes);
+
+      // Standard conditional processing parameters established from Swagger rules
+      const isSuccessStatus =
+        statusRes?.HttpStatusCode === 200 ||
+        statusRes?.StatusCode === 200 ||
+        statusRes?.Type === "Success";
+
+      if (isSuccessStatus && statusRes?.Data?.IsProceedPayment !== true) {
+        // 🌟 STEP 3: Complete execution pipeline chain by executing formal order confirmation
+        setIsAlreadyPaid(true);
+        return;
+      }
+      // else {
+      //   setErrorLog(
+      //     "Failed to sync system structure manifest parameters accurately.",
+      //   );
+      // }
+    } catch (err: any) {
+      console.log("Defensive system lookup failure: ", err);
+      setErrorLog(err || "Network synchronization runtime interruption error.");
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  // State 1: Active system verify processing loading loop spinner
+  if (checkingStatus) {
+    return (
+      <View style={styles.centerGateContainer}>
+        <ActivityIndicator size="large" color="#E11D48" />
+        <Text style={styles.gateProgressText}>
+          Verifying Transaction Status...
+        </Text>
+      </View>
+    );
+  }
+
+  // State 2: Defensive Block activated if the payment is already completed
+  if (isAlreadyPaid) {
+    return (
+      <View style={styles.centerGateContainer}>
+        <View style={styles.iconCircleSuccess}>
+          <Ionicons name="shield-checkmark" size={44} color="#10B981" />
+        </View>
+        <Text style={styles.gateTitleText}>Invoice Already Settled</Text>
+        <Text style={styles.gateBodyDescription}>
+          Order{" "}
+          <Text style={{ fontWeight: "700" }}>{orderMeta?.OrderNumber}</Text>{" "}
+          has already been successfully processed. Double payments have been
+          intercepted defensively.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.returnFeedButton}
+          onPress={() => router.replace("/(tabs)/orders")} // Adjust to your actual navigation orders track routing point
+        >
+          <Text style={styles.returnFeedButtonText}>
+            Return to Order History
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // State 3: API Endpoint down or corrupted parameter parsing structural issues
+  if (errorLog) {
+    return (
+      <View style={styles.centerGateContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+        <Text style={styles.gateTitleText}>Verification Failed</Text>
+        <Text style={styles.gateBodyDescription}>{errorLog}</Text>
+
+        <TouchableOpacity
+          style={styles.retryBtn}
+          onPress={verifyInvoiceLockStatus}
+        >
+          <Text style={styles.retryBtnText}>Retry Check</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (hook.loading) {
     return (
       <View style={styles.centerWrapper}>
         <ActivityIndicator size="large" color="#E11D48" />
         <Text style={styles.loadingText}>
-          Initializing Payment Configuration...
+          Initializing Payment Secure Matrix...
         </Text>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
-    >
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* 🎫 PROMO COUPON DECK SECTION */}
-        <View style={styles.card}>
-          <Text style={styles.sectionHeaderTitle}>Have a Promo Coupon?</Text>
-          {!hook.appliedPromo ? (
-            <View style={styles.promoFormInputRow}>
-              <TextInput
-                placeholder="Enter Promo Code (e.g. SAVE20)"
-                placeholderTextColor="#94A3B8"
-                style={styles.promoTextInputField}
-                value={hook.promoCode}
-                onChangeText={hook.setPromoCode}
-                autoCapitalize="characters"
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.mainLayoutWrapper}>
+          {/* SYSTEM TOP GLOBAL NOTIFICATION CONTROLLER */}
+          {hook.generalNotification.type && (
+            <View
+              style={[
+                styles.globalBannerAlert,
+                hook.generalNotification.type === "error"
+                  ? styles.bgError
+                  : styles.bgSuccess,
+              ]}
+            >
+              <Ionicons
+                name={
+                  hook.generalNotification.type === "error"
+                    ? "alert-circle"
+                    : "checkmark-circle"
+                }
+                size={20}
+                color={
+                  hook.generalNotification.type === "error"
+                    ? "#EF4444"
+                    : "#16A34A"
+                }
               />
-              <TouchableOpacity
-                style={styles.promoSubmitBtn}
-                onPress={hook.handleApplyPromo}
+              <Text
+                style={[
+                  styles.globalBannerText,
+                  hook.generalNotification.type === "error"
+                    ? styles.textError
+                    : styles.textSuccess,
+                ]}
               >
-                <Text style={styles.promoSubmitBtnText}>Apply</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.activePromoBadgeRow}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <View style={{ flex: 1, marginLeft: 8 }}>
-                <Text style={styles.badgePrimaryText}>
-                  Code "{hook.appliedPromo.code}" Active
-                </Text>
-                <Text style={styles.badgeSecondaryText}>
-                  Discount saved Rs.{" "}
-                  {hook.appliedPromo.discount.toLocaleString()}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={hook.handleCancelPromo}>
-                <Text style={styles.removePromoActionLinkText}>Remove</Text>
-              </TouchableOpacity>
+                {hook.generalNotification.text}
+              </Text>
             </View>
           )}
-        </View>
 
-        {/* 💎 LOYALTY POINTS BLOCK VALUE REFINER */}
-        <View style={styles.card}>
-          <Text style={styles.sectionHeaderTitle}>
-            Redeem Store Reward Points
-          </Text>
-          <View style={styles.promoFormInputRow}>
-            <TextInput
-              placeholder="Number of points to spend"
-              placeholderTextColor="#94A3B8"
-              keyboardType="number-pad"
-              style={styles.promoTextInputField}
-              value={hook.pointsToRedeem}
-              onChangeText={hook.setPointsToRedeem}
-              editable={!hook.pointsApplied}
-            />
-            <TouchableOpacity
-              style={[
-                styles.pointsRedeemButton,
-                hook.pointsApplied && { backgroundColor: "#10B981" },
-              ]}
-              onPress={hook.handleApplyPoints}
-              disabled={hook.pointsApplied}
-            >
-              <Text style={styles.promoSubmitBtnText}>
-                {hook.pointsApplied ? "Applied" : "Redeem"}
+          {/* CANCELLATION MODAL BRIDGE LAYER */}
+          {/* <OrderCancelModal
+            visible={hook.isCancelConfirmVisible}
+            isLoading={hook.isCanceling}
+            errorMessage={
+              hook.cancelMessage.type === "error" ? hook.cancelMessage.text : ""
+            }
+            onConfirm={async () => {
+              if (hook.executeOrderCancellation) {
+                await hook.executeOrderCancellation(() => {
+                  setTimeout(() => router.back(), 1500);
+                });
+              }
+            }}
+            onCancel={() => hook.setIsCancelConfirmVisible(false)}
+          /> */}
+          <OrderCancelModal
+            visible={hook.isCancelConfirmVisible}
+            isLoading={hook.isCanceling}
+            isLoadingReasons={hook.loadingReasons}
+            reasons={hook.cancellationReasons}
+            selectedReason={hook.selectedReason}
+            onSelectReason={hook.setSelectedReason}
+            errorMessage={
+              hook.cancelMessage.type === "error" ? hook.cancelMessage.text : ""
+            }
+            onConfirm={async () => {
+              if (hook.executeOrderCancellation) {
+                await hook.executeOrderCancellation(() => {
+                  fetchOrders(-1);
+                  setTimeout(() => router.back(), 1500);
+                });
+              }
+            }}
+            onCancel={() => hook.setIsCancelConfirmVisible(false)}
+          />
+          {/* SCROLLABLE FORM SEGMENTATION DECK */}
+          <ScrollView
+            style={styles.scrollContainer}
+            contentContainerStyle={[
+              styles.scrollContentLayout,
+              hook.isKeyboardVisible && { paddingBottom: 40 },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* INVOICE IDENTITY BANNER CARD */}
+            <View style={styles.orderSummaryCard}>
+              <View style={styles.summaryHeaderRow}>
+                <View style={styles.iconBadge}>
+                  <Ionicons name="receipt" size={22} color="#E11D48" />
+                </View>
+                <View>
+                  <Text style={styles.summarySubLabel}>
+                    Secure Checkout Session
+                  </Text>
+                  <Text style={styles.summaryMainLabel}>
+                    Order Reference: #{orderId}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* PROMO CODE INTERACTION MODULE */}
+            <View style={styles.card}>
+              <Text style={styles.sectionHeaderTitle}>
+                Have a Promotional Coupon?
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+              {!hook.appliedPromo ? (
+                <>
+                  <View style={styles.promoFormInputRow}>
+                    <TextInput
+                      placeholder="Enter Promo Code (e.g., SAVE50)"
+                      placeholderTextColor="#94A3B8"
+                      style={[
+                        styles.promoTextInputField,
+                        hook.promoNotification.type === "error" &&
+                          styles.inputBorderError,
+                      ]}
+                      value={hook.promoCode}
+                      onChangeText={hook.setPromoCode}
+                      autoCapitalize="characters"
+                    />
+                    <TouchableOpacity
+                      style={styles.promoSubmitBtn}
+                      onPress={hook.handleApplyPromo}
+                    >
+                      <Text style={styles.promoSubmitBtnText}>Apply</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {hook.promoNotification.type && (
+                    <Text
+                      style={[
+                        styles.inputFeedbackInlineLabel,
+                        hook.promoNotification.type === "error"
+                          ? styles.textError
+                          : styles.textSuccess,
+                      ]}
+                    >
+                      {hook.promoNotification.text}
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <View style={styles.activePromoBadgeRow}>
+                  <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.badgePrimaryText}>
+                      Code "{hook.appliedPromo.code}" Activated
+                    </Text>
+                    <Text style={styles.badgeSecondaryText}>
+                      Instant savings of Rs.{" "}
+                      {hook.appliedPromo.discount.toLocaleString()} attached.
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.removePromoButton}
+                    onPress={hook.handleCancelPromo}
+                  >
+                    <Text style={styles.removePromoActionLinkText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
 
-        {/* 💳 NATIVE SELECTABLE PAYMENT CHANNELS DECK */}
-        <Text style={styles.mainTitleHeaderLabel}>Select Payment Method</Text>
-
-        <View style={styles.gatewayDeckGroupContainer}>
-          {hook.gateways.map((gw) => {
-            const isSelected = hook.selectedGatewayId === gw.PGId;
-            return (
-              <TouchableOpacity
-                key={gw.PGId}
-                style={[
-                  styles.gatewaySelectionCardRow,
-                  isSelected && styles.selectedGatewayActiveBorderCard,
-                ]}
-                onPress={() => hook.setSelectedGatewayId(gw.PGId)}
-              >
-                <View
+            {/* REWARD POINTS REDEMPTION MODULE */}
+            <View style={styles.card}>
+              <Text style={styles.sectionHeaderTitle}>
+                Redeem Store Loyalty Points
+              </Text>
+              <View style={styles.promoFormInputRow}>
+                <TextInput
+                  placeholder="Points quantity to apply"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="number-pad"
                   style={[
-                    styles.outerRadioRingCircle,
-                    isSelected && styles.activeOuterRadioRingCircle,
+                    styles.promoTextInputField,
+                    hook.pointsNotification.type === "error" &&
+                      styles.inputBorderError,
+                    hook.pointsApplied && styles.inputBorderSuccess,
+                  ]}
+                  value={hook.pointsToRedeem}
+                  onChangeText={hook.setPointsToRedeem}
+                  editable={!hook.pointsApplied}
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.pointsRedeemButton,
+                    hook.pointsApplied && styles.bgSuccessBtn,
+                  ]}
+                  onPress={hook.handleApplyPoints}
+                  disabled={hook.pointsApplied}
+                >
+                  <Text style={styles.promoSubmitBtnText}>
+                    {hook.pointsApplied ? "Applied" : "Redeem"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {hook.pointsNotification.type && (
+                <Text
+                  style={[
+                    styles.inputFeedbackInlineLabel,
+                    hook.pointsNotification.type === "error"
+                      ? styles.textError
+                      : styles.textSuccess,
                   ]}
                 >
-                  {isSelected && (
-                    <View style={styles.innerRadioFilledDotNode} />
-                  )}
-                </View>
-                <View style={styles.gatewayMetaDescriptionColumn}>
-                  <Text style={styles.gatewayNameLabelText}>
-                    {gw.Name || "Online Gateway Payment"}
+                  {hook.pointsNotification.text}
+                </Text>
+              )}
+            </View>
+
+            {/* SELECTABLE PAYMENT CHANNEL TRACKS */}
+            <Text style={styles.mainTitleHeaderLabel}>
+              Select Payment Method
+            </Text>
+            <View style={styles.gatewayDeckGroupContainer}>
+              {hook.gateways?.map((gw) => {
+                const isSelected = hook.selectedGatewayId === gw.PGId;
+                return (
+                  <TouchableOpacity
+                    key={gw.PGId}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.gatewaySelectionCardRow,
+                      isSelected && styles.selectedGatewayActiveBorderCard,
+                    ]}
+                    onPress={() => hook.setSelectedGatewayId(gw.PGId)}
+                  >
+                    <View
+                      style={[
+                        styles.outerRadioRingCircle,
+                        isSelected && styles.activeOuterRadioRingCircle,
+                      ]}
+                    >
+                      {isSelected && (
+                        <View style={styles.innerRadioFilledDotNode} />
+                      )}
+                    </View>
+                    <View style={styles.gatewayMetaDescriptionColumn}>
+                      <Text style={styles.gatewayNameLabelText}>
+                        {gw.Name || "Online Gateway System"}
+                      </Text>
+                      <Text style={styles.gatewaySubtextSubheading}>
+                        Secure instant payment authorization using tokenized
+                        transfers.
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={
+                        gw.Name?.toLowerCase().includes("card")
+                          ? "card"
+                          : "globe-outline"
+                      }
+                      size={24}
+                      color={isSelected ? "#E11D48" : "#64748B"}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* CASH ON DELIVERY TRAY ALTERNATIVE */}
+              {hook.isCODAvailable && (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={[
+                    styles.gatewaySelectionCardRow,
+                    hook.selectedGatewayId === 0 &&
+                      styles.selectedGatewayActiveBorderCard,
+                  ]}
+                  onPress={() => hook.setSelectedGatewayId(0)}
+                >
+                  <View
+                    style={[
+                      styles.outerRadioRingCircle,
+                      hook.selectedGatewayId === 0 &&
+                        styles.activeOuterRadioRingCircle,
+                    ]}
+                  >
+                    {hook.selectedGatewayId === 0 && (
+                      <View style={styles.innerRadioFilledDotNode} />
+                    )}
+                  </View>
+                  <View style={styles.gatewayMetaDescriptionColumn}>
+                    <Text style={styles.gatewayNameLabelText}>
+                      Cash On Delivery (COD)
+                    </Text>
+                    <Text style={styles.gatewaySubtextSubheading}>
+                      Settle invoice balance utilizing hard cash assets on
+                      doorstep arrival.
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="cash-outline"
+                    size={24}
+                    color={hook.selectedGatewayId === 0 ? "#E11D48" : "#64748B"}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* PRICING CALCULATION LEDGER BLOCK */}
+            <View style={styles.card}>
+              <Text style={styles.sectionHeaderTitle}>
+                Final Settlement Summary
+              </Text>
+              <View style={styles.pricingSummaryCalculationRowItem}>
+                <Text style={styles.summaryItemTitleDescriptionLabel}>
+                  Order Base Subtotal
+                </Text>
+                <Text style={styles.summaryItemNumericValueText}>
+                  Rs. {hook.totals?.subtotal?.toLocaleString() || "0"}
+                </Text>
+              </View>
+              <View style={styles.pricingSummaryCalculationRowItem}>
+                <Text style={styles.summaryItemTitleDescriptionLabel}>
+                  Logistic Handling Fees
+                </Text>
+                <Text style={styles.summaryItemNumericValueText}>
+                  Rs. {hook.totals?.deliveryCharges?.toLocaleString() || "0"}
+                </Text>
+              </View>
+              {hook.totals?.discount > 0 && (
+                <View style={styles.pricingSummaryCalculationRowItem}>
+                  <Text
+                    style={[
+                      styles.summaryItemTitleDescriptionLabel,
+                      { color: "#10B981" },
+                    ]}
+                  >
+                    Applied Ledger Deductions
                   </Text>
-                  <Text style={styles.gatewaySubtextSubheading}>
-                    Secure instant payment via encrypted gateway processing
+                  <Text
+                    style={[
+                      styles.summaryItemNumericValueText,
+                      { color: "#10B981", fontWeight: "700" },
+                    ]}
+                  >
+                    - Rs. {hook.totals.discount.toLocaleString()}
                   </Text>
                 </View>
-                <Ionicons
-                  name={
-                    gw.Name?.toLowerCase().includes("card")
-                      ? "card"
-                      : "globe-outline"
+              )}
+              <View style={styles.decorativeDividingBreakline} />
+              <View style={styles.pricingSummaryCalculationRowItem}>
+                <Text style={styles.masterInvoiceGrandTotalLabel}>
+                  Net Outstanding Balance
+                </Text>
+                <Text style={styles.masterInvoiceGrandTotalValueText}>
+                  Rs. {hook.totals?.grandTotal?.toLocaleString() || "0"}
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* =========================================================
+              💰 FIXED BOTTOM ACTION PANEL - DISMISSED WHEN KEYBOARD SHOWS
+             ========================================================= */}
+          {!hook.isKeyboardVisible && (
+            <View style={styles.fixedBottomControlDock}>
+              <View style={styles.dockActionRowWrapper}>
+                {/* Secondary Abort Order Pipeline */}
+                <TouchableOpacity
+                  style={[
+                    styles.cancelActionFlexButton,
+                    hook.isCanceling && { opacity: 0.5 },
+                  ]}
+                  disabled={hook.isProcessing || hook.isCanceling}
+                  onPress={() =>
+                    hook.triggerCancelConfirmation(orderId?.toString())
                   }
-                  size={22}
-                  color={isSelected ? "#E11D48" : "#64748B"}
-                />
-              </TouchableOpacity>
-            );
-          })}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                  <Text style={styles.cancelActionFlexButtonText}>Cancel</Text>
+                </TouchableOpacity>
 
-          {/* 💵 CASH ON DELIVERY CONDITIONAL TRAY */}
-          {hook.isCODAvailable && (
-            <TouchableOpacity
-              style={[
-                styles.gatewaySelectionCardRow,
-                hook.selectedGatewayId === 0 &&
-                  styles.selectedGatewayActiveBorderCard,
-              ]}
-              onPress={() => hook.setSelectedGatewayId(0)}
-            >
-              <View
-                style={[
-                  styles.outerRadioRingCircle,
-                  hook.selectedGatewayId === 0 &&
-                    styles.activeOuterRadioRingCircle,
-                ]}
-              >
-                {hook.selectedGatewayId === 0 && (
-                  <View style={styles.innerRadioFilledDotNode} />
-                )}
+                {/* Primary Authorization Execution Pipeline */}
+                <TouchableOpacity
+                  style={[
+                    styles.primarySubmitFlexButton,
+                    (hook.isProcessing || hook.selectedGatewayId === null) &&
+                      styles.disabledPrimaryButton,
+                  ]}
+                  onPress={hook.handleProcessPayment}
+                  disabled={
+                    hook.isProcessing ||
+                    hook.isCanceling ||
+                    hook.selectedGatewayId === null
+                  }
+                >
+                  {hook.isProcessing ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <Text style={styles.primarySubmitFlexButtonText}>
+                        Pay Invoice
+                      </Text>
+                      <Ionicons
+                        name="shield-checkmark"
+                        size={18}
+                        color="#FFF"
+                      />
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
-              <View style={styles.gatewayMetaDescriptionColumn}>
-                <Text style={styles.gatewayNameLabelText}>
-                  Cash On Delivery (COD)
-                </Text>
-                <Text style={styles.gatewaySubtextSubheading}>
-                  Pay with physical currency right at your doorstep upon receipt
-                </Text>
-              </View>
-              <Ionicons
-                name="cash-outline"
-                size={24}
-                color={hook.selectedGatewayId === 0 ? "#E11D48" : "#64748B"}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* 📊 INTERACTIVE INVOICE BILLING BREAKDOWN */}
-        <View style={styles.card}>
-          <Text style={styles.sectionHeaderTitle}>Final Payment Invoice</Text>
-          <View style={styles.pricingSummaryCalculationRowItem}>
-            <Text style={styles.summaryItemTitleDescriptionLabel}>
-              Order Subtotal
-            </Text>
-            <Text style={styles.summaryItemNumericValueText}>
-              Rs. {hook.totals.subtotal.toLocaleString()}
-            </Text>
-          </View>
-          <View style={styles.pricingSummaryCalculationRowItem}>
-            <Text style={styles.summaryItemTitleDescriptionLabel}>
-              Courier Delivery Fees
-            </Text>
-            <Text style={styles.summaryItemNumericValueText}>
-              Rs. {hook.totals.deliveryCharges.toLocaleString()}
-            </Text>
-          </View>
-          {hook.totals.discount > 0 && (
-            <View style={styles.pricingSummaryCalculationRowItem}>
-              <Text
-                style={[
-                  styles.summaryItemTitleDescriptionLabel,
-                  { color: "#10B981" },
-                ]}
-              >
-                Applied Deductions
-              </Text>
-              <Text
-                style={[
-                  styles.summaryItemNumericValueText,
-                  { color: "#10B981" },
-                ]}
-              >
-                - Rs. {hook.totals.discount.toLocaleString()}
-              </Text>
             </View>
           )}
-          <View style={styles.decorativeDividingBreakline} />
-          <View style={styles.pricingSummaryCalculationRowItem}>
-            <Text style={styles.masterInvoiceGrandTotalLabel}>
-              Net Outstanding Amount
-            </Text>
-            <Text style={styles.masterInvoiceGrandTotalValueText}>
-              Rs. {hook.totals.grandTotal.toLocaleString()}
-            </Text>
-          </View>
         </View>
-
-        {/* 🚀 SUBMIT INVOICE CALL TO ACTION */}
-        <TouchableOpacity
-          style={[
-            styles.masterSubmitCheckoutProcessingBtn,
-            (hook.isProcessing || hook.isCanceling) && { opacity: 0.65 },
-          ]}
-          onPress={hook.handleProcessPayment}
-          disabled={hook.isProcessing || hook.isCanceling}
-        >
-          {hook.isProcessing ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <>
-              <Text style={styles.masterSubmitCheckoutProcessingBtnTextLabel}>
-                Authorize & Pay Invoice
-              </Text>
-              <Ionicons name="lock-closed" size={18} color="#FFF" />
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* 🚫 SECONDARY DECOUPLED ORDER CANCELLATION ENGINE TRIGER */}
-        <TouchableOpacity
-          style={[
-            styles.cancelOrderSecondaryBtn,
-            hook.isCanceling && { opacity: 0.5 },
-          ]}
-          onPress={hook.handleCancelEntireOrder}
-          disabled={hook.isProcessing || hook.isCanceling}
-        >
-          {hook.isCanceling ? (
-            <ActivityIndicator size="small" color="#EF4444" />
-          ) : (
-            <>
-              <Ionicons name="trash-bin-outline" size={16} color="#EF4444" />
-              <Text style={styles.cancelOrderActionTextLabel}>
-                Cancel and Discard Order
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
+  centerGateContainer: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+  },
+  gateProgressText: {
+    marginTop: 14,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  iconCircleSuccess: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#D1FAE5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  gateTitleText: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+    textAlign: "center",
+  },
+  gateBodyDescription: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 8,
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  returnFeedButton: {
+    backgroundColor: "#0F172A",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  returnFeedButtonText: {
+    color: "#FFF",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  retryBtn: {
+    borderColor: "#E2E8F0",
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 12,
+  },
+  retryBtnText: {
+    color: "#334155",
+    fontWeight: "600",
+  },
+
+  mainLayoutWrapper: { flex: 1, justifyContent: "space-between" },
+  scrollContainer: { flex: 1 },
+  scrollContentLayout: { padding: 16, paddingBottom: 110 },
   centerWrapper: {
     flex: 1,
     justifyContent: "center",
@@ -293,10 +1225,41 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 14,
     fontWeight: "600",
     color: "#64748B",
+  },
+  orderSummaryCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderLeftWidth: 5,
+    borderLeftColor: "#E11D48",
+  },
+  summaryHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconBadge: {
+    backgroundColor: "#FFF1F2",
+    padding: 10,
+    borderRadius: 14,
+  },
+  summarySubLabel: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  summaryMainLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginTop: 2,
   },
   card: {
     backgroundColor: "#FFF",
@@ -305,19 +1268,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.02,
+        shadowRadius: 8,
+      },
+      android: { elevation: 1.5 },
+    }),
   },
   sectionHeaderTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1E293B",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#64748B",
     marginBottom: 12,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.75,
   },
   mainTitleHeaderLabel: {
     fontSize: 16,
@@ -325,14 +1292,14 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     marginTop: 8,
     marginBottom: 14,
-    marginLeft: 2,
+    letterSpacing: -0.2,
   },
   promoFormInputRow: { flexDirection: "row", gap: 10 },
   promoTextInputField: {
     flex: 1,
     backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: "#E2E8F0",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -340,32 +1307,50 @@ const styles = StyleSheet.create({
     color: "#1E293B",
     fontWeight: "600",
   },
+  inputBorderError: { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
+  inputBorderSuccess: { borderColor: "#10B981", backgroundColor: "#F0FDF4" },
   promoSubmitBtn: {
-    backgroundColor: "#1E293B",
+    backgroundColor: "#0F172A",
+    borderRadius: 12,
+    paddingHorizontal: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pointsRedeemButton: {
+    backgroundColor: "#475569",
     borderRadius: 12,
     paddingHorizontal: 20,
     justifyContent: "center",
     alignItems: "center",
   },
-  pointsRedeemButton: {
-    backgroundColor: "#64748B",
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  bgSuccessBtn: { backgroundColor: "#10B981" },
   promoSubmitBtnText: { color: "#FFF", fontWeight: "700", fontSize: 14 },
+  inputFeedbackInlineLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 8,
+    marginLeft: 2,
+  },
   activePromoBadgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ECFDF5",
+    backgroundColor: "#F0FDF4",
     borderWidth: 1,
-    borderColor: "#A7F3D0",
-    padding: 12,
+    borderColor: "#DCFCE7",
+    padding: 14,
     borderRadius: 12,
   },
-  badgePrimaryText: { fontSize: 14, fontWeight: "700", color: "#065F46" },
-  badgeSecondaryText: { fontSize: 12, color: "#047857", marginTop: 2 },
+  badgePrimaryText: { fontSize: 14, fontWeight: "700", color: "#16A34A" },
+  badgeSecondaryText: {
+    fontSize: 12,
+    color: "#15803D",
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  removePromoButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
   removePromoActionLinkText: {
     color: "#EF4444",
     fontWeight: "700",
@@ -404,11 +1389,16 @@ const styles = StyleSheet.create({
   },
   gatewayMetaDescriptionColumn: { flex: 1 },
   gatewayNameLabelText: { fontSize: 15, fontWeight: "700", color: "#1E293B" },
-  gatewaySubtextSubheading: { fontSize: 12, color: "#64748B", marginTop: 3 },
+  gatewaySubtextSubheading: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 3,
+    lineHeight: 16,
+  },
   pricingSummaryCalculationRowItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
   summaryItemTitleDescriptionLabel: {
     fontSize: 14,
@@ -436,42 +1426,89 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#E11D48",
   },
-  masterSubmitCheckoutProcessingBtn: {
-    backgroundColor: "#E11D48",
-    borderRadius: 16,
-    paddingVertical: 16,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 8,
-    shadowColor: "#E11D48",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  masterSubmitCheckoutProcessingBtnTextLabel: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
 
-  // ➕ Added Cancellation Area Styling Properties Safely
-  cancelOrderSecondaryBtn: {
+  /* 🌟 FIXED DOCK ACTIONS BOTTOM BAR STYLING */
+  fixedBottomControlDock: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === "ios" ? 24 : 14,
+    borderTopWidth: 1,
+    borderColor: "#E2E8F0",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      },
+      android: { elevation: 8 },
+    }),
+  },
+  dockActionRowWrapper: {
     flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+  cancelActionFlexButton: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+    borderRadius: 14,
+    paddingVertical: 15,
     justifyContent: "center",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 14,
-    marginTop: 14,
-    marginBottom: 48,
-    alignSelf: "center",
   },
-  cancelOrderActionTextLabel: {
+  cancelActionFlexButtonText: {
     color: "#EF4444",
     fontSize: 14,
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
+  primarySubmitFlexButton: {
+    flex: 2,
+    flexDirection: "row",
+    backgroundColor: "#E11D48",
+    borderRadius: 14,
+    paddingVertical: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  disabledPrimaryButton: {
+    backgroundColor: "#CBD5E1",
+  },
+  primarySubmitFlexButtonText: {
+    color: "#FFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  /* STATE NOTIFICATION STRUCTS */
+  globalBannerAlert: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  globalBannerText: {
+    flex: 1,
+    fontWeight: "600",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  bgError: { backgroundColor: "#FEF2F2", borderColor: "#FEE2E2" },
+  bgSuccess: { backgroundColor: "#F0FDF4", borderColor: "#DCFCE7" },
+  textError: { color: "#EF4444" },
+  textSuccess: { color: "#16A34A" },
 });

@@ -1,3 +1,538 @@
+// import React, { useEffect, useState } from "react";
+// import {
+//   View,
+//   Text,
+//   StyleSheet,
+//   FlatList,
+//   Image,
+//   TouchableOpacity,
+//   ActivityIndicator,
+//   Dimensions,
+// } from "react-native";
+// import { MotiView } from "moti";
+// import { Ionicons } from "@expo/vector-icons";
+// import { useCartScreen } from "../hooks/useCartScreen";
+// import { Colors } from "@/constants/Theme";
+// import { useAuth } from "@/store/AuthContext";
+// import { AuthGuardModal } from "@/components/AuthGuardModal";
+// import { useSharedCartData } from "@/store/CartContext";
+// import { CustomErrorMessage } from "@/components/CustomErrorMessage";
+// import { EmptyState } from "@/components/EmptyState";
+// import { useIsFocused } from "@react-navigation/native";
+
+// const { width } = Dimensions.get("window");
+
+// const IMAGE_PLACEHOLDER =
+//   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
+// export const CartScreen = () => {
+//   const { isAuthenticated } = useAuth();
+//   const {
+//     cartItems,
+//     pricingSummary,
+//     handleIncrement,
+//     handleDecrement,
+//     handleRemove,
+//     handleProcessCheckoutPipeline,
+//   } = useCartScreen();
+
+//   const {
+//     cartMessage,
+//     loading,
+//     serverError,
+//     fetchCart,
+//     markCartAsVisited,
+//     deleteLoading,
+//   } = useSharedCartData();
+
+//   const [modalVisible, setModalVisible] = useState(false);
+//   const isFocused = useIsFocused();
+
+//   useEffect(() => {
+//     if (isFocused) {
+//       markCartAsVisited();
+//     }
+//   }, [isFocused]);
+
+//   const handleRetryFetch = () => {
+//     fetchCart();
+//   };
+
+//   if (loading.fetching) {
+//     return (
+//       <View style={styles.centerContainer}>
+//         <ActivityIndicator size="large" color="#0284C7" />
+//       </View>
+//     );
+//   }
+
+//   return (
+//     <View style={styles.container}>
+//       {serverError ? (
+//         <EmptyState
+//           iconName="cloud-offline-outline"
+//           title="Server Connection Interrupted"
+//           description="We are having trouble synchronizing our Cart items. Please check your network and try again."
+//           actionLabel="Retry Connection"
+//           onActionPress={handleRetryFetch}
+//         />
+//       ) : (
+//         <>
+//           <FlatList
+//             data={cartItems}
+//             keyExtractor={(item) => `cart-row-${item.CartId}`}
+//             contentContainerStyle={styles.listContainer}
+//             showsVerticalScrollIndicator={false}
+//             ListHeaderComponent={
+//               <View style={styles.headerWrapper}>
+//                 <Text style={styles.sheetTitle}>Shopping Cart </Text>
+//                 <View style={styles.badgeCount}>
+//                   <Text style={styles.badgeText}>{cartItems.length} Items</Text>
+//                 </View>
+//               </View>
+//             }
+//             renderItem={({ item, index }) => (
+//               <MotiView
+//                 from={{ opacity: 0, translateY: 20 }}
+//                 animate={{ opacity: 1, translateY: 0 }}
+//                 transition={{
+//                   type: "timing",
+//                   duration: 400,
+//                   delay: index * 60,
+//                 }}
+//                 style={styles.cartCard}
+//               >
+//                 {/* Product Image Wrapper */}
+//                 <View style={styles.imageContainer}>
+//                   <Image
+//                     source={{
+//                       uri: item.ProductImage || IMAGE_PLACEHOLDER,
+//                     }}
+//                     style={styles.productImage}
+//                     resizeMode="cover"
+//                   />
+//                 </View>
+
+//                 {/* Right Side Content Details */}
+//                 <View style={styles.cardDetails}>
+//                   <View style={styles.rowHeader}>
+//                     <Text style={styles.productName} numberOfLines={2}>
+//                       {item.ProductName}
+//                     </Text>
+
+//                     {!(
+//                       deleteLoading.active &&
+//                       deleteLoading.cartId === item.CartId
+//                     ) ? (
+//                       <TouchableOpacity
+//                         onPress={() => handleRemove(item.CartId)}
+//                         style={styles.deleteButtonContainer}
+//                         activeOpacity={0.7}
+//                       >
+//                         <Ionicons
+//                           name="trash-outline"
+//                           size={19}
+//                           color="#EF4444"
+//                         />
+//                       </TouchableOpacity>
+//                     ) : (
+//                       <ActivityIndicator
+//                         size="small"
+//                         color="#EF4444"
+//                         style={styles.loaderPadding}
+//                       />
+//                     )}
+//                   </View>
+
+//                   {/* Variant Information Styled as Pill Badges */}
+//                   <View style={styles.variantBadgeContainer}>
+//                     <Ionicons
+//                       name="options-outline"
+//                       size={12}
+//                       color="#64748B"
+//                       style={{ marginRight: 4 }}
+//                     />
+//                     <Text style={styles.variantText} numberOfLines={1}>
+//                       {item.ProductVariants || "Standard Configuration"}
+//                     </Text>
+//                   </View>
+
+//                   {/* Pricing and Action Control Layer */}
+//                   <View style={styles.priceRow}>
+//                     <Text style={styles.priceText}>
+//                       Rs. {item.Price.toLocaleString()}
+//                     </Text>
+
+//                     {/* Quantity Selector Interface */}
+//                     <View style={styles.quantityWidget}>
+//                       <TouchableOpacity
+//                         style={styles.qtyBtn}
+//                         activeOpacity={0.6}
+//                         onPress={() => {
+//                           if (!isAuthenticated) {
+//                             setModalVisible(true);
+//                             return;
+//                           }
+//                           handleDecrement(item.CartId, item.Quantity);
+//                         }}
+//                       >
+//                         <Ionicons name="remove" size={16} color="#0F172A" />
+//                       </TouchableOpacity>
+
+//                       <View style={styles.qtyTextContainer}>
+//                         <Text style={styles.qtyText}>{item.Quantity}</Text>
+//                       </View>
+
+//                       <TouchableOpacity
+//                         style={styles.qtyBtn}
+//                         activeOpacity={0.6}
+//                         onPress={() => {
+//                           if (!isAuthenticated) {
+//                             setModalVisible(true);
+//                             return;
+//                           }
+//                           handleIncrement(item.CartId, item.Quantity);
+//                         }}
+//                       >
+//                         <Ionicons name="add" size={16} color="#0F172A" />
+//                       </TouchableOpacity>
+//                     </View>
+//                   </View>
+//                 </View>
+//               </MotiView>
+//             )}
+//             ListEmptyComponent={
+//               <View style={styles.emptyView}>
+//                 <View style={styles.emptyIconCircle}>
+//                   <Ionicons
+//                     name="bag-handle-outline"
+//                     size={48}
+//                     color="#64748B"
+//                   />
+//                 </View>
+//                 <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
+//                 <Text style={styles.emptySubtitle}>
+//                   Looks like you haven't added anything to your cart yet.
+//                   Explore our latest collections to get started!
+//                 </Text>
+//               </View>
+//             }
+//           />
+
+//           {/* Bottom Billing Sheet Summary Component */}
+//           {cartItems.length > 0 && (
+//             <View style={styles.checkoutFooter}>
+//               <View style={styles.indicatorBar} />
+
+//               <View style={styles.summaryLine}>
+//                 <Text style={styles.summaryLabel}>Subtotal</Text>
+//                 <Text style={styles.summaryValue}>
+//                   Rs. {pricingSummary.subtotal.toLocaleString()}
+//                 </Text>
+//               </View>
+
+//               <View style={styles.summaryLine}>
+//                 <Text style={styles.summaryLabel}>Discounts</Text>
+//                 <Text style={[styles.summaryValue, { color: "#10B981" }]}>
+//                   - Rs. {pricingSummary.discount.toLocaleString()}
+//                 </Text>
+//               </View>
+
+//               <View style={[styles.summaryLine, styles.grandTotalLine]}>
+//                 <Text style={styles.grandTotalLabel}>Total Amount</Text>
+//                 <Text style={styles.grandTotalValue}>
+//                   Rs. {pricingSummary.grandTotal.toLocaleString()}
+//                 </Text>
+//               </View>
+
+//               <TouchableOpacity
+//                 style={styles.checkoutBtn}
+//                 activeOpacity={0.85}
+//                 disabled={loading.checkout}
+//                 onPress={handleProcessCheckoutPipeline}
+//               >
+//                 {loading.checkout ? (
+//                   <ActivityIndicator size="small" color="#FFFFFF" />
+//                 ) : (
+//                   <>
+//                     <Text style={styles.checkoutBtnText}>
+//                       PROCEED TO CHECKOUT
+//                     </Text>
+//                     <Ionicons
+//                       name="arrow-forward"
+//                       size={18}
+//                       color="#FFFFFF"
+//                       style={styles.arrowSpacing}
+//                     />
+//                   </>
+//                 )}
+//               </TouchableOpacity>
+//             </View>
+//           )}
+
+//           <AuthGuardModal
+//             visible={modalVisible}
+//             onClose={() => setModalVisible(false)}
+//             title="Account Required"
+//             subtitle="You can't update your cart without an account."
+//             iconName="account-circle-outline"
+//           />
+//           {cartMessage && (
+//             <CustomErrorMessage>{cartMessage}</CustomErrorMessage>
+//           )}
+//         </>
+//       )}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#F8FAFC", // Soft premium off-white canvas
+//   },
+//   centerContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#F8FAFC",
+//   },
+//   listContainer: {
+//     padding: 16,
+//     paddingBottom: 260, // Extra cushioning context for the floating footer card
+//   },
+//   headerWrapper: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "space-between",
+//     marginBottom: 20,
+//     marginTop: 4,
+//   },
+//   sheetTitle: {
+//     fontSize: 18,
+//     fontWeight: "800",
+//     color: "#0F172A",
+//     letterSpacing: -0.5,
+//   },
+//   badgeCount: {
+//     backgroundColor: "#E0F2FE",
+//     paddingHorizontal: 12,
+//     paddingVertical: 6,
+//     borderRadius: 20,
+//   },
+//   badgeText: {
+//     color: "#0369A1",
+//     fontSize: 12,
+//     fontWeight: "700",
+//   },
+//   cartCard: {
+//     flexDirection: "row",
+//     backgroundColor: "#FFFFFF",
+//     borderRadius: 20,
+//     padding: 12,
+//     marginBottom: 16,
+//     // Premium structural soft shadow setup
+//     shadowColor: "#0F172A",
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.04,
+//     shadowRadius: 12,
+//     elevation: 3,
+//     borderWidth: 1,
+//     borderColor: "#F1F5F9",
+//   },
+//   imageContainer: {
+//     shadowColor: "#0F172A",
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.06,
+//     shadowRadius: 4,
+//   },
+//   productImage: {
+//     width: 90,
+//     height: 95,
+//     borderRadius: 14,
+//     backgroundColor: "#F1F5F9",
+//   },
+//   cardDetails: {
+//     flex: 1,
+//     marginLeft: 16,
+//     justifyContent: "space-between",
+//   },
+//   rowHeader: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "flex-start",
+//   },
+//   productName: {
+//     fontSize: 15,
+//     fontWeight: "700",
+//     color: "#1E293B",
+//     flex: 0.9,
+//     lineHeight: 20,
+//   },
+//   deleteButtonContainer: {
+//     padding: 4,
+//     marginTop: -2,
+//   },
+//   loaderPadding: {
+//     padding: 4,
+//   },
+//   variantBadgeContainer: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#F1F5F9",
+//     alignSelf: "flex-start",
+//     paddingHorizontal: 8,
+//     paddingVertical: 4,
+//     borderRadius: 6,
+//     marginTop: 4,
+//   },
+//   variantText: {
+//     fontSize: 11,
+//     color: "#64748B",
+//     fontWeight: "600",
+//   },
+//   priceRow: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     marginTop: 12,
+//   },
+//   priceText: {
+//     fontSize: 16,
+//     fontWeight: "800",
+//     color: "#0284C7",
+//   },
+//   quantityWidget: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#FFFFFF",
+//     borderRadius: 10,
+//     borderWidth: 1.5,
+//     borderColor: "#E2E8F0",
+//     overflow: "hidden",
+//   },
+//   qtyBtn: {
+//     width: 32,
+//     height: 32,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#F8FAFC",
+//   },
+//   qtyTextContainer: {
+//     minWidth: 28,
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+//   qtyText: {
+//     fontSize: 13,
+//     fontWeight: "700",
+//     color: "#0F172A",
+//   },
+//   emptyView: {
+//     alignItems: "center",
+//     marginTop: 80,
+//     paddingHorizontal: 32,
+//   },
+//   emptyIconCircle: {
+//     width: 100,
+//     height: 100,
+//     borderRadius: 50,
+//     backgroundColor: "#F1F5F9",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     marginBottom: 20,
+//   },
+//   emptyTitle: {
+//     fontSize: 20,
+//     fontWeight: "800",
+//     color: "#1E293B",
+//   },
+//   emptySubtitle: {
+//     fontSize: 14,
+//     color: "#64748B",
+//     textAlign: "center",
+//     marginTop: 8,
+//     lineHeight: 22,
+//   },
+//   checkoutFooter: {
+//     position: "absolute",
+//     bottom: 0,
+//     left: 0,
+//     right: 0,
+//     backgroundColor: "#FFFFFF",
+//     paddingHorizontal: 24,
+//     paddingTop: 12,
+//     paddingBottom: 34, // Structural protection buffer for safe areas (iOS home bar)
+//     borderTopLeftRadius: 32,
+//     borderTopRightRadius: 32,
+//     shadowColor: "#0F172A",
+//     shadowOffset: { width: 0, height: -8 },
+//     shadowOpacity: 0.08,
+//     shadowRadius: 24,
+//     elevation: 20,
+//   },
+//   indicatorBar: {
+//     width: 40,
+//     height: 5,
+//     backgroundColor: "#E2E8F0",
+//     borderRadius: 3,
+//     alignSelf: "center",
+//     marginBottom: 20,
+//   },
+//   summaryLine: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     marginBottom: 10,
+//   },
+//   summaryLabel: {
+//     fontSize: 14,
+//     color: "#64748B",
+//     fontWeight: "600",
+//   },
+//   summaryValue: {
+//     fontSize: 14,
+//     color: "#0F172A",
+//     fontWeight: "700",
+//   },
+//   grandTotalLine: {
+//     borderTopWidth: 1,
+//     borderColor: "#F1F5F9",
+//     paddingTop: 16,
+//     marginTop: 8,
+//     marginBottom: 24,
+//   },
+//   grandTotalLabel: {
+//     fontSize: 16,
+//     fontWeight: "800",
+//     color: "#0F172A",
+//   },
+//   grandTotalValue: {
+//     fontSize: 20,
+//     fontWeight: "900",
+//     color: "#0284C7", // Highlighted using theme color
+//   },
+//   checkoutBtn: {
+//     backgroundColor: "#0284C7", // Ensure explicit pairing with your app design palette accent
+//     height: 56,
+//     borderRadius: 16,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     flexDirection: "row",
+//     shadowColor: "#0284C7",
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.2,
+//     shadowRadius: 8,
+//   },
+//   checkoutBtnText: {
+//     color: "#FFFFFF",
+//     fontSize: 15,
+//     fontWeight: "700",
+//     letterSpacing: 0.3,
+//   },
+//   arrowSpacing: {
+//     marginLeft: 8,
+//   },
+// });
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -7,21 +542,25 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
+  SafeAreaView,
 } from "react-native";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartScreen } from "../hooks/useCartScreen";
-import { Colors } from "@/constants/Theme";
 import { useAuth } from "@/store/AuthContext";
 import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { useSharedCartData } from "@/store/CartContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { EmptyState } from "@/components/EmptyState";
 import { useIsFocused } from "@react-navigation/native";
-const IMAGE_BASE_URL = "http://thelink.innovex.biz/";
+import { useRouter } from "expo-router";
+const IMAGE_PLACEHOLDER =
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
 
 export const CartScreen = () => {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const {
     cartItems,
     pricingSummary,
@@ -48,8 +587,16 @@ export const CartScreen = () => {
       markCartAsVisited();
     }
   }, [isFocused]);
+
   const handleRetryFetch = () => {
     fetchCart();
+  };
+
+  const handleNavigateToDetails = (productId: number) => {
+    router.push({
+      pathname: "/(tabs)/category/product-details",
+      params: { productId: String(productId) },
+    });
   };
 
   if (loading.fetching) {
@@ -60,8 +607,51 @@ export const CartScreen = () => {
     );
   }
 
+  // Pure Component Helper to render Related Products cleanly beneath their parent
+  const renderRelatedProducts = (relatedProducts: any[]) => {
+    if (!relatedProducts || relatedProducts.length === 0) return null;
+
+    return (
+      <View style={styles.relatedSectionContainer}>
+        <View style={styles.relatedHeaderRow}>
+          <Ionicons name="sparkles-outline" size={14} color="#0284C7" />
+          <Text style={styles.relatedSectionTitle}>
+            Frequently Bought Together
+          </Text>
+        </View>
+
+        {relatedProducts.map((product: any) => (
+          <View key={`related-${product.ProductId}`} style={styles.relatedCard}>
+            <Image
+              source={{ uri: product.ThumbnailImagePath || IMAGE_PLACEHOLDER }}
+              style={styles.relatedProductImage}
+              resizeMode="cover"
+            />
+            <View style={styles.relatedInfo}>
+              <Text style={styles.relatedCategoryName}>
+                {product.Category?.CategoryName || "Featured Option"}
+              </Text>
+              <Text style={styles.relatedProductName} numberOfLines={1}>
+                {product.ProductName}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.relatedAddBtn}
+              activeOpacity={0.7}
+              onPress={() => {
+                handleNavigateToDetails(product.ProductId);
+              }}
+            >
+              <Text style={styles.relatedAddBtnText}>View Product</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {serverError ? (
         <EmptyState
           iconName="cloud-offline-outline"
@@ -78,129 +668,206 @@ export const CartScreen = () => {
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
-              <Text style={styles.sheetTitle}>
-                Cart ({cartItems.length} items)
-              </Text>
+              <View style={styles.headerWrapper}>
+                <Text style={styles.sheetTitle}>Shopping Cart</Text>
+                <View style={styles.badgeCount}>
+                  <Text style={styles.badgeText}>{cartItems.length} Items</Text>
+                </View>
+              </View>
             }
             renderItem={({ item, index }) => (
-              <MotiView
-                from={{ opacity: 0, translateY: 15 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: "timing",
-                  duration: 300,
-                  delay: index * 40,
-                }}
-                style={styles.cartCard}
-              >
-                <Image
-                  source={{ uri: `${IMAGE_BASE_URL}${item.ProductImage}` }}
-                  style={styles.productImage}
-                />
-
-                <View style={styles.cardDetails}>
-                  <View style={styles.rowHeader}>
-                    <Text style={styles.productName} numberOfLines={1}>
-                      {item.ProductName}
-                    </Text>
-                    {!(
-                      deleteLoading.active &&
-                      deleteLoading.cartId === item.CartId
-                    ) ? (
-                      <TouchableOpacity
-                        onPress={() => handleRemove(item.CartId)}
-                      >
-                        <Ionicons name="trash-outline" size={18} color="red" />
-                      </TouchableOpacity>
-                    ) : (
-                      <ActivityIndicator size="small" color="red" />
-                    )}
+              <View style={styles.itemGroupWrapper}>
+                {/* Parent Cart Card Item Component */}
+                <MotiView
+                  from={{ opacity: 0, translateY: 15 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  transition={{
+                    type: "timing",
+                    duration: 350,
+                    delay: index * 40,
+                  }}
+                  style={styles.cartCard}
+                >
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={{ uri: item.ProductImage || IMAGE_PLACEHOLDER }}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
                   </View>
 
-                  <Text style={styles.variantText}>
-                    {item.ProductVariants || "Standard Configuration"}
-                  </Text>
+                  <View style={styles.cardDetails}>
+                    <View style={styles.rowHeader}>
+                      <Text style={styles.productName} numberOfLines={2}>
+                        {item.ProductName}
+                      </Text>
 
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceText}>
-                      Rs. {item.Price.toLocaleString()}
-                    </Text>
+                      {!(
+                        deleteLoading.active &&
+                        deleteLoading.cartId === item.CartId
+                      ) ? (
+                        <TouchableOpacity
+                          onPress={() => handleRemove(item.CartId)}
+                          style={styles.deleteButtonContainer}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={18}
+                            color="#EF4444"
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        <ActivityIndicator
+                          size="small"
+                          color="#EF4444"
+                          style={styles.loaderPadding}
+                        />
+                      )}
+                    </View>
 
-                    {/* Micro Controller Quantity Box */}
-                    <View style={styles.quantityWidget}>
-                      <TouchableOpacity
-                        style={styles.qtyBtn}
-                        onPress={() => {
-                          if (!isAuthenticated) {
-                            setModalVisible(true);
-                            return;
-                          }
-                          handleDecrement(item.CartId, item.Quantity);
-                        }}
-                      >
-                        <Ionicons name="remove" size={14} color="#1E293B" />
-                      </TouchableOpacity>
-                      <Text style={styles.qtyText}>{item.Quantity}</Text>
-                      <TouchableOpacity
-                        style={styles.qtyBtn}
-                        onPress={() => {
-                          if (!isAuthenticated) {
-                            setModalVisible(true);
-                            return;
-                          }
-                          handleIncrement(item.CartId, item.Quantity);
-                        }}
-                      >
-                        <Ionicons name="add" size={14} color="#1E293B" />
-                      </TouchableOpacity>
+                    <View style={styles.variantBadgeContainer}>
+                      <Ionicons
+                        name="options-outline"
+                        size={11}
+                        color="#64748B"
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text style={styles.variantText} numberOfLines={1}>
+                        {item.ProductVariants || "Standard Configuration"}
+                      </Text>
+                    </View>
+
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceText}>
+                        Rs. {item.Price.toLocaleString()}
+                      </Text>
+
+                      <View style={styles.quantityWidget}>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          activeOpacity={0.6}
+                          onPress={() => {
+                            if (!isAuthenticated) {
+                              setModalVisible(true);
+                              return;
+                            }
+                            handleDecrement(item.CartId, item.Quantity);
+                          }}
+                        >
+                          <Ionicons name="remove" size={14} color="#0F172A" />
+                        </TouchableOpacity>
+
+                        <View style={styles.qtyTextContainer}>
+                          <Text style={styles.qtyText}>{item.Quantity}</Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          activeOpacity={0.6}
+                          onPress={() => {
+                            if (!isAuthenticated) {
+                              setModalVisible(true);
+                              return;
+                            }
+                            handleIncrement(item.CartId, item.Quantity);
+                          }}
+                        >
+                          <Ionicons name="add" size={14} color="#0F172A" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </MotiView>
+                </MotiView>
+
+                {/* Sub-list injection representing Related Items targeting user configuration 2 */}
+                {renderRelatedProducts(item.relatedProductList)}
+              </View>
             )}
+            ListFooterComponent={
+              cartItems.length > 0 ? (
+                <View style={styles.scrollSummaryContainer}>
+                  <Text style={styles.breakdownHeading}>Price Breakdown</Text>
+
+                  <View style={styles.summaryLine}>
+                    <Text style={styles.summaryLabel}>Subtotal</Text>
+                    <Text style={styles.summaryValue}>
+                      Rs. {pricingSummary.subtotal.toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.summaryLine}>
+                    <Text style={styles.summaryLabel}>Discounts</Text>
+                    <Text style={[styles.summaryValue, { color: "#10B981" }]}>
+                      - Rs. {pricingSummary.discount.toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.summaryLine}>
+                    <Text style={styles.summaryLabel}>Shipping Fee</Text>
+                    <Text
+                      style={[
+                        styles.summaryValue,
+                        { color: "#10B981", fontWeight: "600" },
+                      ]}
+                    >
+                      Free Delivery
+                    </Text>
+                  </View>
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <View style={styles.emptyView}>
-                <Ionicons name="bag-handle-outline" size={64} color="#CBD5E1" />
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons
+                    name="bag-handle-outline"
+                    size={44}
+                    color="#64748B"
+                  />
+                </View>
                 <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
                 <Text style={styles.emptySubtitle}>
-                  Items you add to your shopping cart will appear right here.
+                  Looks like you haven't added anything to your cart yet.
+                  Explore our latest collections to get started!
                 </Text>
               </View>
             }
           />
+
+          {/* Fixed Side-by-Side Professional Sticky Bottom Bar */}
           {cartItems.length > 0 && (
-            <View style={styles.checkoutFooter}>
-              <View style={styles.summaryLine}>
-                <Text style={styles.summaryLabel}>Subtotal</Text>
-                <Text style={styles.summaryValue}>
-                  Rs. {pricingSummary.subtotal.toLocaleString()}
-                </Text>
-              </View>
-              <View style={styles.summaryLine}>
-                <Text style={styles.summaryLabel}>Discounts</Text>
-                <Text style={[styles.summaryValue, { color: "#10B981" }]}>
-                  - Rs. {pricingSummary.discount.toLocaleString()}
-                </Text>
-              </View>
-              <View style={[styles.summaryLine, styles.grandTotalLine]}>
-                <Text style={styles.grandTotalLabel}>Total Amount</Text>
-                <Text style={styles.grandTotalValue}>
+            <View style={styles.compactStickyFooter}>
+              <View style={styles.metaPriceContainer}>
+                <Text style={styles.footerTotalLabel}>GRAND TOTAL</Text>
+                <Text style={styles.footerTotalValue} numberOfLines={1}>
                   Rs. {pricingSummary.grandTotal.toLocaleString()}
                 </Text>
               </View>
 
               <TouchableOpacity
-                style={styles.checkoutBtn}
-                activeOpacity={0.8}
+                style={styles.splitCheckoutBtn}
+                activeOpacity={0.85}
                 disabled={loading.checkout}
                 onPress={handleProcessCheckoutPipeline}
               >
-                <Text style={styles.checkoutBtnText}>
-                  {loading.checkout ? "Processing..." : "PROCEED TO CHECKOUT"}
-                </Text>
+                {loading.checkout ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <View style={styles.innerBtnLayout}>
+                    <Text style={styles.splitCheckoutBtnText}>CHECKOUT</Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={16}
+                      color="#FFFFFF"
+                      style={{ marginLeft: 6 }}
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           )}
+
           <AuthGuardModal
             visible={modalVisible}
             onClose={() => setModalVisible(false)}
@@ -213,61 +880,114 @@ export const CartScreen = () => {
           )}
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F8FAFC",
   },
   listContainer: {
-    // flex: 1,
     padding: 16,
-    paddingBottom: 220,
+    paddingBottom: 120, // Clean cushioning for the sticky action footer
+  },
+  headerWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    marginTop: 4,
   },
   sheetTitle: {
-    fontSize: 14,
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0F172A",
+    letterSpacing: -0.5,
+  },
+  badgeCount: {
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    color: "#0369A1",
+    fontSize: 12,
     fontWeight: "700",
-    color: Colors.textMain,
+  },
+  itemGroupWrapper: {
     marginBottom: 16,
-    letterSpacing: -0.3,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    overflow: "hidden",
+    // Clean unified shadow pattern
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cartCard: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
     padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+  },
+  imageContainer: {
+    alignSelf: "center",
   },
   productImage: {
-    width: 84,
-    height: 84,
+    width: 85,
+    height: 90,
     borderRadius: 12,
     backgroundColor: "#F1F5F9",
   },
-  cardDetails: { flex: 1, marginLeft: 14, justifyContent: "space-between" },
+  cardDetails: {
+    flex: 1,
+    marginLeft: 14,
+    justifyContent: "space-between",
+  },
   rowHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   productName: {
     fontSize: 14,
     fontWeight: "700",
     color: "#1E293B",
-    flex: 0.95,
+    flex: 0.92,
+    lineHeight: 18,
+  },
+  deleteButtonContainer: {
+    padding: 2,
+  },
+  loaderPadding: {
+    padding: 2,
+  },
+  variantBadgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1F5F9",
+    alignSelf: "flex-start",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginTop: 4,
   },
   variantText: {
     fontSize: 11,
     color: "#64748B",
-    fontWeight: "500",
-    marginTop: 2,
+    fontWeight: "600",
   },
   priceRow: {
     flexDirection: "row",
@@ -275,11 +995,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  priceText: { fontSize: 14, fontWeight: "800", color: "#0284C7" },
+  priceText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0284C7",
+  },
   quantityWidget: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#F8FAFC",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E2E8F0",
@@ -290,69 +1014,188 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  qtyText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#1E293B",
-    paddingHorizontal: 6,
+  qtyTextContainer: {
+    minWidth: 24,
+    alignItems: "center",
   },
-  emptyView: { alignItems: "center", marginTop: 100, paddingHorizontal: 40 },
+  qtyText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  /* --- Related Products Section Styles --- */
+  relatedSectionContainer: {
+    backgroundColor: "#FAFAFA",
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    padding: 12,
+  },
+  relatedHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  relatedSectionTitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#64748B",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginLeft: 4,
+  },
+  relatedCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 8,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  relatedProductImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    backgroundColor: "#F1F5F9",
+  },
+  relatedInfo: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  relatedCategoryName: {
+    fontSize: 10,
+    color: "#94A3B8",
+    fontWeight: "600",
+  },
+  relatedProductName: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#334155",
+    marginTop: 1,
+  },
+  relatedAddBtn: {
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  relatedAddBtnText: {
+    color: "#0369A1",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  /* --- Price Breakdown (In-Scroll) Styles --- */
+  scrollSummaryContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  breakdownHeading: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+  summaryLine: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  summaryValue: {
+    fontSize: 13,
+    color: "#1E293B",
+    fontWeight: "600",
+  },
+  /* --- Empty State --- */
+  emptyView: {
+    alignItems: "center",
+    marginTop: 80,
+    paddingHorizontal: 32,
+  },
+  emptyIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "800",
     color: "#1E293B",
-    marginTop: 16,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: "#94A3B8",
+    fontSize: 13,
+    color: "#64748B",
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 8,
     lineHeight: 20,
   },
-  checkoutFooter: {
+  /* --- Compact Side-by-Side Professional Bottom Bar --- */
+  compactStickyFooter: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 28, // Secure protection buffer tracking home indicator layout
+    borderTopWidth: 1,
+    borderColor: "#F1F5F9",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
-    elevation: 10,
+    elevation: 15,
   },
-  summaryLine: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  summaryLabel: { fontSize: 13, color: "#64748B", fontWeight: "500" },
-  summaryValue: { fontSize: 13, color: "#1E293B", fontWeight: "700" },
-  grandTotalLine: {
-    borderTopWidth: 1,
-    borderColor: "#F1F5F9",
-    paddingTop: 12,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  grandTotalLabel: { fontSize: 15, fontWeight: "800", color: "#0F172A" },
-  grandTotalValue: { fontSize: 18, fontWeight: "900", color: "#0F172A" },
-  checkoutBtn: {
-    backgroundColor: Colors.accent,
-    height: 54,
-    borderRadius: 14,
+  metaPriceContainer: {
+    flex: 0.45,
     justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
   },
-  checkoutBtnText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "800",
+  footerTotalLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#94A3B8",
     letterSpacing: 0.5,
   },
-  arrowSpacing: { marginLeft: 6 },
+  footerTotalValue: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0F172A",
+    marginTop: 2,
+  },
+  splitCheckoutBtn: {
+    flex: 0.55,
+    backgroundColor: "#0284C7",
+    height: 48,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  innerBtnLayout: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  splitCheckoutBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
 });

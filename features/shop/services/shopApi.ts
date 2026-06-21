@@ -13,7 +13,7 @@ export const shopApi = {
     params: CategoryQueryParams,
   ): Promise<CategoryResponse> => {
     const response = await apiClient.get("/Category/current", {
-      params: { ...params, Status: params.Status ?? 1 },
+      params: { ...params, Status: params.Status ?? -1 },
     });
     return response.data;
   },
@@ -42,7 +42,7 @@ export const shopApi = {
         CategoryId: categoryId,
         PageNumber: page,
         PageSize: 10,
-        BrandId: -1, // as seen in image_a1a3c1.png
+        BrandId: 0, // as seen in image_a1a3c1.png
       },
     });
     return response.data;

@@ -1,4 +1,3 @@
-import { Alert } from "react-native"; // Add Alert import
 import { useSharedCartData } from "@/store/CartContext";
 import { useRouter } from "expo-router";
 export function useCartScreen() {
