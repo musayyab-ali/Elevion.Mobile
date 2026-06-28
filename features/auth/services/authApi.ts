@@ -36,6 +36,10 @@ const getHeaders = () => ({
   Accept: "application/json",
   "api-security-key": SECURITY_KEY || "", // Using the fixed GUID key
 });
+const getAuthHeaders = (token: string) => ({
+  ...getHeaders(),
+  Authorization: `Bearer ${token}`,
+});
 
 export const authApi = {
   // --- AUTH SERVICE (OAuth) ---
@@ -80,13 +84,10 @@ export const authApi = {
       method: "GET",
       headers: getHeaders(),
     }).then(handleResponse),
-  // Logic Separation: Moved fetch logic here
   login: (credentials: { UserName: string; Password: string }) => {
-    // 1. Remove the Form Data encoding logic
-    // 2. Send as standard JSON to satisfy the server's Media Type requirements
     return fetch(`${BASE_URL}/oauth/token`, {
       method: "POST",
-      headers: getHeaders(), // This uses "Content-Type": "application/json"
+      headers: getHeaders(),
       body: JSON.stringify(credentials),
     }).then(handleResponse);
   },
@@ -138,5 +139,36 @@ export const authApi = {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),
+    }).then(handleResponse),
+
+  getDeletionStatus: (token: string) =>
+    fetch(`${BASE_URL}/Customer/account/deletion-status`, {
+      method: "GET",
+      headers: getAuthHeaders(token),
+    }).then(handleResponse),
+
+  verifyDeletedPhone: (payload: {
+    UserName: string;
+    PhoneCode: string;
+    PhoneNumber: string;
+  }) =>
+    fetch(`${BASE_URL}/Account/account/verify-deleted-phone`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }).then(handleResponse),
+
+  sendOtpToPhone: (payload: { PhoneNumber: string; PhoneCode: number }) =>
+    fetch(`${BASE_URL}/Account/SendOTP`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }).then(handleResponse),
+
+  restoreDeletedAccount: (token: string) =>
+    fetch(`${BASE_URL}/Customer/account/restore`, {
+      method: "POST",
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ files: [] }), // explicit payload compatibility fallback
     }).then(handleResponse),
 };

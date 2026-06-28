@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLogin } from "../hooks/useLogin";
 import { MotiView } from "moti";
 import { AuthContainer } from "../../../components/AuthContainer";
-import { CelebrationOverlay } from "@/components/CelebrationOverlay";
+import { RestoreAccountModal } from "./RestoreAccountModal";
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 const isTablet = SCREEN_WIDTH > 600;
 
@@ -24,49 +24,41 @@ export default function LoginScreen() {
   const router = useRouter();
   const {
     handleLogin,
-    checkUserExists,
     loading,
-    showPassword,
     apiMessage,
     isSuccess,
+    showDeletionModal,
+    setShowDeletionModal,
+    pendingDeletionData,
   } = useLogin();
 
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // Eye toggle state
   const onPrimaryAction = () => {
-    if (!showPassword) {
-      checkUserExists(userName);
-    } else {
-      handleLogin(userName, password);
-    }
+    console.log("fuck is clicked");
+    handleLogin(userName, password);
   };
-
-  // if (!isSuccess) {
-  //   return (
-  //     <View style={styles.responsiveWrapper}>
-  //       <View style={styles.successWrapper}>
-  //         <Ionicons name="checkmark-circle" size={80} color="#10B981" />
-  //         <Text style={styles.successTitle}>Login Successful!</Text>
-  //         <Text style={styles.successSub}>
-  //           We are redirecting you to our Homepage
-  //         </Text>
-  //         <ActivityIndicator
-  //           size="small"
-  //           color="#0077b6"
-  //           style={{ marginTop: 20 }}
-  //         />
-  //       </View>
-  //     </View>
-  //   );
-  // }
-  console.log("success status :", isSuccess);
   return (
-    <AuthContainer
-      title="Login to Account"
-      apiMessage={apiMessage}
-      // celebration={isCelebration}
-    >
+    <AuthContainer title="Login to Account" apiMessage={apiMessage}>
+      <RestoreAccountModal
+        visible={showDeletionModal}
+        scheduledPurgeDate={pendingDeletionData?.ScheduledPurgeOn}
+        onCreateNew={() => {
+          setShowDeletionModal(false);
+          router.push("/(unauthorized)/register");
+        }}
+        onRestore={() => {
+          setShowDeletionModal(false);
+          router.push({
+            pathname: "/(unauthorized)/restore-profile",
+            params: {
+              userName: pendingDeletionData?.OriginalUserName,
+              token: pendingDeletionData?.AccessToken,
+            },
+          });
+        }}
+      />
       <View style={styles.responsiveWrapper}>
         {isSuccess ? (
           <View style={styles.successWrapper}>
@@ -95,64 +87,46 @@ export default function LoginScreen() {
                 resizeMode="contain"
               />
             </MotiView>
-
-            {/* Step 1: Username Input */}
-            {!showPassword && (
-              <MotiView
-                from={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
+            <MotiView
+              from={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <AppInput
+                label="UserName"
+                placeholder="Enter userName"
+                value={userName}
+                onChangeText={setUserName}
+              />
+              <View style={styles.inputWrapper}>
                 <AppInput
-                  label="Username"
-                  placeholder="Enter your username"
-                  value={userName}
-                  onChangeText={setUserName}
-                  editable={!showPassword}
+                  label="Password"
+                  placeholder="********"
+                  secureTextEntry={!isPasswordVisible}
+                  value={password}
+                  onChangeText={setPassword}
                 />
-              </MotiView>
-            )}
-
-            {/* Step 2: Password Input (Appears after checkUserExists) */}
-            {showPassword && (
-              <MotiView
-                from={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <View style={styles.inputWrapper}>
-                  <AppInput
-                    label="Password"
-                    placeholder="********"
-                    secureTextEntry={!isPasswordVisible}
-                    value={password}
-                    onChangeText={setPassword}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                  >
-                    <Ionicons
-                      name={isPasswordVisible ? "eye-off" : "eye"}
-                      size={20}
-                      color="#64748b"
-                    />
-                  </TouchableOpacity>
-                </View>
-
                 <TouchableOpacity
-                  onPress={() => router.push("/(unauthorized)/forgot-password")}
-                  style={styles.forgotPasswordContainer}
+                  style={styles.eyeIcon}
+                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
                 >
-                  <Text style={styles.forgotPasswordText}>
-                    Forgot Password?
-                  </Text>
+                  <Ionicons
+                    name={isPasswordVisible ? "eye-off" : "eye"}
+                    size={20}
+                    color="#64748b"
+                  />
                 </TouchableOpacity>
-              </MotiView>
-            )}
+              </View>
 
+              <TouchableOpacity
+                onPress={() => router.push("/(unauthorized)/forgot-password")}
+                style={styles.forgotPasswordContainer}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </MotiView>
             <AppButton
-              title={
-                loading ? "Processing..." : showPassword ? "LOGIN" : "NEXT"
-              }
+              title={loading ? "Processing..." : "LOGIN"}
+              disabled={loading || !userName || !password}
               onPress={onPrimaryAction}
               style={styles.loginBtn}
             />
@@ -185,7 +159,7 @@ const styles = StyleSheet.create({
   successWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingTop: 100,
   },
   successTitle: {
     fontSize: 22,

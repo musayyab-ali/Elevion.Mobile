@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Platform,
+  FlatList,
   Alert,
 } from "react-native";
 import { useAuth } from "@/store/AuthContext";
@@ -23,7 +24,7 @@ import {
   DeliveryOption,
 } from "@/features/cart/hooks/useCheckoutSummary";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
-
+import { SearchableDropdownPicker } from "@/components/SearchableDropdownPicker";
 interface PromoModalProps {
   visible: boolean;
   title: string;
@@ -65,6 +66,7 @@ interface ErrorState {
   countryId?: string;
   stateId?: string;
   cityId?: string;
+  areaId?: string;
 }
 
 const COUNTRY_PHONE_CONFIGS: Record<
@@ -73,6 +75,19 @@ const COUNTRY_PHONE_CONFIGS: Record<
 > = {
   PK: { rawLength: 10, prefix: "+92" },
   GB: { rawLength: 10, prefix: "+44" },
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  fullName: "Shipping Full Name",
+  email: "Shipping Email Address",
+  phone: "Shipping Phone Number",
+  address: "Street Address",
+  countryId: "Country Selection",
+  stateId: "State Selection",
+  cityId: "City Selection",
+  billingFullName: "Billing Full Name",
+  billingEmail: "Billing Email Address",
+  billingPhone: "Billing Phone Number",
 };
 
 export default function CheckoutSummaryScreen() {
@@ -90,28 +105,6 @@ export default function CheckoutSummaryScreen() {
   }
 
   const hook = useCheckoutSummary(checkoutData);
-
-  // Check if initial profiles exist
-  // const hasInitialBilling = !!(
-  //   checkoutData?.BillingDetail?.FullName && checkoutData?.BillingDetail?.Phone
-  // );
-  // const hasInitialShipping = !!(
-  //   checkoutData?.ShippingDetail?.FullName &&
-  //   checkoutData?.ShippingDetail?.Address
-  // );
-
-  // // Local UI expansion states - Force forms open if details do not exist
-  // const [isEditingBilling, setIsEditingBilling] = useState(!hasInitialBilling);
-  // const [isEditingShipping, setIsEditingShipping] =
-  //   useState(!hasInitialShipping);
-
-  // // Error validation states for UI feedback
-  // const [billingErrors, setBillingErrors] = useState<Record<string, boolean>>(
-  //   {},
-  // );
-  // const [shippingErrors, setShippingErrors] = useState<Record<string, boolean>>(
-  //   {},
-  // );
 
   const hasInitialBilling = useMemo(
     () =>
@@ -157,175 +150,10 @@ export default function CheckoutSummaryScreen() {
     };
   }, []);
 
-  // --------------------------------------------------------
-  // 1. BILLING DETECT-CHANGES CONTROLLER LOGIC
-  // --------------------------------------------------------
-  // const isBillingModified = useMemo(() => {
-  //   const originalName = checkoutData?.BillingDetail?.FullName || "";
-  //   const originalEmail = checkoutData?.BillingDetail?.EmailAddress || "";
-  //   const originalPhone = checkoutData?.BillingDetail?.Phone || "";
-
-  //   return (
-  //     (hook.billingForm?.fullName || "") !== originalName ||
-  //     (hook.billingForm?.email || "") !== originalEmail ||
-  //     (hook.billingForm?.phone || "") !== originalPhone
-  //   );
-  // }, [hook.billingForm, checkoutData]);
-
-  // const isShippingModified = useMemo(() => {
-  //   const originalName = checkoutData?.ShippingDetail?.FullName || "";
-  //   // Sync fallback calculation here to match form state initialization
-  //   const originalEmail =
-  //     // checkoutData?.ShippingDetail?.EmailAddress  || user?.Email || "";
-  //     checkoutData?.ShippingDetail?.EmailAddress === "" || "Null"
-  //       ? checkoutData?.BillingDetail?.EmailAddress
-  //       : checkoutData?.ShippingDetail?.EmailAddress || "";
-  //   const originalPhone = checkoutData?.ShippingDetail?.Phone || "";
-  //   const originalAddress = checkoutData?.ShippingDetail?.Address || "";
-
-  //   // Make sure fallback rules match form parsing defaults
-  //   const originalCountry = checkoutData?.ShippingDetail?.CountryId
-  //     ? Number(checkoutData.ShippingDetail.CountryId)
-  //     : originalPhone.startsWith("+92") || originalPhone.startsWith("92")
-  //       ? // originalPhone.startsWith("30")
-  //         169
-  //       : 236;
-
-  //   const originalState = checkoutData?.ShippingDetail?.StateId
-  //     ? Number(checkoutData.ShippingDetail.StateId)
-  //     : 0;
-  //   const originalCity = checkoutData?.ShippingDetail?.CityId
-  //     ? Number(checkoutData.ShippingDetail.CityId)
-  //     : 0;
-
-  //   return (
-  //     (hook.addressForm?.fullName || "") !== originalName ||
-  //     (hook.addressForm?.email || "") !== originalEmail ||
-  //     (hook.addressForm?.phone || "") !== originalPhone ||
-  //     (hook.addressForm?.address || "") !== originalAddress ||
-  //     Number(hook.addressForm?.countryId || 0) !== originalCountry ||
-  //     Number(hook.addressForm?.stateId || 0) !== originalState ||
-  //     Number(hook.addressForm?.cityId || 0) !== originalCity
-  //   );
-  // }, [hook.addressForm, checkoutData, user]);
-
-  // const cleanRawPhoneNumber = (text: string, isoCode: string): string => {
-  //   let cleaned = text.replace(/\D/g, ""); // strip non-numeric characters
-  //   const upperIso = isoCode?.toUpperCase() || "";
-
-  //   if (upperIso === "PK") {
-  //     // If user typed 92 at the beginning, strip it
-  //     if (cleaned.startsWith("92")) {
-  //       cleaned = cleaned.substring(2);
-  //     }
-  //     // If user typed absolute zero mobile format (03xxxxxxxxx), strip the zero
-  //     else if (cleaned.startsWith("0")) {
-  //       cleaned = cleaned.substring(1);
-  //     }
-  //   } else if (upperIso === "GB") {
-  //     if (cleaned.startsWith("44")) {
-  //       cleaned = cleaned.substring(2);
-  //     } else if (cleaned.startsWith("0")) {
-  //       cleaned = cleaned.substring(1);
-  //     }
-  //   }
-
-  //   return cleaned;
-  // };
-
-  // // --- Updated Billing Form Saver ---
-  // const handleSaveBilling = () => {
-  //   const errors: Record<string, string> = {};
-  //   const currentIso = hook.addressForm?.isoCode || "PK"; // Fallback context
-  //   const phoneConfig = COUNTRY_PHONE_CONFIGS[currentIso.toUpperCase()];
-
-  //   if (!hook.billingForm?.fullName?.trim()) {
-  //     errors.fullName = "Full name is required.";
-  //   }
-  //   if (!hook.billingForm?.email?.trim()) {
-  //     errors.email = "Email address is required.";
-  //   } else if (!/\S+@\S+\.\S+/.test(hook.billingForm.email)) {
-  //     errors.email = "Please enter a valid email address.";
-  //   }
-
-  //   const billingPhone = hook.billingForm?.phone || "";
-  //   if (!billingPhone.trim()) {
-  //     errors.phone = "Phone number is required.";
-  //   } else if (phoneConfig && billingPhone.length !== phoneConfig.rawLength) {
-  //     errors.phone = `Phone number must be exactly ${phoneConfig.rawLength} digits long.`;
-  //   }
-
-  //   if (Object.keys(errors).length > 0) {
-  //     setBillingErrors(errors);
-  //     return; // Block execution cleanly without generic Alert popups
-  //   }
-
-  //   setBillingErrors({});
-  //   setIsEditingBilling(false);
-  // };
-
-  // // --- Updated Shipping Form Saver ---
-  // const handleSaveShipping = () => {
-  //   const errors: Record<string, string> = {};
-  //   const currentIso = hook.addressForm?.isoCode || "PK";
-  //   const phoneConfig = COUNTRY_PHONE_CONFIGS[currentIso.toUpperCase()];
-
-  //   if (!hook.addressForm?.fullName?.trim())
-  //     errors.fullName = "Receiver's name is required.";
-  //   if (!hook.addressForm?.email?.trim()) {
-  //     errors.email = "Email address is required.";
-  //   } else if (!/\S+@\S+\.\S+/.test(hook.addressForm.email)) {
-  //     errors.email = "Please enter a valid email address.";
-  //   }
-
-  //   const shippingPhone = hook.addressForm?.phone || "";
-  //   if (!shippingPhone.trim()) {
-  //     errors.phone = "Phone number is required.";
-  //   } else if (phoneConfig && shippingPhone.length !== phoneConfig.rawLength) {
-  //     errors.phone = `Phone number must be exactly ${phoneConfig.rawLength} digits long.`;
-  //   }
-
-  //   if (!hook.addressForm?.address?.trim())
-  //     errors.address = "Street address location is required.";
-  //   if (!hook.addressForm?.countryId)
-  //     errors.countryId = "Please pick your country destination.";
-  //   if (!hook.addressForm?.stateId)
-  //     errors.stateId = "Please pick your state or region.";
-  //   if (!hook.addressForm?.cityId)
-  //     errors.cityId = "Please pick your city destination.";
-
-  //   if (Object.keys(errors).length > 0) {
-  //     setShippingErrors(errors);
-  //     return;
-  //   }
-
-  //   setShippingErrors({});
-  //   setIsEditingShipping(false);
-  // };
-
-  // const handleAddNewAddressTrigger = () => {
-  //   hook.setAddressForm({
-  //     fullName: "",
-  //     email: "",
-  //     phone: "",
-  //     address: "",
-  //     countryId: 0,
-  //     stateId: 0,
-  //     cityId: 0,
-  //     cityName: "",
-  //     isoCode: "",
-  //     phoneCode: "",
-  //     addressBookId: 0,
-  //   });
-  //   setShippingErrors({});
-  //   setIsEditingShipping(true);
-  // };
-
   const isBillingModified = useMemo(() => {
     const originalName = checkoutData?.BillingDetail?.FullName || "";
     const originalEmail = checkoutData?.BillingDetail?.EmailAddress || "";
     const originalPhone = checkoutData?.BillingDetail?.Phone || "";
-
     return (
       (hook.billingForm?.fullName || "") !== originalName ||
       (hook.billingForm?.email || "") !== originalEmail ||
@@ -359,6 +187,10 @@ export default function CheckoutSummaryScreen() {
       ? Number(checkoutData.ShippingDetail.CityId)
       : 0;
 
+    const originalArea = checkoutData?.ShippingDetail?.AreaId
+      ? Number(checkoutData.ShippingDetail.AreaId)
+      : 0;
+
     return (
       (hook.addressForm?.fullName || "") !== originalName ||
       (hook.addressForm?.email || "") !== originalEmail ||
@@ -366,7 +198,8 @@ export default function CheckoutSummaryScreen() {
       (hook.addressForm?.address || "") !== originalAddress ||
       Number(hook.addressForm?.countryId || 0) !== originalCountry ||
       Number(hook.addressForm?.stateId || 0) !== originalState ||
-      Number(hook.addressForm?.cityId || 0) !== originalCity
+      Number(hook.addressForm?.cityId || 0) !== originalCity ||
+      Number(hook.addressForm?.areaId || 0) !== originalArea
     );
   }, [hook.addressForm, checkoutData, user]);
 
@@ -442,6 +275,8 @@ export default function CheckoutSummaryScreen() {
       errors.stateId = "Please pick your state or region.";
     if (!hook.addressForm?.cityId)
       errors.cityId = "Please pick your city destination.";
+    if (!hook.addressForm?.areaId)
+      errors.areaId = "Please pick your area destination.";
 
     if (Object.keys(errors).length > 0) {
       setShippingErrors(errors);
@@ -462,6 +297,7 @@ export default function CheckoutSummaryScreen() {
       countryId: 0,
       stateId: 0,
       cityId: 0,
+      areaId: 0,
       cityName: "",
       isoCode: "PK",
       phoneCode: "",
@@ -505,7 +341,7 @@ export default function CheckoutSummaryScreen() {
                     }}
                   >
                     <Text style={styles.editLink}>
-                      {isEditingBilling ? "View Summary" : "Edit Details"}
+                      {isEditingBilling ? "Hide Details" : "Edit Details"}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -661,7 +497,7 @@ export default function CheckoutSummaryScreen() {
                     }}
                   >
                     <Text style={styles.editLink}>
-                      {isEditingShipping ? "View Summary" : "Edit Address"}
+                      {isEditingShipping ? "Hide Details" : "Edit Address"}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -723,176 +559,110 @@ export default function CheckoutSummaryScreen() {
 
                   {/* Country Tabs */}
                   <View style={styles.inputGroupContainer}>
-                    <Text
-                      style={[
-                        styles.fieldLabel,
-                        shippingErrors.countryId && styles.errorTextLabel,
-                      ]}
-                    >
-                      Select Country *
-                    </Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.geoScrollRow}
-                    >
-                      {hook.countries?.map((c: any) => {
-                        const isSelected =
-                          Number(hook.addressForm?.countryId) ===
-                          Number(c.Value);
-                        return (
-                          <TouchableOpacity
-                            key={`country-key-${c.Value}`}
-                            style={[
-                              styles.geoTabButton,
-                              isSelected && styles.geoTabActive,
-                              shippingErrors.countryId &&
-                                !isSelected &&
-                                styles.borderError,
-                            ]}
-                            onPress={() => {
-                              hook.handleCountryChange(Number(c.Value));
-                              if (shippingErrors.countryId)
-                                setShippingErrors((p) => ({
-                                  ...p,
-                                  countryId: undefined,
-                                }));
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.geoTabText,
-                                isSelected && styles.geoTabTextActive,
-                              ]}
-                            >
-                              {c.Text}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                    {shippingErrors.countryId && (
-                      <Text style={styles.errorTextInline}>
-                        {shippingErrors.countryId}
-                      </Text>
-                    )}
+                    <SearchableDropdownPicker
+                      label="Select Country *"
+                      placeholder="Choose your country"
+                      data={hook.countries}
+                      selectedValue={hook.addressForm?.countryId}
+                      error={shippingErrors.countryId}
+                      onSelect={(val) => {
+                        hook.handleCountryChange(val);
+                        if (shippingErrors.countryId) {
+                          setShippingErrors((p) => ({
+                            ...p,
+                            countryId: undefined,
+                          }));
+                        }
+                      }}
+                    />
                   </View>
 
                   {/* State Tabs */}
                   {Number(hook.addressForm?.countryId) > 0 && (
                     <View style={styles.inputGroupContainer}>
-                      <Text
-                        style={[
-                          styles.fieldLabel,
-                          shippingErrors.stateId && styles.errorTextLabel,
-                        ]}
-                      >
-                        Select State / Region *
-                      </Text>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.geoScrollRow}
-                      >
-                        {hook.states?.map((s: any, index: number) => {
-                          const isSelected =
-                            Number(hook.addressForm?.stateId) ===
-                            Number(s.Value);
-                          return (
-                            <TouchableOpacity
-                              key={`state-${s.Value || index}`}
-                              style={[
-                                styles.geoTabButton,
-                                isSelected && styles.geoTabActive,
-                                shippingErrors.stateId &&
-                                  !isSelected &&
-                                  styles.borderError,
-                              ]}
-                              onPress={() => {
-                                hook.handleStateChange(Number(s.Value));
-                                if (shippingErrors.stateId)
-                                  setShippingErrors((p) => ({
-                                    ...p,
-                                    stateId: undefined,
-                                  }));
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.geoTabText,
-                                  isSelected && styles.geoTabTextActive,
-                                ]}
-                              >
-                                {s.Text}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </ScrollView>
-                      {shippingErrors.stateId && (
-                        <Text style={styles.errorTextInline}>
-                          {shippingErrors.stateId}
-                        </Text>
-                      )}
+                      <SearchableDropdownPicker
+                        label="Select State / Region *"
+                        placeholder={
+                          Number(hook.addressForm?.countryId) > 0
+                            ? "Choose your state"
+                            : "Select a country first"
+                        }
+                        data={hook.states}
+                        selectedValue={hook.addressForm?.stateId}
+                        error={shippingErrors.stateId}
+                        disabled={
+                          !hook.addressForm?.countryId ||
+                          Number(hook.addressForm?.countryId) === 0
+                        }
+                        onSelect={(val) => {
+                          hook.handleStateChange(val);
+                          if (shippingErrors.stateId) {
+                            setShippingErrors((p) => ({
+                              ...p,
+                              stateId: undefined,
+                            }));
+                          }
+                        }}
+                      />
                     </View>
                   )}
 
                   {/* City Tabs */}
                   {Number(hook.addressForm?.stateId) > 0 && (
                     <View style={styles.inputGroupContainer}>
-                      <Text
-                        style={[
-                          styles.fieldLabel,
-                          shippingErrors.cityId && styles.errorTextLabel,
-                        ]}
-                      >
-                        Select City *
-                      </Text>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.geoScrollRow}
-                      >
-                        {hook.cities?.map((ct: any, index: number) => {
-                          const isSelected =
-                            Number(hook.addressForm?.cityId) ===
-                            Number(ct.Value);
-                          return (
-                            <TouchableOpacity
-                              key={`city-${ct.Value || index}`}
-                              style={[
-                                styles.geoTabButton,
-                                isSelected && styles.geoTabActive,
-                                shippingErrors.cityId &&
-                                  !isSelected &&
-                                  styles.borderError,
-                              ]}
-                              onPress={() => {
-                                hook.handleCityChange(Number(ct.Value));
-                                if (shippingErrors.cityId)
-                                  setShippingErrors((p) => ({
-                                    ...p,
-                                    cityId: undefined,
-                                  }));
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.geoTabText,
-                                  isSelected && styles.geoTabTextActive,
-                                ]}
-                              >
-                                {ct.Text}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </ScrollView>
-                      {shippingErrors.cityId && (
-                        <Text style={styles.errorTextInline}>
-                          {shippingErrors.cityId}
-                        </Text>
-                      )}
+                      <SearchableDropdownPicker
+                        label="Select City *"
+                        placeholder={
+                          Number(hook.addressForm?.stateId) > 0
+                            ? "Choose your city"
+                            : "Select a state region first"
+                        }
+                        data={hook.cities}
+                        selectedValue={hook.addressForm?.cityId}
+                        error={shippingErrors.cityId}
+                        disabled={
+                          !hook.addressForm?.stateId ||
+                          Number(hook.addressForm?.stateId) === 0
+                        }
+                        onSelect={(val) => {
+                          hook.handleCityChange(val);
+                          if (shippingErrors.cityId) {
+                            setShippingErrors((p) => ({
+                              ...p,
+                              cityId: undefined,
+                            }));
+                          }
+                        }}
+                      />
+                    </View>
+                  )}
+
+                  {Number(hook.addressForm?.cityId) > 0 && (
+                    <View style={styles.inputGroupContainer}>
+                      <SearchableDropdownPicker
+                        label="Select Area *"
+                        placeholder={
+                          Number(hook.addressForm?.cityId) > 0
+                            ? "Choose your area"
+                            : "Select a city region first"
+                        }
+                        data={hook.areas}
+                        selectedValue={hook.addressForm?.areaId}
+                        error={shippingErrors.areaId}
+                        disabled={
+                          !hook.addressForm?.cityId ||
+                          Number(hook.addressForm?.cityId) === 0
+                        }
+                        onSelect={(val) => {
+                          hook.handleAreaChange(val);
+                          if (shippingErrors.areaId) {
+                            setShippingErrors((p) => ({
+                              ...p,
+                              areaId: undefined,
+                            }));
+                          }
+                        }}
+                      />
                     </View>
                   )}
 
@@ -1065,7 +835,7 @@ export default function CheckoutSummaryScreen() {
                     ISO Code : {hook.addressForm?.isoCode || "N/A"}
                   </Text>
                   <Text style={styles.secondaryText}>
-                    Phone Code : {hook.addressForm?.phoneCode || "N/A"}
+                    Phone Code : +{hook.addressForm?.phoneCode || "N/A"}
                   </Text>
                   <Text style={styles.secondaryText}>
                     Phone: {hook.addressForm?.phone || "N/A"}
@@ -1267,6 +1037,59 @@ export default function CheckoutSummaryScreen() {
                 </Text>
               </View>
             </View>
+
+            {/* Professional Validation Warning Summary Modal */}
+            <Modal
+              visible={hook.errorModalVisible}
+              animationType="fade"
+              transparent={true}
+            >
+              <View style={styles.errorModalOverlay}>
+                <View style={styles.errorCardContainer}>
+                  <View style={styles.errorCardHeader}>
+                    <Ionicons name="alert-circle" size={28} color="#EF4444" />
+                    <Text style={styles.errorCardTitle}>
+                      Missing Information
+                    </Text>
+                  </View>
+
+                  <Text style={styles.errorCardSubtitle}>
+                    Please complete the following required operational fields
+                    before moving to payment:
+                  </Text>
+
+                  <View style={styles.errorListWrapper}>
+                    <FlatList
+                      data={Object.keys(hook.formErrors)}
+                      keyExtractor={(item) => item}
+                      renderItem={({ item }) => (
+                        <View style={styles.errorItemRow}>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={14}
+                            color="#F87171"
+                            style={{ marginTop: 2 }}
+                          />
+                          <Text style={styles.errorItemText}>
+                            {FIELD_LABELS[item] || item}
+                          </Text>
+                        </View>
+                      )}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.errorDismissButton}
+                    activeOpacity={0.8}
+                    onPress={() => hook.setErrorModalVisible(false)}
+                  >
+                    <Text style={styles.errorDismissButtonText}>
+                      Review Form
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </ScrollView>
 
           {!isKeyboardVisible && (
@@ -1670,5 +1493,71 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginTop: 4,
     paddingLeft: 2,
+  },
+
+  errorModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  errorCardContainer: {
+    width: "100%",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  errorCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  errorCardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  errorCardSubtitle: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  errorListWrapper: {
+    maxHeight: 180,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+  },
+  errorItemRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginVertical: 4,
+  },
+  errorItemText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#991B1B",
+  },
+  errorDismissButton: {
+    backgroundColor: "#0F172A",
+    borderRadius: 12,
+    height: 46,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  errorDismissButtonText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

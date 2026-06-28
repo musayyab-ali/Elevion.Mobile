@@ -18,6 +18,7 @@ interface CartContextType {
   cartCount: number;
   loading: boolean;
   serverError: boolean;
+  refreshing: boolean;
   processingIds: Set<number>;
   cartMessage: string | null;
   deleteLoading: {
@@ -52,21 +53,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const router = useRouter();
   const [cartData, setCartData] = useState<CartResponse["Data"] | null>(null);
   const [cartCount, setCartCount] = useState<number>(0);
-  //  const [loading, setLoading] = useState<boolean>(false);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [guestSessionId, setGuestSessionId] = useState<string | null>(null);
   const [isSessionReady, setIsSessionReady] = useState<boolean>(false);
   const [serverError, setServerError] = useState<boolean>(false);
-  type LoadingState = {
-    fetching: boolean;
-    checkout: boolean;
-  };
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const [loading, setLoading] = useState<LoadingState>({
-    fetching: false,
-    checkout: false,
-  });
+  const [loading, setLoading] = useState<boolean>(false);
+
   // 🌟 Pass the exact object shape directly into the useState generic wrapper
   const [deleteLoading, setDeleteLoading] = useState<{
     active: boolean;
@@ -76,9 +71,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     cartId: null, // Clean initialization without nasty inline type castings
   });
 
-  const setActionLoading = (key: keyof LoadingState, value: boolean) => {
-    setLoading((prev) => ({ ...prev, [key]: value }));
-  };
+  // const setActionLoading = (key: keyof LoadingState, value: boolean) => {
+  //   setLoading((prev) => ({ ...prev, [key]: value }));
+  // };
   // 1. Initialize or load the tracking tracking session keys safely
   useEffect(() => {
     const initializeSessionId = async () => {
@@ -100,7 +95,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     initializeSessionId();
   }, []);
 
-  console.log(`fuck me : ${guestSessionId}`);
+  console.log(`fuck you : ${guestSessionId}`);
 
   const [isCartBannerDismissed, setIsCartBannerDismissed] =
     useState<boolean>(false);
@@ -141,44 +136,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // 2. Fetch cart contents with conditional gates
-  const fetchCart = useCallback(async () => {
-    // 🛑 GATE 1: Wait until Auth state is resolved from SecureStore
-    if (isAuthSettled === false) return;
+  const fetchCart = useCallback(
+    async (isRefreshing = false) => {
+      // 🛑 GATE 1: Wait until Auth state is resolved from SecureStore
+      if (isAuthSettled === false) return;
 
-    // 🛑 GATE 2: Wait until guest tracking keys are fully loaded from storage
-    if (!isSessionReady) return;
-    setActionLoading("fetching", true);
-    // setLoading(true);
-    try {
-      let response: CartResponse;
-      if (isAuthenticated) {
-        response = await cartApi.getCart();
-      } else if (guestSessionId) {
-        response = await cartApi.getCartGuest(guestSessionId);
-      } else {
-        return;
-      }
+      // 🛑 GATE 2: Wait until guest tracking keys are fully loaded from storage
+      if (!isSessionReady) return;
+      if (isRefreshing) setRefreshing(true);
+      else setLoading(true);
 
-      if (response?.Data) {
-        setCartData(response.Data);
-        const count =
-          response.Data.CartItemList?.reduce(
-            (sum, item) => sum + (item.Quantity || 0),
-            0,
-          ) || 0;
-        setCartCount(count);
-      } else {
-        // Fallback clear reset rules if backend data arrives clean empty
-        setCartData(null);
-        setCartCount(0);
+      try {
+        let response: CartResponse;
+        if (isAuthenticated) {
+          response = await cartApi.getCart();
+          // response = await cartApi.getCartGuest(guestSessionId);
+        } else if (guestSessionId) {
+          response = await cartApi.getCartGuest(guestSessionId);
+        } else {
+          return;
+        }
+
+        if (response?.Data) {
+          setCartData(response.Data);
+          const count =
+            response.Data.CartItemList?.reduce(
+              (sum, item) => sum + (item.Quantity || 0),
+              0,
+            ) || 0;
+          console.log("count is :", count);
+          setCartCount(count);
+        } else {
+          // Fallback clear reset rules if backend data arrives clean empty
+          setCartData(null);
+          setCartCount(0);
+        }
+      } catch (error: any) {
+        console.log("fetchCart error:", error);
+        setServerError(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (error: any) {
-      console.log("fetchCart error:", error);
-      setServerError(true);
-    } finally {
-      setActionLoading("fetching", false);
-    }
-  }, [isAuthenticated, isAuthSettled, guestSessionId, isSessionReady]);
+    },
+    [isAuthenticated, isAuthSettled, guestSessionId, isSessionReady],
+  );
 
   // Handle immediate auto-fetch execution gates securely
   useEffect(() => {
@@ -376,7 +378,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const executeCheckout = useCallback(
     async (attachments: string[] = []) => {
-      setActionLoading("checkout", true);
       try {
         let checkoutResult;
         if (isAuthenticated) {
@@ -398,7 +399,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           error?.Message || "Something went wrong processing your order.",
         );
       } finally {
-        setActionLoading("checkout", false);
         setTimeout(() => setCartMessage(null), 2000);
       }
     },
@@ -425,6 +425,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       dismissCartBanner,
       markCartAsVisited,
       deleteLoading,
+      refreshing,
     }),
     [
       cartData,
@@ -445,6 +446,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       dismissCartBanner,
       markCartAsVisited,
       deleteLoading,
+      refreshing,
     ],
   );
 

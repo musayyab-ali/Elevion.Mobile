@@ -178,7 +178,7 @@ export const OrderConfirmationScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.masterContainer}>
+    <View style={styles.masterContainer}>
       <View style={styles.contentCardWrapper}>
         {/* State A: Processing / Automatic Polling */}
         {verificationState === "processing" && (
@@ -259,7 +259,7 @@ export const OrderConfirmationScreen = () => {
                 style={styles.changeMethodBtn}
                 onPress={() => {
                   router.replace({
-                    pathname: "/(tabs)/cart/payment-methods",
+                    pathname: "/(cart)/payment-methods",
                     params: { orderId: String(orderId) },
                   });
                 }}
@@ -273,7 +273,7 @@ export const OrderConfirmationScreen = () => {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -142,6 +142,7 @@ export const useRegister = (resetFormCallback?: () => void) => {
   );
 
   const handleRegister = async (formData: any) => {
+    console.log("fuck");
     if (!usernameStatus?.isUnique) {
       setApiMessage("Username must be unique");
       return;

@@ -208,7 +208,7 @@ export const OrdersHistoryScreen = () => {
   const handleProceedToPayment = (orderId: string) => {
     closeDetailInspector();
     router.push({
-      pathname: "/(tabs)/cart/payment-methods",
+      pathname: "/(cart)/payment-methods",
       params: { orderId: String(orderId) },
     });
   };

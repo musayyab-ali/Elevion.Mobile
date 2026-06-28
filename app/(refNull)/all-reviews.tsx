@@ -9,9 +9,9 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useReviews } from "../../../features/customer/hooks/useReviews";
-import { ReviewItem } from "../../../features/customer/components/ReviewItem";
-import { Colors } from "../../../constants/Theme";
+import { useReviews } from "../../features/customer/hooks/useReviews";
+import { ReviewItem } from "../../features/customer/components/ReviewItem";
+import { Colors } from "../../constants/Theme";
 
 const AllReviewsScreen = () => {
   const router = useRouter();
@@ -20,7 +20,7 @@ const AllReviewsScreen = () => {
   const { reviews, loading, refresh } = useReviews("all");
   const handlePressDetails = (productId: number) => {
     router.push({
-      pathname: "/(tabs)/category/product-details",
+      pathname: "/(product)/product-details",
       params: { productId: String(productId) },
     });
   };

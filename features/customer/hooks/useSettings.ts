@@ -5,23 +5,25 @@ import { accountApi } from "../services/accountApi";
 
 export const useSettings = () => {
   const [loading, setLoading] = useState(false);
-  const { logout, setGlobalLogoutSuccess, globalLogoutSuccess } = useAuth();
+  const {
+    logout,
+    setGlobalLogoutSuccess,
+    globalLogoutSuccess,
+    globalDeleteSuccess,
+    setGlobalDeleteSuccess,
+  } = useAuth();
   const router = useRouter();
-  // const [isSuccess, setIsSuccess] = useState(false);
   const executeConfirmedLogout = async () => {
     setLoading(true);
     try {
-      await logout();
-      // setIsSuccess(true);
       setGlobalLogoutSuccess(true);
-      setTimeout(() => {
-        router.replace("/(tabs)");
-        setTimeout(() => setGlobalLogoutSuccess(false), 500);
-      }, 2000);
+      await logout();
+      router.replace("/(tabs)");
     } catch (err) {
       console.log("🚨 Error processing system logout sequence:", err);
     } finally {
       setLoading(false);
+      setGlobalLogoutSuccess(false);
     }
   };
 
@@ -86,6 +88,9 @@ export const useSettings = () => {
     setLoading(true);
     try {
       const res = await accountApi.deleteAccount();
+      setGlobalDeleteSuccess(true);
+      await logout();
+      router.replace("/(tabs)");
       return {
         success: true,
         message: res.Message || `Account scheduled for deletion successfully.`,
@@ -97,41 +102,16 @@ export const useSettings = () => {
       return { success: false, message: apiErr };
     } finally {
       setLoading(false);
+      setGlobalDeleteSuccess(false);
     }
   };
-
-  const handleRestoreAccount = async (userName: string, email: string) => {
-    if (!userName || !email)
-      return {
-        success: false,
-        message: "Username and Email are mandatory fields.",
-      };
-
-    setLoading(true);
-    try {
-      const res = await accountApi.restoreAccount({
-        UserName: userName,
-        Email: email,
-      });
-      return {
-        success: true,
-        message: res.Message || `Account record successfully recovered.`,
-      };
-    } catch (err: any) {
-      const apiErr = err?.Message || "Failed to process account recovery.";
-      return { success: false, message: apiErr };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return {
     loading,
     isSuccess: globalLogoutSuccess,
+    isDeleteSuccess: globalDeleteSuccess,
     executeConfirmedLogout,
     handleChangePassword,
     handleChangeEmail,
     handleDeleteAccount,
-    handleRestoreAccount,
   };
 };

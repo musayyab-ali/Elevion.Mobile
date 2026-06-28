@@ -28,7 +28,7 @@ export const CategoryBreadcrumbs = ({
     if (isLast) return;
 
     router.push({
-      pathname: "/(tabs)/category/[id]",
+      pathname: "/(product)/[id]",
       params: { id: crumb.id.toString(), name: crumb.name },
     });
   };

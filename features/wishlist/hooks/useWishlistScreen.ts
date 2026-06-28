@@ -51,7 +51,7 @@ export function useWishlistScreen() {
 
   const handleNavigateToDetails = (productId: number) => {
     router.push({
-      pathname: "/(tabs)/category/product-details",
+      pathname: "/(product)/product-details",
       params: { productId: String(productId) },
     });
   };

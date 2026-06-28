@@ -37,7 +37,8 @@ export const ShopHomeScreen = () => {
     (category: any) => {
       if (category?.IsLeafNode) {
         router.push({
-          pathname: "/(tabs)/category/products",
+          // pathname: "/(tabs)/category/products",
+          pathname: "/(product)/products",
           params: {
             categoryId: category.CategoryId,
             categoryName: category.Name,
@@ -45,7 +46,7 @@ export const ShopHomeScreen = () => {
         });
       } else {
         router.push({
-          pathname: "/(tabs)/category/[id]",
+          pathname: "/(product)/[id]",
           params: { id: category.CategoryId.toString(), name: category.Name },
         });
       }
@@ -56,7 +57,8 @@ export const ShopHomeScreen = () => {
   const handleProductPress = useCallback(
     (product: any) => {
       router.push({
-        pathname: "/(tabs)/category/product-details",
+        // pathname: "/(tabs)/category/product-details",
+        pathname: "/(product)/product-details",
         params: { productId: product.ProductId },
       });
     },

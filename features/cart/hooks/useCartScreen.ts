@@ -1,10 +1,11 @@
 import { useSharedCartData } from "@/store/CartContext";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 export function useCartScreen() {
   const router = useRouter();
   const { cartData, updateCartItemQuantity, removeCartItem, executeCheckout } =
     useSharedCartData();
-
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const cartItems = cartData?.CartItemList ?? [];
   const pricingSummary = {
     subtotal: cartData?.TotalPrice ?? 0,
@@ -26,15 +27,13 @@ export function useCartScreen() {
   };
 
   const handleProcessCheckoutPipeline = async () => {
+    setCheckoutLoading(true);
     try {
       const invoiceReceipt = await executeCheckout([]);
-      console.log(
-        "Checkout successful, received invoice receipt:",
-        invoiceReceipt,
-      );
+      console.log("cart fuck");
       if (invoiceReceipt && invoiceReceipt.Data) {
         router.push({
-          pathname: "/(tabs)/cart/checkout-summary",
+          pathname: "/(cart)/checkout-summary",
           params: { data: JSON.stringify(invoiceReceipt.Data) },
         });
       }
@@ -46,6 +45,8 @@ export function useCartScreen() {
         "Something went wrong processing your order.";
 
       console.log("Checkout error:", serverMessage);
+    } finally {
+      setCheckoutLoading(false);
     }
   };
   return {
@@ -55,5 +56,6 @@ export function useCartScreen() {
     handleDecrement,
     handleRemove: removeCartItem,
     handleProcessCheckoutPipeline,
+    checkoutLoading,
   };
 }

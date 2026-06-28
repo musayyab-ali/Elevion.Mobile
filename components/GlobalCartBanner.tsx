@@ -31,7 +31,7 @@ export function GlobalCartBanner() {
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.interactiveCard}
-            onPress={() => router.push("/(tabs)/category/cart")} // Routes cleanly straight into your cart layout view
+            onPress={() => router.push("/(cart)/cart")} // Routes cleanly straight into your cart layout view
           >
             <View style={styles.contentLeftRow}>
               <View style={styles.iconPillFrame}>

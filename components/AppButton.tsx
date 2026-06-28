@@ -17,6 +17,7 @@ interface Props {
 export const AppButton = ({
   title,
   onPress,
+  disabled,
   variant = "primary",
   style,
 }: Props) => {
@@ -25,6 +26,7 @@ export const AppButton = ({
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       style={[
         styles.button,
         isOutline ? styles.outlineButton : styles.primaryButton,

@@ -140,7 +140,7 @@ export const ShopHeader = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconCircle}
-            onPress={() => router.push("/(tabs)/category/cart")}
+            onPress={() => router.push("/(cart)/cart")}
             activeOpacity={0.8}
           >
             <Ionicons name="cart" size={22} color={Colors.white || "#FFF"} />

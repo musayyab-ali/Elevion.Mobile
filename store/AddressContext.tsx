@@ -239,7 +239,7 @@ export const AddressProvider = ({
       const payload = res?.data || res;
       setCountries(payload?.Data || []);
     } catch (err) {
-      console.error("Error loading countries:", err);
+      console.log("Error loading countries:", err);
     } finally {
       setDropdownLoading(false);
     }
@@ -253,7 +253,7 @@ export const AddressProvider = ({
       const payload = res?.data || res;
       setStates(payload?.Data || []);
     } catch (err) {
-      console.error("Error loading states:", err);
+      console.log("Error loading states:", err);
     } finally {
       setDropdownLoading(false);
     }
@@ -267,7 +267,7 @@ export const AddressProvider = ({
       const payload = res?.data || res;
       setCities(payload?.Data || []);
     } catch (err) {
-      console.error("Error loading cities:", err);
+      console.log("Error loading cities:", err);
     } finally {
       setDropdownLoading(false);
     }
@@ -288,7 +288,7 @@ export const AddressProvider = ({
       setAreas(areasPayload?.Data || []);
       setBranches(branchesPayload?.Data || []);
     } catch (err) {
-      console.error("Error loading architectural areas/branches arrays:", err);
+      console.log("Error loading architectural areas/branches arrays:", err);
     } finally {
       setDropdownLoading(false);
     }

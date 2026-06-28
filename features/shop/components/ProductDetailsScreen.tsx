@@ -19,16 +19,16 @@ import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useProductDetails } from "@/features/shop/hooks/useProductDetails";
-import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
-import { useProductCartActions } from "@/features/cart/hooks/useProductCartActions";
+import { useProductDetails } from "../hooks/useProductDetails";
+import { useWishlist } from "../../wishlist/hooks/useWishlist";
+import { useProductCartActions } from "../../cart/hooks/useProductCartActions";
 import { useSharedCartData } from "@/store/CartContext";
 import { Colors } from "@/constants/Theme";
 import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { useAuth } from "@/store/AuthContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useSharedWishlistData } from "@/store/WishlistContext";
-import { customerApi } from "@/features/customer/services/customerApi";
+import { customerApi } from "../../customer/services/customerApi";
 
 const IMAGE_PLACEHOLDER =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
@@ -47,7 +47,7 @@ interface ReviewItem {
   Email?: string;
 }
 
-export default function ProductDetailsScreen() {
+export const ProductDetailsScreen = () => {
   const { isAuthenticated, user } = useAuth();
   const { wishMessage } = useSharedWishlistData();
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -124,7 +124,7 @@ export default function ProductDetailsScreen() {
       setRatingGraph(rawGraph);
       setReviewsList(rawList);
     } catch (err) {
-      console.error("Failed syncing metrics pipeline components:", err);
+      console.log("Failed syncing metrics pipeline components:", err);
     } finally {
       setReviewsLoading(false);
     }
@@ -232,13 +232,6 @@ export default function ProductDetailsScreen() {
   if (!loading && !product) {
     return (
       <View style={styles.premiumErrorWorkspace}>
-        <Stack.Screen
-          options={{
-            headerTransparent: true,
-            title: "",
-            headerBackTitleVisible: false,
-          }}
-        />
         <View style={styles.errorCardBody}>
           <View style={styles.errorIconFrame}>
             <Ionicons name="cloud-offline-outline" size={32} color="#64748B" />
@@ -321,7 +314,7 @@ export default function ProductDetailsScreen() {
       try {
         await removeCartItem(matchedCartItem.CartId);
       } catch (err) {
-        console.error("Cart mutation pipeline interruption:", err);
+        console.log("Cart mutation pipeline interruption:", err);
       } finally {
         setIsRemovingFromCart(false);
       }
@@ -337,14 +330,6 @@ export default function ProductDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* <Stack.Screen
-        options={{
-          headerTransparent: true,
-          title: "",
-          headerBackTitleVisible: false,
-        }}
-      /> */}
-
       {(wishMessage || cartMessage) && (
         <CustomErrorMessage style={styles.toastNotification}>
           {wishMessage || cartMessage}
@@ -815,7 +800,8 @@ export default function ProductDetailsScreen() {
                     activeOpacity={0.9}
                     onPress={() =>
                       router.push({
-                        pathname: "/(tabs)/category/product-details",
+                        // pathname: "/(tabs)/category/product-details",
+                        pathname: "/(product)/product-details",
                         params: { productId: item.ProductId },
                       })
                     }
@@ -1045,7 +1031,7 @@ export default function ProductDetailsScreen() {
       </Modal>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF", paddingBottom: 100 },

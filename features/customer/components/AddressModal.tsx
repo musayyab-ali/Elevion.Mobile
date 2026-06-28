@@ -27,7 +27,6 @@ interface Props {
 const INITIAL_FORM_STATE = {
   AddressBookId: 0,
   FullName: "",
-  RawPhoneNumber: "",
   PhoneNumber: "",
   IsDefault: true,
   Address: "",
@@ -76,17 +75,19 @@ export const AddressModal = ({
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // High-end Custom Modal Toast Alert notification states
-  // const [toastConfig, setToastConfig] = useState<{
-  //   visible: boolean;
-  //   type: "success" | "error";
-  //   message: string;
-  // }>({
-  //   visible: false,
-  //   type: "success",
-  //   message: "",
-  // });
+  const [toastConfig, setToastConfig] = useState<{
+    visible: boolean;
+    type: "success" | "error";
+    message: string;
+  }>({
+    visible: false,
+    type: "success",
+    message: "",
+  });
 
-  const [selectedCountryCode, setSelectedCountryCode] = useState("+92");
+  const [selectedCountryCode, setSelectedCountryCode] = useState(
+    user?.PhoneCode,
+  );
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -102,7 +103,7 @@ export const AddressModal = ({
     } else {
       setView("list");
       setFormData(INITIAL_FORM_STATE);
-      setSelectedCountryCode("+92");
+      setSelectedCountryCode(user?.PhoneCode);
       setFormErrors({});
       closeAllDropdowns();
     }
@@ -115,49 +116,39 @@ export const AddressModal = ({
     setShowAreaDropdown(false);
   };
 
-  // const triggerToast = (type: "success" | "error", message: string) => {
-  //   setToastConfig({ visible: true, type, message });
-  //   setTimeout(() => {
-  //     setToastConfig((prev) => ({ ...prev, visible: false }));
-  //   }, 3500);
-  // };
+  const triggerToast = (type: "success" | "error", message: string) => {
+    setToastConfig({ visible: true, type, message });
+    setTimeout(() => {
+      setToastConfig((prev) => ({ ...prev, visible: false }));
+    }, 3500);
+  };
 
   const hydrateUserProfileData = async () => {
     try {
       const storedName = user?.Name;
       const storedPhone = user?.Phone;
+      const storedPhoneCode = user?.PhoneCode;
 
-      let parsedRawPhone = "";
-      let inferredDialCode = "+92";
       let countryLabel = "";
       let countryStringId = 0;
 
-      if (storedPhone) {
-        let cleanPhone = storedPhone.trim().replace(/\D/g, "");
-        if (cleanPhone.startsWith("92")) {
-          inferredDialCode = "+92";
-          parsedRawPhone = cleanPhone.substring(2);
+      if (storedPhoneCode) {
+        if (storedPhoneCode === "92") {
           countryLabel = "Pakistan";
-          countryStringId = 169; // Assuming lookup string value logic maps matching IDs
-        } else if (cleanPhone.startsWith("44")) {
-          inferredDialCode = "+44";
-          parsedRawPhone = cleanPhone.substring(2);
+          countryStringId = 169;
+        } else if (storedPhoneCode === "44") {
           countryLabel = "United Kingdom";
           countryStringId = 236;
         } else {
-          // Standard structural fallback sequence handling
-          inferredDialCode = "+92";
-          parsedRawPhone = cleanPhone;
           countryLabel = "Pakistan";
           countryStringId = 169;
         }
       }
 
-      setSelectedCountryCode(inferredDialCode);
+      setSelectedCountryCode(storedPhoneCode);
       setFormData((prev) => ({
         ...prev,
         FullName: storedName || prev.FullName,
-        RawPhoneNumber: parsedRawPhone || prev.RawPhoneNumber,
         PhoneNumber: storedPhone || prev.PhoneNumber,
         Country: countryLabel || prev.Country,
         CountryId: countryStringId || prev.CountryId,
@@ -171,46 +162,50 @@ export const AddressModal = ({
     }
   };
 
-  // Keep options clean using client string properties
   const filteredCountries = countries.filter((c) => {
     const name = c.Text.toLowerCase();
     const code = c.Value.toLowerCase();
     return (
       name.includes("pakistan") ||
       name.includes("united kingdom") ||
-      code === "1" ||
+      code === "169" ||
       code === "236"
     );
   });
 
   const updatePhoneNumberPayload = (rawNum: string, currentCode: string) => {
     let cleanedDigits = rawNum.replace(/\D/g, "");
-    cleanedDigits = cleanedDigits.replace(/^0+/, "");
-
     if (
-      currentCode === "+92" &&
-      cleanedDigits.startsWith("92") &&
-      cleanedDigits.length > 2
+      cleanedDigits.startsWith(currentCode) &&
+      cleanedDigits.length >= currentCode.length
     ) {
-      cleanedDigits = cleanedDigits.substring(2);
-    } else if (
-      currentCode === "+44" &&
-      cleanedDigits.startsWith("44") &&
-      cleanedDigits.length > 2
-    ) {
-      cleanedDigits = cleanedDigits.substring(2);
+      setFormErrors((prev) => ({
+        ...prev,
+        PhoneNumber: `Do not include the country code (+${currentCode}). Enter your raw number.`,
+      }));
+      return;
+    }
+    if (cleanedDigits.startsWith("0")) {
+      setFormErrors((prev) => ({
+        ...prev,
+        PhoneNumber:
+          "Phone number must not start with a 0. Enter your raw number.",
+      }));
+      return;
     }
 
+    if (formErrors.PhoneNumber) {
+      setFormErrors((prev) => ({ ...prev, PhoneNumber: "" }));
+    }
     setFormData((prev) => ({
       ...prev,
-      RawPhoneNumber: cleanedDigits,
-      PhoneNumber: cleanedDigits ? `${currentCode}${cleanedDigits}` : "",
+      PhoneNumber: cleanedDigits,
     }));
   };
 
   const inferPhoneCodeByStringId = (countryValue: string): string => {
-    if (countryValue === "236") return "+44";
-    return "+92";
+    if (countryValue === "236") return "44";
+    return "92";
   };
 
   const validateFormFields = (): boolean => {
@@ -224,11 +219,11 @@ export const AddressModal = ({
         "Please enter a valid alphabetic name configuration string.";
     }
 
-    if (!formData.RawPhoneNumber.trim()) {
+    if (!formData.PhoneNumber.trim()) {
       errors.PhoneNumber = "Phone contact number is required.";
     } else if (
-      formData.RawPhoneNumber.length < 9 ||
-      formData.RawPhoneNumber.length > 11
+      formData.PhoneNumber.length < 9 ||
+      formData.PhoneNumber.length > 11
     ) {
       errors.PhoneNumber =
         "Enter a complete, valid mobile contact number line.";
@@ -256,9 +251,6 @@ export const AddressModal = ({
 
   const onSavePress = async () => {
     if (!validateFormFields()) return;
-
-    setIsSaving(true);
-    // Explicit API formatting structure block matching standard expectations
     const finalPayload = {
       AddressBookId: formData.AddressBookId,
       FullName: formData.FullName.trim(),
@@ -272,19 +264,25 @@ export const AddressModal = ({
       Longitude: formData.Longitude,
       Latitude: formData.Latitude,
     };
+    console.log("sending payload :", finalPayload);
+    try {
+      setIsSaving(true);
+      const res = await handleSaveAddress(finalPayload);
 
-    const res = await handleSaveAddress(finalPayload);
-    setIsSaving(false);
-
-    if (res?.success) {
-      // triggerToast(
-      //   "success",
-      //   "Address synchronized and securely updated successfully.",
-      // );
-      setView("list");
-      setFormData(INITIAL_FORM_STATE);
-      setFormErrors({});
-      return;
+      if (res?.success) {
+        setView("list");
+        setFormData(INITIAL_FORM_STATE);
+        setFormErrors({});
+        return;
+      }
+    } catch (err) {
+      console.log("error while saving addres :", err);
+      triggerToast(
+        "error",
+        "There is something wrong! please check your connection.",
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -312,7 +310,7 @@ export const AddressModal = ({
       >
         <View style={styles.modalOverlay}>
           {/* HIGH-END TOAST MODAL INLINE COMPONENT CONTAINER */}
-          {/* {toastConfig.visible && (
+          {toastConfig.visible && (
             <View
               style={[
                 styles.premiumToastBox,
@@ -332,7 +330,7 @@ export const AddressModal = ({
               />
               <Text style={styles.toastTextContent}>{toastConfig.message}</Text>
             </View>
-          )} */}
+          )}
 
           <View style={styles.modalContainer}>
             {/* HEADER ROW */}
@@ -538,9 +536,8 @@ export const AddressModal = ({
                               Area: "",
                               AreaId: 0,
                             }));
-
                             updatePhoneNumberPayload(
-                              formData.RawPhoneNumber,
+                              formData.PhoneNumber,
                               code,
                             );
                             loadStates(c.Value);
@@ -788,6 +785,43 @@ export const AddressModal = ({
                 )}
 
                 {/* 6. Phone Number Compound Input Section */}
+                {/* <Text style={styles.fieldLabelText}>Phone Number</Text>
+                <View style={styles.phoneInputCompoundRow}>
+                  <View
+                    style={[
+                      styles.staticCountryCodeDeck,
+                      formErrors.PhoneNumber ? styles.inputErrorBorder : null,
+                    ]}
+                  >
+                    <Text style={styles.countryCodeLabelText}>
+                      +{selectedCountryCode}
+                    </Text>
+                  </View>
+                  <TextInput
+                    placeholder="**********"
+                    placeholderTextColor="#94A3B8"
+                    style={[
+                      styles.phoneInputFieldElement,
+                      formErrors.PhoneNumber ? styles.inputErrorBorder : null,
+                    ]}
+                    keyboardType="number-pad"
+                    maxLength={11}
+                    value={formData.PhoneNumber}
+                    onChangeText={(t) => {
+                      updatePhoneNumberPayload(t, selectedCountryCode);
+                      if (formErrors.PhoneNumber)
+                        setFormErrors({ ...formErrors, PhoneNumber: "" });
+                    }}
+            
+                  />
+                </View>
+                {formErrors.PhoneNumber && (
+                  <Text style={styles.errorSubtext}>
+                    {formErrors.PhoneNumber}
+                  </Text>
+                )} */}
+
+                {/* 6. Phone Number Compound Input Section */}
                 <Text style={styles.fieldLabelText}>Phone Number</Text>
                 <View style={styles.phoneInputCompoundRow}>
                   <View
@@ -797,24 +831,24 @@ export const AddressModal = ({
                     ]}
                   >
                     <Text style={styles.countryCodeLabelText}>
-                      {selectedCountryCode}
+                      +{selectedCountryCode}
                     </Text>
                   </View>
                   <TextInput
-                    placeholder="3076856432"
+                    placeholder={
+                      selectedCountryCode === "92" ? "3001234567" : "7123456789"
+                    }
                     placeholderTextColor="#94A3B8"
                     style={[
                       styles.phoneInputFieldElement,
                       formErrors.PhoneNumber ? styles.inputErrorBorder : null,
                     ]}
                     keyboardType="number-pad"
-                    maxLength={11}
-                    value={formData.RawPhoneNumber}
-                    onChangeText={(t) => {
-                      updatePhoneNumberPayload(t, selectedCountryCode);
-                      if (formErrors.PhoneNumber)
-                        setFormErrors({ ...formErrors, PhoneNumber: "" });
-                    }}
+                    maxLength={10} // Adjusted down to 10 for raw numbers
+                    value={formData.PhoneNumber} // Displays only the raw numbers beautifully
+                    onChangeText={(t) =>
+                      updatePhoneNumberPayload(t, selectedCountryCode)
+                    }
                   />
                 </View>
                 {formErrors.PhoneNumber && (

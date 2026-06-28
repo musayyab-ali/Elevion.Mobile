@@ -1,538 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   FlatList,
-//   Image,
-//   TouchableOpacity,
-//   ActivityIndicator,
-//   Dimensions,
-// } from "react-native";
-// import { MotiView } from "moti";
-// import { Ionicons } from "@expo/vector-icons";
-// import { useCartScreen } from "../hooks/useCartScreen";
-// import { Colors } from "@/constants/Theme";
-// import { useAuth } from "@/store/AuthContext";
-// import { AuthGuardModal } from "@/components/AuthGuardModal";
-// import { useSharedCartData } from "@/store/CartContext";
-// import { CustomErrorMessage } from "@/components/CustomErrorMessage";
-// import { EmptyState } from "@/components/EmptyState";
-// import { useIsFocused } from "@react-navigation/native";
-
-// const { width } = Dimensions.get("window");
-
-// const IMAGE_PLACEHOLDER =
-//   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
-// export const CartScreen = () => {
-//   const { isAuthenticated } = useAuth();
-//   const {
-//     cartItems,
-//     pricingSummary,
-//     handleIncrement,
-//     handleDecrement,
-//     handleRemove,
-//     handleProcessCheckoutPipeline,
-//   } = useCartScreen();
-
-//   const {
-//     cartMessage,
-//     loading,
-//     serverError,
-//     fetchCart,
-//     markCartAsVisited,
-//     deleteLoading,
-//   } = useSharedCartData();
-
-//   const [modalVisible, setModalVisible] = useState(false);
-//   const isFocused = useIsFocused();
-
-//   useEffect(() => {
-//     if (isFocused) {
-//       markCartAsVisited();
-//     }
-//   }, [isFocused]);
-
-//   const handleRetryFetch = () => {
-//     fetchCart();
-//   };
-
-//   if (loading.fetching) {
-//     return (
-//       <View style={styles.centerContainer}>
-//         <ActivityIndicator size="large" color="#0284C7" />
-//       </View>
-//     );
-//   }
-
-//   return (
-//     <View style={styles.container}>
-//       {serverError ? (
-//         <EmptyState
-//           iconName="cloud-offline-outline"
-//           title="Server Connection Interrupted"
-//           description="We are having trouble synchronizing our Cart items. Please check your network and try again."
-//           actionLabel="Retry Connection"
-//           onActionPress={handleRetryFetch}
-//         />
-//       ) : (
-//         <>
-//           <FlatList
-//             data={cartItems}
-//             keyExtractor={(item) => `cart-row-${item.CartId}`}
-//             contentContainerStyle={styles.listContainer}
-//             showsVerticalScrollIndicator={false}
-//             ListHeaderComponent={
-//               <View style={styles.headerWrapper}>
-//                 <Text style={styles.sheetTitle}>Shopping Cart </Text>
-//                 <View style={styles.badgeCount}>
-//                   <Text style={styles.badgeText}>{cartItems.length} Items</Text>
-//                 </View>
-//               </View>
-//             }
-//             renderItem={({ item, index }) => (
-//               <MotiView
-//                 from={{ opacity: 0, translateY: 20 }}
-//                 animate={{ opacity: 1, translateY: 0 }}
-//                 transition={{
-//                   type: "timing",
-//                   duration: 400,
-//                   delay: index * 60,
-//                 }}
-//                 style={styles.cartCard}
-//               >
-//                 {/* Product Image Wrapper */}
-//                 <View style={styles.imageContainer}>
-//                   <Image
-//                     source={{
-//                       uri: item.ProductImage || IMAGE_PLACEHOLDER,
-//                     }}
-//                     style={styles.productImage}
-//                     resizeMode="cover"
-//                   />
-//                 </View>
-
-//                 {/* Right Side Content Details */}
-//                 <View style={styles.cardDetails}>
-//                   <View style={styles.rowHeader}>
-//                     <Text style={styles.productName} numberOfLines={2}>
-//                       {item.ProductName}
-//                     </Text>
-
-//                     {!(
-//                       deleteLoading.active &&
-//                       deleteLoading.cartId === item.CartId
-//                     ) ? (
-//                       <TouchableOpacity
-//                         onPress={() => handleRemove(item.CartId)}
-//                         style={styles.deleteButtonContainer}
-//                         activeOpacity={0.7}
-//                       >
-//                         <Ionicons
-//                           name="trash-outline"
-//                           size={19}
-//                           color="#EF4444"
-//                         />
-//                       </TouchableOpacity>
-//                     ) : (
-//                       <ActivityIndicator
-//                         size="small"
-//                         color="#EF4444"
-//                         style={styles.loaderPadding}
-//                       />
-//                     )}
-//                   </View>
-
-//                   {/* Variant Information Styled as Pill Badges */}
-//                   <View style={styles.variantBadgeContainer}>
-//                     <Ionicons
-//                       name="options-outline"
-//                       size={12}
-//                       color="#64748B"
-//                       style={{ marginRight: 4 }}
-//                     />
-//                     <Text style={styles.variantText} numberOfLines={1}>
-//                       {item.ProductVariants || "Standard Configuration"}
-//                     </Text>
-//                   </View>
-
-//                   {/* Pricing and Action Control Layer */}
-//                   <View style={styles.priceRow}>
-//                     <Text style={styles.priceText}>
-//                       Rs. {item.Price.toLocaleString()}
-//                     </Text>
-
-//                     {/* Quantity Selector Interface */}
-//                     <View style={styles.quantityWidget}>
-//                       <TouchableOpacity
-//                         style={styles.qtyBtn}
-//                         activeOpacity={0.6}
-//                         onPress={() => {
-//                           if (!isAuthenticated) {
-//                             setModalVisible(true);
-//                             return;
-//                           }
-//                           handleDecrement(item.CartId, item.Quantity);
-//                         }}
-//                       >
-//                         <Ionicons name="remove" size={16} color="#0F172A" />
-//                       </TouchableOpacity>
-
-//                       <View style={styles.qtyTextContainer}>
-//                         <Text style={styles.qtyText}>{item.Quantity}</Text>
-//                       </View>
-
-//                       <TouchableOpacity
-//                         style={styles.qtyBtn}
-//                         activeOpacity={0.6}
-//                         onPress={() => {
-//                           if (!isAuthenticated) {
-//                             setModalVisible(true);
-//                             return;
-//                           }
-//                           handleIncrement(item.CartId, item.Quantity);
-//                         }}
-//                       >
-//                         <Ionicons name="add" size={16} color="#0F172A" />
-//                       </TouchableOpacity>
-//                     </View>
-//                   </View>
-//                 </View>
-//               </MotiView>
-//             )}
-//             ListEmptyComponent={
-//               <View style={styles.emptyView}>
-//                 <View style={styles.emptyIconCircle}>
-//                   <Ionicons
-//                     name="bag-handle-outline"
-//                     size={48}
-//                     color="#64748B"
-//                   />
-//                 </View>
-//                 <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
-//                 <Text style={styles.emptySubtitle}>
-//                   Looks like you haven't added anything to your cart yet.
-//                   Explore our latest collections to get started!
-//                 </Text>
-//               </View>
-//             }
-//           />
-
-//           {/* Bottom Billing Sheet Summary Component */}
-//           {cartItems.length > 0 && (
-//             <View style={styles.checkoutFooter}>
-//               <View style={styles.indicatorBar} />
-
-//               <View style={styles.summaryLine}>
-//                 <Text style={styles.summaryLabel}>Subtotal</Text>
-//                 <Text style={styles.summaryValue}>
-//                   Rs. {pricingSummary.subtotal.toLocaleString()}
-//                 </Text>
-//               </View>
-
-//               <View style={styles.summaryLine}>
-//                 <Text style={styles.summaryLabel}>Discounts</Text>
-//                 <Text style={[styles.summaryValue, { color: "#10B981" }]}>
-//                   - Rs. {pricingSummary.discount.toLocaleString()}
-//                 </Text>
-//               </View>
-
-//               <View style={[styles.summaryLine, styles.grandTotalLine]}>
-//                 <Text style={styles.grandTotalLabel}>Total Amount</Text>
-//                 <Text style={styles.grandTotalValue}>
-//                   Rs. {pricingSummary.grandTotal.toLocaleString()}
-//                 </Text>
-//               </View>
-
-//               <TouchableOpacity
-//                 style={styles.checkoutBtn}
-//                 activeOpacity={0.85}
-//                 disabled={loading.checkout}
-//                 onPress={handleProcessCheckoutPipeline}
-//               >
-//                 {loading.checkout ? (
-//                   <ActivityIndicator size="small" color="#FFFFFF" />
-//                 ) : (
-//                   <>
-//                     <Text style={styles.checkoutBtnText}>
-//                       PROCEED TO CHECKOUT
-//                     </Text>
-//                     <Ionicons
-//                       name="arrow-forward"
-//                       size={18}
-//                       color="#FFFFFF"
-//                       style={styles.arrowSpacing}
-//                     />
-//                   </>
-//                 )}
-//               </TouchableOpacity>
-//             </View>
-//           )}
-
-//           <AuthGuardModal
-//             visible={modalVisible}
-//             onClose={() => setModalVisible(false)}
-//             title="Account Required"
-//             subtitle="You can't update your cart without an account."
-//             iconName="account-circle-outline"
-//           />
-//           {cartMessage && (
-//             <CustomErrorMessage>{cartMessage}</CustomErrorMessage>
-//           )}
-//         </>
-//       )}
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#F8FAFC", // Soft premium off-white canvas
-//   },
-//   centerContainer: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     backgroundColor: "#F8FAFC",
-//   },
-//   listContainer: {
-//     padding: 16,
-//     paddingBottom: 260, // Extra cushioning context for the floating footer card
-//   },
-//   headerWrapper: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "space-between",
-//     marginBottom: 20,
-//     marginTop: 4,
-//   },
-//   sheetTitle: {
-//     fontSize: 18,
-//     fontWeight: "800",
-//     color: "#0F172A",
-//     letterSpacing: -0.5,
-//   },
-//   badgeCount: {
-//     backgroundColor: "#E0F2FE",
-//     paddingHorizontal: 12,
-//     paddingVertical: 6,
-//     borderRadius: 20,
-//   },
-//   badgeText: {
-//     color: "#0369A1",
-//     fontSize: 12,
-//     fontWeight: "700",
-//   },
-//   cartCard: {
-//     flexDirection: "row",
-//     backgroundColor: "#FFFFFF",
-//     borderRadius: 20,
-//     padding: 12,
-//     marginBottom: 16,
-//     // Premium structural soft shadow setup
-//     shadowColor: "#0F172A",
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.04,
-//     shadowRadius: 12,
-//     elevation: 3,
-//     borderWidth: 1,
-//     borderColor: "#F1F5F9",
-//   },
-//   imageContainer: {
-//     shadowColor: "#0F172A",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.06,
-//     shadowRadius: 4,
-//   },
-//   productImage: {
-//     width: 90,
-//     height: 95,
-//     borderRadius: 14,
-//     backgroundColor: "#F1F5F9",
-//   },
-//   cardDetails: {
-//     flex: 1,
-//     marginLeft: 16,
-//     justifyContent: "space-between",
-//   },
-//   rowHeader: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "flex-start",
-//   },
-//   productName: {
-//     fontSize: 15,
-//     fontWeight: "700",
-//     color: "#1E293B",
-//     flex: 0.9,
-//     lineHeight: 20,
-//   },
-//   deleteButtonContainer: {
-//     padding: 4,
-//     marginTop: -2,
-//   },
-//   loaderPadding: {
-//     padding: 4,
-//   },
-//   variantBadgeContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#F1F5F9",
-//     alignSelf: "flex-start",
-//     paddingHorizontal: 8,
-//     paddingVertical: 4,
-//     borderRadius: 6,
-//     marginTop: 4,
-//   },
-//   variantText: {
-//     fontSize: 11,
-//     color: "#64748B",
-//     fontWeight: "600",
-//   },
-//   priceRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     marginTop: 12,
-//   },
-//   priceText: {
-//     fontSize: 16,
-//     fontWeight: "800",
-//     color: "#0284C7",
-//   },
-//   quantityWidget: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#FFFFFF",
-//     borderRadius: 10,
-//     borderWidth: 1.5,
-//     borderColor: "#E2E8F0",
-//     overflow: "hidden",
-//   },
-//   qtyBtn: {
-//     width: 32,
-//     height: 32,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     backgroundColor: "#F8FAFC",
-//   },
-//   qtyTextContainer: {
-//     minWidth: 28,
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-//   qtyText: {
-//     fontSize: 13,
-//     fontWeight: "700",
-//     color: "#0F172A",
-//   },
-//   emptyView: {
-//     alignItems: "center",
-//     marginTop: 80,
-//     paddingHorizontal: 32,
-//   },
-//   emptyIconCircle: {
-//     width: 100,
-//     height: 100,
-//     borderRadius: 50,
-//     backgroundColor: "#F1F5F9",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     marginBottom: 20,
-//   },
-//   emptyTitle: {
-//     fontSize: 20,
-//     fontWeight: "800",
-//     color: "#1E293B",
-//   },
-//   emptySubtitle: {
-//     fontSize: 14,
-//     color: "#64748B",
-//     textAlign: "center",
-//     marginTop: 8,
-//     lineHeight: 22,
-//   },
-//   checkoutFooter: {
-//     position: "absolute",
-//     bottom: 0,
-//     left: 0,
-//     right: 0,
-//     backgroundColor: "#FFFFFF",
-//     paddingHorizontal: 24,
-//     paddingTop: 12,
-//     paddingBottom: 34, // Structural protection buffer for safe areas (iOS home bar)
-//     borderTopLeftRadius: 32,
-//     borderTopRightRadius: 32,
-//     shadowColor: "#0F172A",
-//     shadowOffset: { width: 0, height: -8 },
-//     shadowOpacity: 0.08,
-//     shadowRadius: 24,
-//     elevation: 20,
-//   },
-//   indicatorBar: {
-//     width: 40,
-//     height: 5,
-//     backgroundColor: "#E2E8F0",
-//     borderRadius: 3,
-//     alignSelf: "center",
-//     marginBottom: 20,
-//   },
-//   summaryLine: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     marginBottom: 10,
-//   },
-//   summaryLabel: {
-//     fontSize: 14,
-//     color: "#64748B",
-//     fontWeight: "600",
-//   },
-//   summaryValue: {
-//     fontSize: 14,
-//     color: "#0F172A",
-//     fontWeight: "700",
-//   },
-//   grandTotalLine: {
-//     borderTopWidth: 1,
-//     borderColor: "#F1F5F9",
-//     paddingTop: 16,
-//     marginTop: 8,
-//     marginBottom: 24,
-//   },
-//   grandTotalLabel: {
-//     fontSize: 16,
-//     fontWeight: "800",
-//     color: "#0F172A",
-//   },
-//   grandTotalValue: {
-//     fontSize: 20,
-//     fontWeight: "900",
-//     color: "#0284C7", // Highlighted using theme color
-//   },
-//   checkoutBtn: {
-//     backgroundColor: "#0284C7", // Ensure explicit pairing with your app design palette accent
-//     height: 56,
-//     borderRadius: 16,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     flexDirection: "row",
-//     shadowColor: "#0284C7",
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.2,
-//     shadowRadius: 8,
-//   },
-//   checkoutBtnText: {
-//     color: "#FFFFFF",
-//     fontSize: 15,
-//     fontWeight: "700",
-//     letterSpacing: 0.3,
-//   },
-//   arrowSpacing: {
-//     marginLeft: 8,
-//   },
-// });
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -542,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
   Dimensions,
   SafeAreaView,
 } from "react-native";
@@ -555,6 +21,7 @@ import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { EmptyState } from "@/components/EmptyState";
 import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import { Colors } from "@/constants/Theme";
 const IMAGE_PLACEHOLDER =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
 
@@ -568,15 +35,18 @@ export const CartScreen = () => {
     handleDecrement,
     handleRemove,
     handleProcessCheckoutPipeline,
+    checkoutLoading,
   } = useCartScreen();
 
   const {
     cartMessage,
     loading,
+
     serverError,
     fetchCart,
     markCartAsVisited,
     deleteLoading,
+    refreshing,
   } = useSharedCartData();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -594,12 +64,12 @@ export const CartScreen = () => {
 
   const handleNavigateToDetails = (productId: number) => {
     router.push({
-      pathname: "/(tabs)/category/product-details",
+      pathname: "/(product)/product-details",
       params: { productId: String(productId) },
     });
   };
 
-  if (loading.fetching) {
+  if (loading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#0284C7" />
@@ -651,7 +121,7 @@ export const CartScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {serverError ? (
         <EmptyState
           iconName="cloud-offline-outline"
@@ -817,6 +287,13 @@ export const CartScreen = () => {
                 </View>
               ) : null
             }
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRetryFetch}
+                tintColor={Colors.headerOne[0]}
+              />
+            }
             ListEmptyComponent={
               <View style={styles.emptyView}>
                 <View style={styles.emptyIconCircle}>
@@ -848,10 +325,10 @@ export const CartScreen = () => {
               <TouchableOpacity
                 style={styles.splitCheckoutBtn}
                 activeOpacity={0.85}
-                disabled={loading.checkout}
+                disabled={checkoutLoading}
                 onPress={handleProcessCheckoutPipeline}
               >
-                {loading.checkout ? (
+                {checkoutLoading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <View style={styles.innerBtnLayout}>
@@ -880,7 +357,7 @@ export const CartScreen = () => {
           )}
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
