@@ -78,17 +78,17 @@ function RootStack() {
                 />
                 <Stack.Screen
                   name="(product)"
-                  options={{ animation: "slide_from_left" }}
+                  options={{ animation: "simple_push" }}
                 />
 
                 <Stack.Screen
                   name="(cart)"
-                  options={{ animation: "slide_from_left" }}
+                  options={{ animation: "simple_push" }}
                 />
 
                 <Stack.Screen
                   name="(refNull)"
-                  options={{ animation: "slide_from_left" }}
+                  options={{ animation: "ios_from_right" }}
                 />
               </Stack>
 

@@ -24,6 +24,6 @@ export default function refNullLayout() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: Colors.headerOne[0],
+    backgroundColor: Colors.white,
   },
 });

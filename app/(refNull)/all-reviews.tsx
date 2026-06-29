@@ -28,7 +28,7 @@ const AllReviewsScreen = () => {
   if (loading && reviews.length === 0) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }

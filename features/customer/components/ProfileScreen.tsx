@@ -79,7 +79,7 @@ export const ProfileScreen = () => {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="small" color="#0284C7" />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }

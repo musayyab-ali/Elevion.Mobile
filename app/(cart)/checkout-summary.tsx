@@ -954,10 +954,14 @@ export default function CheckoutSummaryScreen() {
                               )}
                             </View>
                           )}
-
-                        <Text style={styles.itemQuantityText}>
-                          Qty: {item.Quantity}
-                        </Text>
+                        <View style={styles.variantBadgesContainer}>
+                          <Text style={styles.itemQuantityText}>
+                            Qty: {item.Quantity}
+                          </Text>
+                          <Text style={styles.itemQuantityText}>
+                            Disc: {item.DiscountedPrice}
+                          </Text>
+                        </View>
                       </View>
                       <Text style={styles.itemPriceText}>
                         Rs. {item.Price * item.Quantity}
@@ -1020,6 +1024,14 @@ export default function CheckoutSummaryScreen() {
                   Rs. {hook.subtotal.toLocaleString()}
                 </Text>
               </View>
+
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Total Discount</Text>
+                <Text style={styles.priceValue}>
+                  Rs. {hook.discount.toLocaleString()}
+                </Text>
+              </View>
+
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>
                   Delivery & Handling (

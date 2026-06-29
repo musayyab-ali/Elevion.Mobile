@@ -71,10 +71,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     cartId: null, // Clean initialization without nasty inline type castings
   });
 
-  // const setActionLoading = (key: keyof LoadingState, value: boolean) => {
-  //   setLoading((prev) => ({ ...prev, [key]: value }));
-  // };
-  // 1. Initialize or load the tracking tracking session keys safely
   useEffect(() => {
     const initializeSessionId = async () => {
       try {
@@ -335,46 +331,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [setCartData, setCartCount],
   );
-  // const removeCartItem = useCallback(
-  //   async (cartId: number) => {
-  //     // 🌟 1. Store the exact item ID currently being deleted
-  //     setDeleteLoading({ active: true, cartId: cartId });
-
-  //     try {
-  //       const response = await cartApi.deleteItem(cartId);
-  //       console.log("Delete item response:", response);
-
-  //       if (!response?.Data) {
-  //         setCartMessage("There is something wrong! Check your connection.");
-  //         return;
-  //       }
-
-  //       // Update global count tracking cleanly
-  //       setCartCount(response.Data.CartCount);
-  //       setCartData((prevItems) => {
-  //         if (!prevItems) return prevItems;
-
-  //         // If your array key is named differently (e.g., Data or items), swap 'CartItems' with that key name
-  //         const currentItems = prevItems?.CartItemList || [];
-
-  //         return {
-  //           ...prevItems,
-  //           CartItemList: currentItems.filter(
-  //             (item: any) => item.CartId !== cartId,
-  //           ),
-  //         };
-  //       });
-  //     } catch (error) {
-  //       console.log("Cart deletion routine exception:", error);
-  //       setCartMessage("There is something wrong! Check your connection.");
-  //     } finally {
-  //       // 🌟 3. Clear the explicit loading ID state by passing null
-  //       setDeleteLoading({ active: false, cartId: null });
-  //       setTimeout(() => setCartMessage(null), 2000);
-  //     }
-  //   },
-  //   [setCartData, setCartCount], // Removed fetchCart dependency entirely
-  // );
 
   const executeCheckout = useCallback(
     async (attachments: string[] = []) => {

@@ -72,7 +72,7 @@ export const CartScreen = () => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#0284C7" />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }

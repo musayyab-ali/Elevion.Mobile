@@ -438,12 +438,16 @@ export function useCheckoutSummary(checkoutData: any) {
     () => checkoutData?.OrderTotalPrice || 0,
     [checkoutData],
   );
+  const discount = useMemo(
+    () => checkoutData?.OrderTotalDiscount || 0,
+    [checkoutData],
+  );
   const deliveryCharge = useMemo(
     () => selectedOption?.Charge || 0,
     [selectedOption],
   );
   const grandTotal = useMemo(
-    () => subtotal + deliveryCharge,
+    () => subtotal + deliveryCharge - discount,
     [subtotal, deliveryCharge],
   );
 
@@ -481,6 +485,7 @@ export function useCheckoutSummary(checkoutData: any) {
 
     subtotal,
     deliveryCharge,
+    discount,
     grandTotal,
     errorModalVisible,
     setErrorModalVisible,
