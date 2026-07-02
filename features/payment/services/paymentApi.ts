@@ -10,7 +10,6 @@ export interface PayInvoicePayload {
 export const paymentApi = {
   // Fetch order invoice parameters & matching payment gateways
   getPaymentSetup: async (orderId: string) => {
-    console.log("Fetching payment setup for Order ID:", orderId);
     const response = await apiClient.get(`/Order/SelectPayment`, {
       params: { OrderId: orderId },
     });

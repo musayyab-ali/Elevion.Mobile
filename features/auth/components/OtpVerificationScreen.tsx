@@ -278,7 +278,16 @@ export default function OtpVerificationScreen() {
     isRestorationFlow,
     restorationToken,
     phoneCode,
+    flowType,
   } = useLocalSearchParams<any>();
+
+  console.log(
+    "search params are :",
+    phoneCode,
+    phoneNumber,
+    userName,
+    flowType,
+  );
 
   const {
     verifyOtp,
@@ -320,11 +329,18 @@ export default function OtpVerificationScreen() {
 
     const parsedCode = phoneCode ? parseInt(phoneCode, 10) : 92;
     const res = await verifyOtp(
-      otp,
-      phoneNumber,
-      userName,
-      parsedCode,
-      isRestorationFlow,
+      // otp,
+      // phoneNumber,
+      // userName,
+      // parsedCode,
+      // isRestorationFlow,
+      // restorationToken,
+      // flowType,
+      otp, // 1st: string
+      phoneNumber, // 2nd: string | undefined
+      userName, // 3rd: string | undefined
+      parsedCode, // 4th: number
+      flowType, // 5th: "registration" | "verification" | "reset" | "restoration"
       restorationToken,
     );
 
@@ -343,15 +359,11 @@ export default function OtpVerificationScreen() {
 
   return (
     <AuthContainer
-      title={
-        isRestorationFlow === "true"
-          ? "Account Restoration"
-          : "OTP Verification"
-      }
       apiMessage={apiMessage}
       celebration={isCelebration}
+      loading={loading}
     >
-      <View style={styles.responsiveWrapper}>
+      <View style={[styles.responsiveWrapper, loading && { opacity: 0.5 }]}>
         {/* CASE 1: GLOBAL FINAL SUCCESS CARD (No Flicker) */}
         {globalOtpSuccess ? (
           <View style={styles.stateWrapper}>

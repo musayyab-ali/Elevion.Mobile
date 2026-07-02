@@ -99,8 +99,8 @@ export default function RestoreProfileScreen() {
               userName: userName,
               phoneNumber: trimmedNumber,
               phoneCode: selectedCountry.code,
-              isRestorationFlow: "true",
               restorationToken: token,
+              flowType: "restoration",
               message:
                 "Security code dispatched. Enter token code below to complete profile validation.",
             },

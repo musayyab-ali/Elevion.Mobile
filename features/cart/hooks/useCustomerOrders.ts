@@ -65,11 +65,8 @@ export function useCustomerOrders() {
       if (!isSilent) {
         setLoading(true);
       }
-      // setLoading(true);
       try {
-        // 1. Use the new API endpoint (Requesting a large enough page or handling pagination)
         const res = await orderApi.getOrders(50, 1);
-        console.log("📥 New Customer Orders API Response:", res);
 
         if (res?.StatusCode === 200 && res?.Data?.CustomerOrders) {
           const rawList = res.Data.CustomerOrders;

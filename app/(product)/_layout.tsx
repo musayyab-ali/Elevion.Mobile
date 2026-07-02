@@ -45,6 +45,6 @@ export default function ProductLayout() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: Colors.headerOne[0],
+    backgroundColor: Colors.white,
   },
 });

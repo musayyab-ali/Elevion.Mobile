@@ -104,6 +104,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Colors } from "../constants/Theme";
@@ -115,36 +116,19 @@ import { MotiView } from "moti";
 import { ScrollViewComponent } from "./ScrollViewComponent";
 import { CelebrationOverlay } from "./CelebrationOverlay";
 
-export const AuthContainer = ({ apiMessage, title, children, celebration }) => {
+export const AuthContainer = ({
+  apiMessage,
+  children,
+  celebration,
+  loading,
+}) => {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar style="light" />
       {celebration && <CelebrationOverlay visible={celebration} />}
-
-      {/* 🌟 Refactored clean header zone */}
-      <LinearGradient
-        colors={[Colors.headerOne[0], Colors.headerOne[1]]}
-        style={styles.blueHeader}
-      >
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="chevron-back" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <Text
-            style={[styles.headerTitleInline, { fontSize: isTablet ? 28 : 22 }]}
-          >
-            {title}
-          </Text>
-        </View>
-      </LinearGradient>
 
       {apiMessage && <ErrorMessage>{apiMessage}</ErrorMessage>}
 
@@ -169,6 +153,12 @@ export const AuthContainer = ({ apiMessage, title, children, celebration }) => {
           {children}
         </ScrollViewComponent>
       </MotiView>
+      {loading && (
+        <View style={styles.globalLockOverlay}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.lockText}>Please wait...</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -211,5 +201,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
     alignItems: "center",
+  },
+
+  globalLockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  lockText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0077b6",
   },
 });

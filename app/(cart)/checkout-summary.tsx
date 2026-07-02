@@ -94,7 +94,10 @@ export default function CheckoutSummaryScreen() {
   const { user } = useAuth();
   const params = useLocalSearchParams();
   const checkoutData = params.data ? JSON.parse(params.data as string) : null;
+
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  const hook = useCheckoutSummary(checkoutData);
 
   if (!checkoutData) {
     return (
@@ -103,8 +106,6 @@ export default function CheckoutSummaryScreen() {
       </View>
     );
   }
-
-  const hook = useCheckoutSummary(checkoutData);
 
   const hasInitialBilling = useMemo(
     () =>

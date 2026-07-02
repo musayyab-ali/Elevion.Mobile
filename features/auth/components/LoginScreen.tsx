@@ -40,7 +40,11 @@ export default function LoginScreen() {
     handleLogin(userName, password);
   };
   return (
-    <AuthContainer title="Login to Account" apiMessage={apiMessage}>
+    <AuthContainer
+      title="Login to Account"
+      apiMessage={apiMessage}
+      loading={loading}
+    >
       <RestoreAccountModal
         visible={showDeletionModal}
         scheduledPurgeDate={pendingDeletionData?.ScheduledPurgeOn}
@@ -55,11 +59,12 @@ export default function LoginScreen() {
             params: {
               userName: pendingDeletionData?.OriginalUserName,
               token: pendingDeletionData?.AccessToken,
+              flowType: "restoration",
             },
           });
         }}
       />
-      <View style={styles.responsiveWrapper}>
+      <View style={[styles.responsiveWrapper, loading && { opacity: 0.5 }]}>
         {isSuccess ? (
           <View style={styles.successWrapper}>
             <Ionicons name="checkmark-circle" size={80} color="#10B981" />
@@ -118,7 +123,7 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                onPress={() => router.push("/(unauthorized)/forgot-password")}
+                onPress={() => router.push("/(unauthorized)/reset-password")}
                 style={styles.forgotPasswordContainer}
               >
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>

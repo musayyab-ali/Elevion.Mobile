@@ -6,9 +6,9 @@ export const useForgotPassword = () => {
   const [step, setStep] = useState<"request" | "reset">("request");
   const [apiMessage, setApiMessage] = useState<string | null>(null);
 
-  // Step 1: Request the reset email
+  // Step 1: Request the reset token/OTP
   const sendResetEmail = async (username: string) => {
-    if (!username) {
+    if (!username.trim()) {
       setApiMessage("Please enter your username");
       return { success: false };
     }
@@ -17,36 +17,37 @@ export const useForgotPassword = () => {
     setApiMessage(null);
 
     try {
-      const result = await authApi.sendForgotPasswordEmail(username);
-
+      // Assuming your api service maps to the correct endpoint
+      const result = await authApi.sendForgotPasswordEmail(username.trim());
       setApiMessage(result.Message || "Reset code sent to your email.");
       setStep("reset");
       return { success: true };
     } catch (error: any) {
-      // The error is already logged internally by handleResponse
-      setApiMessage(error.Message || "User not found or server error");
+      setApiMessage(
+        error.Message || "User not found or a server error occurred.",
+      );
       return { success: false };
     } finally {
       setLoading(false);
-      // Clear message after 3 seconds
       setTimeout(() => setApiMessage(null), 3000);
     }
   };
 
-  // Step 2: Submit the new password with the OTP/Token
+  // Step 2: Submit the payload containing updated parameters
   const resetPassword = async (payload: any) => {
     setLoading(true);
     setApiMessage(null);
 
     try {
-      const result = await authApi.resetPassword(payload);
-
+      const result = await authApi.forgotPassword(payload);
       setApiMessage(result.Message || "Password reset successfully!");
-      return { success: true };
+      return { success: true, message: result.Message };
     } catch (error: any) {
       console.log("Reset password error:", error);
-      setApiMessage("Failed to reset password. Please try again.");
-      return { success: false };
+      setApiMessage(
+        error.Message || "Failed to reset password. Please try again.",
+      );
+      return { success: false, message: error.Message };
     } finally {
       setLoading(false);
       setTimeout(() => setApiMessage(null), 3000);
@@ -60,5 +61,6 @@ export const useForgotPassword = () => {
     step,
     setStep,
     apiMessage,
+    setApiMessage,
   };
 };

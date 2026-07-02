@@ -1,6 +1,8 @@
 // const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// const BASE_URL_TWO = process.env.EXPO_PUBLIC_API_URL_TWO;
 // const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
 const BASE_URL = "http://thelink.innovex.biz/api/v1";
+const BASE_URL_TWO = "http://thelink.innovex.biz/api/v2";
 const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
 
 const handleResponse = async (response: Response) => {
@@ -79,11 +81,15 @@ export const authApi = {
       body: JSON.stringify({ phoneNumber }),
     }).then(handleResponse),
 
-  isUserNameUnique: (userName: string) =>
-    fetch(`${BASE_URL}/Account/IsUserNameUnique?UserName=${userName}`, {
-      method: "GET",
-      headers: getHeaders(),
-    }).then(handleResponse),
+  isUserUnique: (value: string, type: "userName" | "email" | "phone") =>
+    fetch(
+      `${BASE_URL_TWO}/Account/IsUserUnique?Value=${encodeURIComponent(value)}&Type=${type}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      },
+    ).then(handleResponse),
+
   login: (credentials: { UserName: string; Password: string }) => {
     return fetch(`${BASE_URL}/oauth/token`, {
       method: "POST",
@@ -113,8 +119,8 @@ export const authApi = {
       body: JSON.stringify({
         OTP: payload.otp,
         PhoneCode: payload.phoneCode,
-        PhoneNumber: payload.phoneNumber || "", // Backend accepts empty string if Username is provided
-        Username: payload.userName || "", // Backend accepts empty string if Phone is provided
+        PhoneNumber: payload.phoneNumber || "",
+        Username: payload.userName || "",
         UpdateAuthToken: true,
       }),
     }).then(handleResponse),
@@ -128,10 +134,17 @@ export const authApi = {
     }).then(handleResponse),
 
   sendForgotPasswordEmail: (username: string) =>
-    fetch(`${BASE_URL}/Account/SendForgotPasswordEmail`, {
+    fetch(`${BASE_URL_TWO}/Account/SendForgotPasswordEmail`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ Username: username }),
+    }).then(handleResponse),
+
+  forgotPassword: (payload: any) =>
+    fetch(`${BASE_URL_TWO}/Account/ResetPassword`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
     }).then(handleResponse),
 
   resetPassword: (payload: any) =>

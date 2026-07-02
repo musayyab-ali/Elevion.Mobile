@@ -19,7 +19,7 @@ export default function CartLayout() {
         <Stack.Screen name="payment-methods" options={{ title: "Payment" }} />
         <Stack.Screen
           name="order-confirmation"
-          options={{ title: "Confirm Order" }}
+          options={{ title: "Confirm Payment" }}
         />
       </Stack>
     </SafeAreaView>
