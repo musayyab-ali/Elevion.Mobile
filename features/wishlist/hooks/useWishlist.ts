@@ -10,8 +10,6 @@ export const useWishlist = () => {
   const {
     items,
     setItems,
-    loading,
-    refreshing,
     wishMessage,
     setWishMessage,
     processingIds,
@@ -182,8 +180,6 @@ export const useWishlist = () => {
 
   return {
     items,
-    loading,
-    refreshing,
     wishlistMap,
     isProcessing: (id: number) => processingIds.has(id),
     fetchWishlist,

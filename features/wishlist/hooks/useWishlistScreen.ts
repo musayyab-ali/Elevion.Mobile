@@ -18,8 +18,7 @@ export function useWishlistScreen() {
   const { wishlistMap, isProcessing, toggleWishlist, fetchWishlist } =
     useWishlist();
   const [loading, setLoading] = useState(true);
-  console.log(`tati is : `);
-  // Sync / Hydrate latest backend state on initial screen paint context
+
   useEffect(() => {
     const hydrateWishlist = async () => {
       try {

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  SafeAreaView,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -479,20 +478,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // successTitle: {
-  //   fontSize: 22,
-  //   fontWeight: "800",
-  //   color: "#1E293B",
-  //   marginTop: 15,
-  //   textAlign: "center",
-  // },
-  // successSub: {
-  //   fontSize: 14,
-  //   color: "#64748B",
-  //   textAlign: "center",
-  //   marginTop: 8,
-  //   paddingHorizontal: 20,
-  // },
+
   successTitle: {
     fontSize: 14,
     fontWeight: "800",

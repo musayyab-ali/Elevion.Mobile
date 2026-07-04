@@ -5,6 +5,7 @@ import {
   Product,
   ProductByCategoryResponse,
   LandingPageData,
+  BannerResponse,
 } from "../types/shopTypes";
 
 export const shopApi = {
@@ -18,21 +19,19 @@ export const shopApi = {
     return response.data;
   },
 
-  // 1. Home Page Banners
-  getFeaturedProducts: async (): Promise<{ Data: Product[] }> => {
-    const response = await apiClient.get("/Product/featured", {
-      params: { IsNew: true, IsFeatured: true }, // as seen in image_a1fe90.png
-    });
+  // 1. Updated: Home Page Mobile Banners
+  getMobileBanners: async (): Promise<BannerResponse> => {
+    const response = await apiClient.get("/TenantLanding/banners");
     return response.data;
   },
 
-  // 2. Category Landing Banners
+  // 2. Category Landing Sections
   getLandingPageProducts: async (): Promise<{ Data: LandingPageData[] }> => {
     const response = await apiClient.get("/Product/landing-page");
     return response.data;
   },
 
-  // 3. Category Product List
+  // 3. Category Product List (CRITICAL FIX FOR SUB-CATEGORIES)
   getProductsByCategory: async (
     categoryId: number,
     page: number = 1,
@@ -41,14 +40,13 @@ export const shopApi = {
       params: {
         CategoryId: categoryId,
         PageNumber: page,
-        PageSize: 10,
-        BrandId: 0, // as seen in image_a1a3c1.png
+        PageSize: 10, // Increased page size for a better premium catalog feel
+        BrandId: -1,
+        SortBy: "theLink",
       },
     });
     return response.data;
   },
-
-  // Inside services/shopApi.ts
 
   getProductDetails: async (
     productId: number,
@@ -57,10 +55,9 @@ export const shopApi = {
     const response = await apiClient.get("/Product/details", {
       params: {
         ProductId: productId,
-        ProductDetailId: productDetailId, // Fallback default example from image_7c9347.png
+        ProductDetailId: productDetailId,
       },
     });
-    // console.log("dirsct details products :", response.data);
     return response.data;
   },
 };

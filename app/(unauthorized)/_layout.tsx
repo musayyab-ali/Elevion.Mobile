@@ -18,7 +18,7 @@ export default function UnauthorizedLayout() {
         <Stack.Screen name="register" options={{ title: "Create Account" }} />
         <Stack.Screen
           name="forgot-password"
-          options={{ title: "Reset Password" }}
+          options={{ title: "Forgot Password" }}
         />
       </Stack>
     </SafeAreaView>
@@ -28,7 +28,6 @@ export default function UnauthorizedLayout() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    // 🌟 Set your primary background color here so your layout views never change color or flash white
     backgroundColor: Colors.white,
   },
 });

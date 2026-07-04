@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  useWindowDimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 
@@ -18,6 +17,7 @@ import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { useAuth } from "@/store/AuthContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useSharedWishlistData } from "@/store/WishlistContext";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 export const ProductsScreen = () => {
   const { isAuthenticated } = useAuth();
@@ -28,37 +28,54 @@ export const ProductsScreen = () => {
   }>();
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
-  const { width } = useWindowDimensions();
 
+  // Hook extracts both structural crumbs and matching results
   const {
-    bannerProducts,
+    categoryProducts = [], // Maps securely to your fetched productListViewModel data
     breadcrumbs,
     loading: discoveryLoading,
   } = useDiscovery(categoryId);
+  console.log("Category Products:", categoryProducts?.length);
   const { wishlistMap, isProcessing, toggleWishlist } = useWishlist();
+
+  const safeBreadcrumbs = breadcrumbs?.length
+    ? breadcrumbs
+    : [
+        {
+          id: Number(categoryId) || 0,
+          name: categoryName || "Loading...",
+          isLeaf: true,
+        },
+      ];
 
   if (discoveryLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary || "#38BDF8"} />
+        <Stack.Screen
+          options={{
+            headerTitle: () => (
+              <CategoryBreadcrumbs breadcrumbs={safeBreadcrumbs} />
+            ),
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: Colors.headerOne[0] },
+            headerTitleAlign: "left",
+            headerBackTitleVisible: false,
+          }}
+        />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }
 
-  // Determine an upscale dynamic heading title text layout
   const derivedHeading = categoryName
     ? `${categoryName} Collection`
     : "Available Products";
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
+    <View style={styles.container}>
       <Stack.Screen
         options={{
-          headerTitle: () => (
-            // <View style={styles.headerTitleContainer}>
-            <CategoryBreadcrumbs breadcrumbs={breadcrumbs} />
-            // </View>
-          ),
+          headerTitle: () => <CategoryBreadcrumbs breadcrumbs={breadcrumbs} />,
           headerShadowVisible: false,
           headerStyle: { backgroundColor: Colors.headerOne[0] },
           headerTitleAlign: "left",
@@ -70,19 +87,27 @@ export const ProductsScreen = () => {
 
       <View style={styles.contentCanvas}>
         <FlatList
-          data={bannerProducts}
-          // 🌟 Professional Change: Enforce a single column list frame for luxury horizontal cards
+          data={categoryProducts}
           numColumns={1}
           keyExtractor={(item) => `prod-list-${item.ProductId}`}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            bannerProducts.length > 0 ? (
-              <View style={styles.headerMetaBlock}>
-                <Text style={styles.collectionHeading}>{derivedHeading}</Text>
-                <Text style={styles.resultsCount}>
-                  Discovering {bannerProducts.length} premium results
-                </Text>
+            categoryProducts.length > 0 ? (
+              <View style={styles.headerBlock}>
+                <View style={styles.headerRow}>
+                  <Text style={styles.sectionTitle} numberOfLines={1}>
+                    {derivedHeading}
+                  </Text>
+                  <View style={styles.badgeBubble}>
+                    <Text style={styles.badgeText}>
+                      {categoryProducts.length}{" "}
+                      {categoryProducts.length === 1 ? "Product" : "Products"}
+                    </Text>
+                  </View>
+                </View>
+                {/* Decorative premium ambient accent line */}
+                <View style={styles.accentLine} />
               </View>
             ) : null
           }
@@ -108,7 +133,6 @@ export const ProductsScreen = () => {
                   }}
                   onPress={() =>
                     router.navigate({
-                      //   pathname: "/(tabs)/category/product-details",
                       pathname: "/(product)/product-details",
                       params: { productId: item.ProductId },
                     })
@@ -119,10 +143,14 @@ export const ProductsScreen = () => {
           }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No Products Found</Text>
-              <Text style={styles.emptySubtitle}>
-                We couldn't find items in this specific collection.
-              </Text>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons
+                  name="bag-handle-outline"
+                  size={44}
+                  color={Colors.primary}
+                />
+              </View>
+              <Text style={styles.emptyTitle}>No Products available</Text>
             </View>
           }
         />
@@ -140,77 +168,70 @@ export const ProductsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: Colors.white },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  contentCanvas: { flex: 1 },
+  listContent: { padding: 16 },
+  headerBlock: {
+    marginBottom: 24,
+    marginTop: 8,
+    paddingHorizontal: 10,
   },
-  headerTitleContainer: {
-    flex: 1,
-    paddingRight: 16,
-    justifyContent: "center",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  contentCanvas: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  listContent: {
-    paddingTop: 20,
-    paddingBottom: 110,
-    paddingHorizontal: 16,
-  },
-  listCell: {
+    justifyContent: "space-between",
     width: "100%",
-    marginBottom: 14,
   },
-  headerMetaBlock: {
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  collectionHeading: {
+  sectionTitle: {
     fontSize: 20,
-    fontWeight: "800",
-    color: "#0F172A",
-    letterSpacing: -0.4,
-    marginBottom: 2,
-    textTransform: "capitalize",
+    fontWeight: "700", // Extra bold weight for maximum visual dominance
+    color: Colors.primary,
+    letterSpacing: -0.5,
+    flex: 1, // Forces the text wrapper to gracefully take up available space and truncate before colliding
+    paddingRight: 16,
   },
-  resultsCount: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  emptyContainer: {
-    flex: 1,
+  badgeBubble: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)", // Semi-transparent glassmorphic backing
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 140,
-    paddingHorizontal: 40,
   },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.primary || "#38BDF8", // Uses your core brand theme color
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  accentLine: {
+    height: 2,
+    width: 40,
+    backgroundColor: Colors.darkError,
+    marginTop: 10,
+    borderRadius: 1,
+    opacity: 0.8,
+  },
+  listCell: { marginBottom: 16 },
+  emptyContainer: { marginTop: 80, alignItems: "center" },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#1E293B",
-    marginBottom: 6,
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.accent,
+    marginBottom: 8,
   },
-  emptySubtitle: {
-    fontSize: 14,
-    color: "#94A3B8",
-    textAlign: "center",
-    fontWeight: "500",
+
+  emptyIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
 });

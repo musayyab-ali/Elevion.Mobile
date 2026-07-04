@@ -338,9 +338,7 @@ export const ProfileScreen = () => {
             onPress={() => router.push("/(refNull)/settings")}
           >
             <Ionicons name="settings-outline" size={18} color="#1E293B" />
-            <Text style={styles.settingsBtnText}>
-              Account Preference Management
-            </Text>
+            <Text style={styles.settingsBtnText}>Account Settings</Text>
             <Ionicons
               name="chevron-forward"
               size={16}

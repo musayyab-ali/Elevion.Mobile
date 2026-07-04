@@ -25,10 +25,9 @@ const styles = StyleSheet.create({
   errorOverlay: {
     position: "absolute",
     top: 20,
-    // bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: "#EF4444",
+    backgroundColor: Colors.darkError,
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 8,

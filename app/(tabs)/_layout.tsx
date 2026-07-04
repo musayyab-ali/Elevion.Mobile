@@ -10,25 +10,11 @@ import {
   Text,
   StyleSheet,
 } from "react-native";
-import { SlideInLeft } from "react-native-reanimated";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
-  // const segments = useSegments();
-  // const checkTabBarHiddenState = () => {
-  //   const currentSubRoute = segments[segments.length - 1];
-  //   const hiddenScreens = [
-  //     "product-details",
-  //     "cart",
-  //     "checkout-summary",
-  //     "payment-methods",
-  //   ];
-
-  //   return hiddenScreens.includes(currentSubRoute);
-  // };
-  // const isTabBarHidden = checkTabBarHiddenState();
   const strictTabBarStyle: ViewStyle = {
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
@@ -47,7 +33,6 @@ export default function TabLayout() {
     shadowRadius: 8,
     elevation: 8,
     display: "flex",
-    // display: isTabBarHidden ? "none" : "flex",
   };
 
   const renderPremiumIcon = (
@@ -82,7 +67,6 @@ export default function TabLayout() {
       screenOptions={({ route }) => ({
         headerShown: true,
         header: ({ options, route: headerRoute }) => {
-          // Clean pattern grouping to prevent header duplication issues
           const bypassHeaders = "index";
           if (bypassHeaders.includes(headerRoute.name)) {
             return null;

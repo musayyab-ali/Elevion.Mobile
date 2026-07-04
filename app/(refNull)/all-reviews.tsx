@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Text,
-  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,8 +14,6 @@ import { Colors } from "../../constants/Theme";
 
 const AllReviewsScreen = () => {
   const router = useRouter();
-
-  // Explicitly fetch everything using the 'all' endpoint modifier configuration
   const { reviews, loading, refresh } = useReviews("all");
   const handlePressDetails = (productId: number) => {
     router.push({
@@ -49,11 +46,13 @@ const AllReviewsScreen = () => {
         refreshing={loading}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons
-              name="chatbox-ellipses-outline"
-              size={64}
-              color={Colors.tertiary}
-            />
+            <View style={styles.emptyIconCircle}>
+              <Ionicons
+                name="chatbox-ellipses-outline"
+                size={32}
+                color={Colors.white}
+              />
+            </View>
             <Text style={styles.emptyText}>
               You haven't written any reviews yet.
             </Text>
@@ -68,8 +67,24 @@ export default AllReviewsScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFC" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+  },
   listContent: { padding: 20, paddingBottom: 40 },
   emptyContainer: { alignItems: "center", marginTop: 100 },
-  emptyText: { marginTop: 16, color: Colors.tertiary, fontSize: 16 },
+  emptyText: { color: Colors.accent, fontSize: 16 },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
 });

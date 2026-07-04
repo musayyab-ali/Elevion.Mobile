@@ -58,7 +58,7 @@ export const FeaturedBanner = ({
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    const title = item.ProductName || item.Name;
+    const title = item.BannerText || item.Name;
 
     return (
       <TouchableOpacity
@@ -73,7 +73,7 @@ export const FeaturedBanner = ({
         <View style={styles.imageWrapper}>
           <Image
             source={{
-              uri: item.ThumbnailImagePath || PLACEHOLDER_IMAGE_BANNER,
+              uri: item.ImagePath || PLACEHOLDER_IMAGE_BANNER,
             }}
             style={[styles.bannerImage, isMinimal && styles.minimalImage]}
           />
@@ -86,7 +86,9 @@ export const FeaturedBanner = ({
                 {title}
               </Text>
               {!isMinimal && (
-                <Text style={styles.actionSubtitle}>Explore Collection</Text>
+                <Text style={styles.actionSubtitle} numberOfLines={3}>
+                  {item.BannerSubText}
+                </Text>
               )}
             </View>
           </LinearGradient>

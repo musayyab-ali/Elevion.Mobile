@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&q=80";
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGFu7lbQX6vINWzXPKWRcDJYOTtigJ9vowZxfUlnp3rw&s=10";
 
 export const CategorySquareCard = React.memo(({ category, onPress }: any) => {
   return (
@@ -13,7 +13,7 @@ export const CategorySquareCard = React.memo(({ category, onPress }: any) => {
     >
       <Image
         source={{
-          uri: category.ThumbnailImagePath || PLACEHOLDER_IMAGE,
+          uri: category?.ImagePath || PLACEHOLDER_IMAGE,
         }}
         style={styles.image}
       />
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: 100,
+    objectFit: "cover",
   },
   textContainer: {
     padding: 10,

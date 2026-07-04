@@ -25,7 +25,7 @@ export const paymentApi = {
 
   // Apply promo marketing coupons (Pass parameters as query strings; pass body fallback as null)
   redeemPromo: async (code: string, orderId: number) => {
-    const response = await apiClient.post(`/Payment/RedeemPromo`, null, {
+    const response = await apiClient.post(`/Payment/PromoCode`, null, {
       params: { Code: code, OrderId: orderId },
     });
     return response.data;

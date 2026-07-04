@@ -70,9 +70,11 @@ const ProductCard = ({
         {/* RIGHT: Structured Contextual Typography Details Block Layer */}
         <View style={styles.detailsSection}>
           <View style={styles.textContainer}>
-            <Text style={styles.brandSubtitle}>Premium Collection</Text>
             <Text style={styles.productName} numberOfLines={2}>
               {product.ProductName || product.Name}
+            </Text>
+            <Text style={styles.brandSubtitle} numberOfLines={2}>
+              {product?.Description}
             </Text>
           </View>
 

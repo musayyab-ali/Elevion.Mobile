@@ -32,67 +32,15 @@ export const useRegister = (resetFormCallback?: () => void) => {
     phone: null,
   });
 
-  // const checkUniqueness = async (
-  //   value: string,
-  //   type: "userName" | "email" | "phone",
-  // ) => {
-  //   // Basic formatting cleanups before hitting network checks
-  //   if (!value || value.trim().length < 3) {
-  //     setFieldStatuses((prev) => ({ ...prev, [type]: null }));
-  //     return;
-  //   }
-
-  //   // 1. Requirement: Letters only validation rule for Username field
-  //   if (type === "userName") {
-  //     const lettersOnlyRegex = /^[A-Za-z]+$/;
-  //     if (!lettersOnlyRegex.test(value)) {
-  //       setFieldStatuses((prev) => ({
-  //         ...prev,
-  //         userName: { isUnique: false, message: "Must contain letters only" },
-  //       }));
-  //       return;
-  //     }
-  //   }
-
-  //   setCheckingFields((prev) => ({ ...prev, [type]: true }));
-
-  //   try {
-  //     const result = await authApi.isUserUnique(value.trim(), type);
-  //     const isUnique = result?.Data?.IsUnique;
-
-  //     if (typeof isUnique === "boolean") {
-  //       setFieldStatuses((prev) => ({
-  //         ...prev,
-  //         [type]: {
-  //           isUnique,
-  //           message: isUnique
-  //             ? "available"
-  //             : result?.Message || "already exists",
-  //         },
-  //       }));
-  //     }
-  //   } catch (error: any) {
-  //     console.log(`[Uniqueness Check Failed] Type: ${type}`, error);
-  //   } finally {
-  //     setCheckingFields((prev) => ({ ...prev, [type]: false }));
-  //   }
-  // };
-
-  // Reusable debounced handles targeting unique validation types
-
   const checkUniqueness = async (
     value: string,
     type: "userName" | "email" | "phone",
   ) => {
     const cleanValue = value.trim();
-
-    // 1. Structural Gatekeepers: Clear status and stop early if field is empty or too short
     if (!cleanValue || cleanValue.length < 3) {
       setFieldStatuses((prev) => ({ ...prev, [type]: null }));
       return;
     }
-
-    // 2. USERNAME GATEKEEPER: Strict Alphabetical Validation Rule
     if (type === "userName") {
       const lettersOnlyRegex = /^[A-Za-z]+$/;
       if (!lettersOnlyRegex.test(cleanValue)) {
@@ -104,7 +52,6 @@ export const useRegister = (resetFormCallback?: () => void) => {
       }
     }
 
-    // 3. EMAIL GATEKEEPER: Silent exit until basic structural completeness (@ and extension) is met
     if (type === "email") {
       const basicEmailRegex = /\S+@\S+\.\S+/;
       if (!basicEmailRegex.test(cleanValue)) {
@@ -126,7 +73,7 @@ export const useRegister = (resetFormCallback?: () => void) => {
 
     // All gatekeepers passed! Safe to spin up individual loading state and check database
     setCheckingFields((prev) => ({ ...prev, [type]: true }));
-
+    setApiMessage(null);
     try {
       const result = await authApi.isUserUnique(cleanValue, type);
       const isUnique = result?.Data?.IsUnique;
@@ -144,8 +91,12 @@ export const useRegister = (resetFormCallback?: () => void) => {
       }
     } catch (error: any) {
       console.log(`[Uniqueness Check Failed] Type: ${type}`, error);
+      setApiMessage(
+        `Failed to verify ${type} uniqueness. Please try again later.`,
+      );
     } finally {
       setCheckingFields((prev) => ({ ...prev, [type]: false }));
+      setTimeout(() => setApiMessage(null), 3000);
     }
   };
 
@@ -160,14 +111,17 @@ export const useRegister = (resetFormCallback?: () => void) => {
     // Block action explicitly if any verification criteria failed validation rules
     if (!fieldStatuses.userName?.isUnique) {
       setApiMessage("Username must be unique and contain letters only.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
     if (!fieldStatuses.email?.isUnique) {
       setApiMessage("Email address must be unique.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
     if (!fieldStatuses.phone?.isUnique) {
       setApiMessage("Phone number must be unique.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 
@@ -187,11 +141,13 @@ export const useRegister = (resetFormCallback?: () => void) => {
     if (payload.ISOCode === "PK" && payload.PhoneNumber.length !== 10) {
       setApiMessage("Pakistan mobile number must be exactly 10 digits.");
       setLoading(false);
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
     if (payload.ISOCode === "GB" && payload.PhoneNumber.length !== 10) {
       setApiMessage("UK mobile number must be exactly 10 digits.");
       setLoading(false);
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 
@@ -217,9 +173,9 @@ export const useRegister = (resetFormCallback?: () => void) => {
       } else {
         setApiMessage(error.Message || "A server error occurred.");
       }
-      setTimeout(() => setApiMessage(null), 4000);
     } finally {
       setLoading(false);
+      setTimeout(() => setApiMessage(null), 3000);
     }
   };
 

@@ -1213,7 +1213,7 @@ export const OrdersHistoryScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* ERROR BANNER */}
       {cancelMessage.type === "error" && (
         <View style={styles.bannerError}>
@@ -1944,7 +1944,7 @@ export const OrdersHistoryScreen = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 const styles = StyleSheet.create({

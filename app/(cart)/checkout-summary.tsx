@@ -9,12 +9,10 @@ import {
   Image,
   Modal,
   ActivityIndicator,
-  SafeAreaView,
   KeyboardAvoidingView,
   Keyboard,
   Platform,
   FlatList,
-  Alert,
 } from "react-native";
 import { useAuth } from "@/store/AuthContext";
 import { useLocalSearchParams } from "expo-router";
@@ -311,7 +309,7 @@ export default function CheckoutSummaryScreen() {
   const itemsList = checkoutData?.CartItemDtos?.CartItemList || [];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -1148,7 +1146,7 @@ export default function CheckoutSummaryScreen() {
           )}
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

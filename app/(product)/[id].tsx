@@ -9,17 +9,16 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Colors } from "@/constants/Theme";
-import { FeaturedBanner } from "@/features/shop/components/FeaturedBanner";
 import { useDiscovery } from "@/features/shop/hooks/useDiscovery";
 import { CategoryBreadcrumbs } from "@/features/shop/components/CategoryBreadcrumbs";
 import { CategorySquareCard } from "@/features/shop/components/CategorySquareCard";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 export default function SubCategoryScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { subCategories, bannerProducts, breadcrumbs, loading } =
-    useDiscovery(id);
+  const { subCategories, breadcrumbs, loading } = useDiscovery(id);
 
   const handlePress = (item: any) => {
     if (item.IsLeafNode) {
@@ -28,7 +27,6 @@ export default function SubCategoryScreen() {
         params: { categoryId: item.CategoryId, categoryName: item.Name },
       });
     } else {
-      // Uses navigate to prevent stack corruption on sub-category loops
       router.navigate({
         pathname: "/(product)/[id]",
         params: { id: item.CategoryId.toString(), name: item.Name },
@@ -36,10 +34,25 @@ export default function SubCategoryScreen() {
     }
   };
 
+  // Keep breadcrumbs structure solid even during loading sequences
+  const safeBreadcrumbs = breadcrumbs?.length
+    ? breadcrumbs
+    : [{ id: Number(id) || 0, name: name || "Loading...", isLeaf: false }];
+
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary || "#38BDF8"} />
+      <View style={[styles.container, styles.center]}>
+        <Stack.Screen
+          options={{
+            headerTitle: () => (
+              <CategoryBreadcrumbs breadcrumbs={safeBreadcrumbs} />
+            ),
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: Colors.headerOne[0] },
+            headerTitleAlign: "left",
+          }}
+        />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }
@@ -47,15 +60,12 @@ export default function SubCategoryScreen() {
   const calculatedColumns = width > 900 ? 4 : width > 600 ? 3 : 2;
   const isOddRowAdjustmentNeeded =
     subCategories.length % calculatedColumns !== 0;
-
-  // Professional typography context
-  const dynamicHeading = name ? `Explore ${name}` : "Sub-Categories";
+  const dynamicHeading = name ? `${name}` : "Sub-Categories";
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
+    <View style={[styles.container, { backgroundColor: Colors.white }]}>
       <Stack.Screen
         options={{
-          // 🌟 RESTORED: Professional dynamic breadcrumbs rendered directly in header
           headerTitle: () => <CategoryBreadcrumbs breadcrumbs={breadcrumbs} />,
           headerShadowVisible: false,
           headerStyle: { backgroundColor: Colors.headerOne[0] },
@@ -76,25 +86,23 @@ export default function SubCategoryScreen() {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <View style={styles.headerBlock}>
-              {bannerProducts.length > 0 && (
-                <View style={styles.bannerWrapperCenter}>
-                  <FeaturedBanner
-                    data={bannerProducts}
-                    variant="minimal"
-                    onPress={(p) =>
-                      router.navigate({
-                        pathname: "/(tabs)/category/product-details",
-                        params: { productId: p.ProductId },
-                      })
-                    }
-                  />
+            subCategories.length > 0 ? (
+              <View style={styles.headerBlock}>
+                <View style={styles.headerRow}>
+                  <Text style={styles.sectionTitle} numberOfLines={1}>
+                    {dynamicHeading}
+                  </Text>
+                  <View style={styles.badgeBubble}>
+                    <Text style={styles.badgeText}>
+                      {subCategories.length}{" "}
+                      {subCategories.length === 1 ? "Category" : "Categories"}
+                    </Text>
+                  </View>
                 </View>
-              )}
-              {subCategories.length > 0 && (
-                <Text style={styles.sectionTitle}>{dynamicHeading}</Text>
-              )}
-            </View>
+                {/* Decorative premium ambient accent line */}
+                <View style={styles.accentLine} />
+              </View>
+            ) : null
           }
           renderItem={({ item }) => (
             <View
@@ -110,13 +118,16 @@ export default function SubCategoryScreen() {
             </View>
           )}
           ListEmptyComponent={
-            !bannerProducts.length ? (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  No available sub-collections discovered.
-                </Text>
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons
+                  name="bag-handle-outline"
+                  size={44}
+                  color={Colors.primary}
+                />
               </View>
-            ) : null
+              <Text style={styles.emptyText}>No collections available.</Text>
+            </View>
           }
         />
       </View>
@@ -147,13 +158,52 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   scrollContainer: {
-    paddingTop: 4,
+    paddingTop: 5,
     paddingBottom: 110,
   },
   headerBlock: {
-    width: "100%",
+    marginBottom: 24,
+    marginTop: 8,
+    paddingHorizontal: 15,
+  },
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 16,
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700", // Extra bold weight for maximum visual dominance
+    color: Colors.primary,
+    letterSpacing: -0.5,
+    flex: 1, // Forces the text wrapper to gracefully take up available space and truncate before colliding
+    paddingRight: 16,
+  },
+  badgeBubble: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)", // Semi-transparent glassmorphic backing
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.primary || "#38BDF8", // Uses your core brand theme color
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  accentLine: {
+    height: 2,
+    width: 40,
+    backgroundColor: Colors.darkError,
+    marginTop: 10,
+    borderRadius: 1,
+    opacity: 0.8,
   },
   // Ensures banner components sit completely centered edge-to-edge natively
   bannerWrapperCenter: {
@@ -171,26 +221,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 6,
   },
-  // Refined Corporate Header Copywriting Metrics
-  sectionTitle: {
-    alignSelf: "flex-start",
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#0F172A",
-    paddingHorizontal: 16,
-    marginTop: 18,
-    marginBottom: 8,
-    letterSpacing: -0.2,
-    textTransform: "capitalize",
-  },
+
   emptyContainer: {
-    marginTop: 80,
-    alignItems: "center",
     justifyContent: "center",
+    marginTop: 100,
+    alignItems: "center",
     paddingHorizontal: 40,
   },
+  emptyIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   emptyText: {
-    color: "#94A3B8",
+    color: Colors.accent,
     fontSize: 14,
     fontWeight: "500",
     textAlign: "center",

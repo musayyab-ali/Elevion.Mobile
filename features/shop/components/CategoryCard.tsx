@@ -1,3 +1,4 @@
+import { Colors } from "@/constants/Theme";
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -5,12 +6,13 @@ interface CategoryCardProps {
   category: {
     Name: string;
     ImagePath?: string;
+    IconPath?: string;
   };
   onPress: (category: any) => void;
 }
 
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&q=80";
+  "https://uxwing.com/wp-content/themes/uxwing/download/signs-and-symbols/no-photography-icon.png";
 
 export const CategoryCard = React.memo(
   ({ category, onPress }: CategoryCardProps) => {
@@ -22,7 +24,7 @@ export const CategoryCard = React.memo(
       >
         <View style={styles.circleOuterRing}>
           <Image
-            source={{ uri: category.ThumbnailImagePath || PLACEHOLDER_IMAGE }}
+            source={{ uri: category.IconPath || PLACEHOLDER_IMAGE }}
             style={styles.image}
           />
         </View>
@@ -50,10 +52,10 @@ const styles = StyleSheet.create({
     width: 80, // Increased size
     height: 80, // Increased size
     borderRadius: 40,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.white,
     padding: 3,
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
+    borderWidth: 1,
+    borderColor: Colors.headerOne[0],
     marginBottom: 8,
     // Add shadow back
     shadowColor: "#000",
@@ -65,6 +67,7 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+    objectFit: "cover",
     borderRadius: 40,
   },
   categoryName: {

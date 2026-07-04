@@ -37,7 +37,6 @@ export const ShopHomeScreen = () => {
     (category: any) => {
       if (category?.IsLeafNode) {
         router.push({
-          // pathname: "/(tabs)/category/products",
           pathname: "/(product)/products",
           params: {
             categoryId: category.CategoryId,
@@ -57,7 +56,6 @@ export const ShopHomeScreen = () => {
   const handleProductPress = useCallback(
     (product: any) => {
       router.push({
-        // pathname: "/(tabs)/category/product-details",
         pathname: "/(product)/product-details",
         params: { productId: product.ProductId },
       });
@@ -182,9 +180,6 @@ export const ShopHomeScreen = () => {
         </View>
       ) : (
         <View style={styles.contentCanvas}>
-          {/* 🏆 MASTER FIX: Outer Frame converted to a standalone Vertical FlatList.
-            Everything else sits cleanly inside the ListHeaderComponent layout scope.
-          */}
           <FlatList
             data={homeSections}
             renderItem={renderCategoryBlockSection}

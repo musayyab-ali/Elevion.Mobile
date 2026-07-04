@@ -67,19 +67,6 @@ export const ShopHeader = () => {
     }, []),
   );
 
-  // 2. Read Secure Cache User Registration Data Separately
-  // useEffect(() => {
-  //   const getUserData = async () => {
-  //     try {
-  //       const name = await SecureStore.getItemAsync("user_name");
-  //       if (name) setUserName(name);
-  //     } catch (err) {
-  //       console.log("Error loading username from SecureStore", err);
-  //     }
-  //   };
-  //   getUserData();
-  // }, []);
-
   return (
     <LinearGradient
       colors={[Colors.headerOne[0], Colors.headerOne[1]]}

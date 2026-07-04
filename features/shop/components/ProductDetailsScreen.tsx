@@ -234,7 +234,11 @@ export const ProductDetailsScreen = () => {
       <View style={styles.premiumErrorWorkspace}>
         <View style={styles.errorCardBody}>
           <View style={styles.errorIconFrame}>
-            <Ionicons name="cloud-offline-outline" size={32} color="#64748B" />
+            <Ionicons
+              name="cloud-offline-outline"
+              size={32}
+              color={Colors.primary}
+            />
           </View>
           <Text style={styles.errorHeadlineText}>Product Unavailable</Text>
           <Text style={styles.errorSubparagraphText}>
@@ -256,7 +260,7 @@ export const ProductDetailsScreen = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color="#0F172A" />
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }
@@ -412,7 +416,9 @@ export const ProductDetailsScreen = () => {
               <Text
                 style={[
                   styles.statusBadgeText,
-                  { color: product?.InStock ? "#15803D" : "#991B1B" },
+                  {
+                    color: product?.InStock ? Colors.success : Colors.darkError,
+                  },
                 ]}
               >
                 {product?.InStock ? "In Stock" : "Allocation Closed"}
@@ -509,7 +515,7 @@ export const ProductDetailsScreen = () => {
                             <Ionicons
                               name="checkmark-circle"
                               size={16}
-                              color="#0F172A"
+                              color={Colors.primary}
                             />
                           </View>
                         )}
@@ -585,52 +591,6 @@ export const ProductDetailsScreen = () => {
                 })}
               </View>
             )}
-
-            {/* {reviewsList.length > 0 ? (
-              <View style={{ marginTop: 8 }}>
-                {reviewsList.map((item) => (
-                  <View
-                    key={item.ProductRatingId}
-                    style={styles.reviewItemWrapperCard}
-                  >
-                    <View style={styles.reviewHeaderRow}>
-                      <Text style={styles.reviewClientUserText}>
-                        {item.Customer || "Verified Buyer"}
-                        {user &&
-                          (item.Email?.toLowerCase() ===
-                            user.Email?.toLowerCase() ||
-                            item.Customer === user.Name) && (
-                            <Text style={styles.userBadgeHighlight}>
-                              {" "}
-                              (You)
-                            </Text>
-                          )}
-                      </Text>
-                      <Text style={styles.reviewTimestampLabel}>
-                        {item.TimeSince || "Recent"}
-                      </Text>
-                    </View>
-                    <View style={[styles.starRow, { marginVertical: 6 }]}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Ionicons
-                          key={s}
-                          name={s <= item.Rating ? "star" : "star-outline"}
-                          size={12}
-                          color="#F59E0B"
-                        />
-                      ))}
-                    </View>
-                    <Text style={styles.reviewBodyParagraph}>
-                      {item.Review}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.emptyReviewsFallbackText}>
-                No reviews published for this item yet.
-              </Text>
-            )} */}
 
             {reviewsList.length > 0 ? (
               <>
@@ -847,12 +807,14 @@ export const ProductDetailsScreen = () => {
               activeOpacity={0.7}
             >
               {isWishlistActionRunning ? (
-                <ActivityIndicator size="small" color="#000" />
+                <ActivityIndicator size="small" color={Colors.darkError} />
               ) : (
                 <Ionicons
                   name={isCurrentProductWishlisted ? "heart" : "heart-outline"}
                   size={20}
-                  color={isCurrentProductWishlisted ? "#0F172A" : "#475569"}
+                  color={
+                    isCurrentProductWishlisted ? Colors.darkError : "#475569"
+                  }
                 />
               )}
             </TouchableOpacity>
@@ -862,8 +824,8 @@ export const ProductDetailsScreen = () => {
                 !(product?.InStock && selectedVariant?.InStock)
                   ? ["#E2E8F0", "#CBD5E1"]
                   : isCurrentVariantInCart
-                    ? ["#334155", "#0F172A"]
-                    : ["#1E293B", "#0F172A"]
+                    ? ["#E11D48", "#ef4444"]
+                    : ["#0077b6", "#0F172A"]
               }
               style={styles.ctaButtonGradient}
             >
@@ -1060,8 +1022,8 @@ const styles = StyleSheet.create({
   },
   errorHeadlineText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#0F172A",
+    fontWeight: "700",
+    color: Colors.primary,
     marginBottom: 10,
     letterSpacing: -0.2,
   },
@@ -1075,8 +1037,8 @@ const styles = StyleSheet.create({
   premiumErrorActionCTA: {
     paddingVertical: 13,
     paddingHorizontal: 28,
-    backgroundColor: "#0F172A",
-    borderRadius: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: 30,
     width: "100%",
     alignItems: "center",
   },
@@ -1139,7 +1101,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.textMain,
     marginTop: 8,
     letterSpacing: -0.4,
   },
@@ -1173,7 +1135,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  sectionLabel: { fontSize: 15, fontWeight: "700", color: "#0F172A" },
+  sectionLabel: { fontSize: 15, fontWeight: "700", color: Colors.textMain },
   skuLabel: { fontSize: 12, color: "#64748B", fontWeight: "500" },
   variantsHorizontalContainer: { gap: 12, paddingRight: 20 },
   luxuryVariantGridCard: {
@@ -1184,7 +1146,10 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#FFFFFF",
   },
-  luxuryVariantGridCardActive: { borderColor: "#0F172A", borderWidth: 1.5 },
+  luxuryVariantGridCardActive: {
+    borderColor: Colors.primary,
+    borderWidth: 1.5,
+  },
   variantImageWrapper: {
     width: "100%",
     height: 90,
@@ -1206,7 +1171,7 @@ const styles = StyleSheet.create({
   },
   shortDescriptionText: {
     fontSize: 14,
-    color: "#334155",
+    color: Colors.primary,
     lineHeight: 22,
     fontWeight: "500",
     marginBottom: 6,
@@ -1307,13 +1272,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
-    color: "#0F172A",
+    color: Colors.textMain,
     height: 80,
     textAlignVertical: "top",
     backgroundColor: "#FAFAFA",
   },
   formSubmitActionCTA: {
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.primary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -1362,14 +1327,14 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
   },
   wishlistCircleButtonActive: {
-    backgroundColor: "#F1F5F9",
-    borderColor: "#0F172A",
+    backgroundColor: Colors.white,
+    borderColor: Colors.darkError,
   },
   ctaButtonGradient: {
     flex: 1,

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   useWindowDimensions,
+  RefreshControl,
 } from "react-native";
 import { MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient"; // Ensure expo-linear-gradient is installed
@@ -38,7 +39,7 @@ export const WishlistScreen = () => {
     handleRemoveItem,
   } = useWishlistScreen();
   const { wishMessage } = useWishlist();
-  const { serverError, fetchWishlist } = useSharedWishlistData();
+  const { serverError, fetchWishlist, refreshing } = useSharedWishlistData();
   const handleRetryFetch = () => {
     fetchWishlist();
   };
@@ -78,150 +79,155 @@ export const WishlistScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.headerOne[1] }]}>
-      <View style={styles.contentCanvas}>
-        {loading ? (
-          renderSkeletons()
-        ) : (
-          <>
-            {serverError ? (
-              <EmptyState
-                iconName="cloud-offline-outline"
-                title="Server Connection Interrupted"
-                description="We are having trouble synchronizing our collection. Please check your network and try again."
-                actionLabel="Retry Connection"
-                onActionPress={handleRetryFetch}
-              />
-            ) : (
-              <FlatList
-                data={wishlistItems}
-                keyExtractor={(item) => `wish-${item.ProductId}`}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-                ListHeaderComponent={
-                  wishlistItems.length > 0 ? (
-                    <View style={styles.headerTextContainer}>
-                      <Text style={styles.savedCounterSubtext}>
-                        {wishlistItems.length}{" "}
-                        {wishlistItems.length === 1
-                          ? "Premium Masterpiece"
-                          : "Premium Masterpieces"}
-                      </Text>
-                    </View>
-                  ) : null
-                }
-                renderItem={({ item, index }) => {
-                  const imageUri = item.ProductImage
-                    ? item?.ProductImage
-                    : PLACEHOLDER_IMAGE_BANNER;
-                  const processingState = isProcessing(item.ProductId);
-
-                  return (
-                    <MotiView
-                      from={{ opacity: 0, scale: 0.95, translateY: 30 }}
-                      animate={{ opacity: 1, scale: 1, translateY: 0 }}
-                      transition={{
-                        type: "timing",
-                        duration: 500,
-                        delay: index * 60,
-                      }}
-                    >
-                      <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => handleNavigateToDetails(item.ProductId)}
-                        style={styles.bannerWrapper}
-                      >
-                        {/* Image Fills Entire Background Card */}
-                        <ImageBackground
-                          source={{ uri: imageUri }}
-                          style={styles.backgroundImage}
-                          imageStyle={styles.backgroundImageRadius}
-                        >
-                          {/* Premium Cinematic Scrim Gradient Overlay */}
-                          <LinearGradient
-                            colors={[
-                              "rgba(15, 23, 42, 0.1)",
-                              "rgba(15, 23, 42, 0.85)",
-                            ]}
-                            style={styles.gradientOverlay}
-                          >
-                            {/* Stock Level Luxury Accent Badge */}
-                            {!item.InStock && (
-                              <View style={styles.outOfStockBadge}>
-                                <Text style={styles.outOfStockText}>
-                                  Archived / Out of Stock
-                                </Text>
-                              </View>
-                            )}
-
-                            {/* Core Typography & Bottom Alignment Layer */}
-                            <View style={styles.bottomMetaContainer}>
-                              <View style={styles.textContainer}>
-                                <Text
-                                  style={styles.productName}
-                                  numberOfLines={1}
-                                >
-                                  {item.ProductName}
-                                </Text>
-                                <Text
-                                  style={styles.priceString}
-                                  numberOfLines={1}
-                                >
-                                  {item.MinPrice === item.MaxPrice
-                                    ? `Rs. ${item.MinPrice.toLocaleString()}`
-                                    : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
-                                </Text>
-                              </View>
-
-                              {/* Interactive Action Heart Wrapper */}
-                              <TouchableOpacity
-                                style={styles.removeFloatingButton}
-                                activeOpacity={0.8}
-                                disabled={processingState}
-                                onPress={() => handleRemoveItem(item.ProductId)}
-                              >
-                                {processingState ? (
-                                  <ActivityIndicator
-                                    size="small"
-                                    color="#FFFFFF"
-                                  />
-                                ) : (
-                                  <Ionicons
-                                    name="heart"
-                                    size={20}
-                                    color="#FF3B30"
-                                  />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </LinearGradient>
-                        </ImageBackground>
-                      </TouchableOpacity>
-                    </MotiView>
-                  );
-                }}
-                ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <View style={styles.emptyIconCircle}>
-                      <Ionicons
-                        name="heart-outline"
-                        size={32}
-                        color="#94A3B8"
-                      />
-                    </View>
-                    <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
-                    <Text style={styles.emptySubtitle}>
-                      Begin cultivating your aesthetic archive by saving items
-                      from the main editorial collection collections.
+    <View style={styles.container}>
+      {loading ? (
+        renderSkeletons()
+      ) : (
+        <>
+          {serverError ? (
+            <EmptyState
+              iconName="cloud-offline-outline"
+              title="Server Connection Interrupted"
+              description="We are having trouble synchronizing our collection. Please check your network and try again."
+              actionLabel="Retry Connection"
+              onActionPress={handleRetryFetch}
+            />
+          ) : (
+            <FlatList
+              data={wishlistItems}
+              keyExtractor={(item) => `wish-${item.ProductId}`}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                wishlistItems.length > 0 ? (
+                  <View style={styles.headerTextContainer}>
+                    <Text style={styles.savedCounterSubtext}>
+                      {wishlistItems.length}{" "}
+                      {wishlistItems.length === 1
+                        ? "Premium Masterpiece"
+                        : "Premium Masterpieces"}
                     </Text>
                   </View>
-                }
-              />
-            )}
-          </>
-        )}
-        {wishMessage && <CustomErrorMessage>{wishMessage}</CustomErrorMessage>}
-      </View>
+                ) : null
+              }
+              renderItem={({ item, index }) => {
+                const imageUri = item.ProductImage
+                  ? item?.ProductImage
+                  : PLACEHOLDER_IMAGE_BANNER;
+                const processingState = isProcessing(item.ProductId);
+
+                return (
+                  <MotiView
+                    from={{ opacity: 0, scale: 0.95, translateY: 30 }}
+                    animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                    transition={{
+                      type: "timing",
+                      duration: 500,
+                      delay: index * 60,
+                    }}
+                  >
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => handleNavigateToDetails(item.ProductId)}
+                      style={styles.bannerWrapper}
+                    >
+                      {/* Image Fills Entire Background Card */}
+                      <ImageBackground
+                        source={{ uri: imageUri }}
+                        style={styles.backgroundImage}
+                        imageStyle={styles.backgroundImageRadius}
+                      >
+                        {/* Premium Cinematic Scrim Gradient Overlay */}
+                        <LinearGradient
+                          colors={[
+                            "rgba(15, 23, 42, 0.1)",
+                            "rgba(15, 23, 42, 0.85)",
+                          ]}
+                          style={styles.gradientOverlay}
+                        >
+                          {/* Stock Level Luxury Accent Badge */}
+                          {!item.InStock && (
+                            <View style={styles.outOfStockBadge}>
+                              <Text style={styles.outOfStockText}>
+                                Archived / Out of Stock
+                              </Text>
+                            </View>
+                          )}
+
+                          {/* Core Typography & Bottom Alignment Layer */}
+                          <View style={styles.bottomMetaContainer}>
+                            <View style={styles.textContainer}>
+                              <Text
+                                style={styles.productName}
+                                numberOfLines={1}
+                              >
+                                {item.ProductName}
+                              </Text>
+                              <Text
+                                style={styles.priceString}
+                                numberOfLines={1}
+                              >
+                                {item.MinPrice === item.MaxPrice
+                                  ? `Rs. ${item.MinPrice.toLocaleString()}`
+                                  : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
+                              </Text>
+                            </View>
+
+                            {/* Interactive Action Heart Wrapper */}
+                            <TouchableOpacity
+                              style={styles.removeFloatingButton}
+                              activeOpacity={0.8}
+                              disabled={processingState}
+                              onPress={() => handleRemoveItem(item.ProductId)}
+                            >
+                              {processingState ? (
+                                <ActivityIndicator
+                                  size="small"
+                                  color="#FFFFFF"
+                                />
+                              ) : (
+                                <Ionicons
+                                  name="heart"
+                                  size={20}
+                                  color="#FF3B30"
+                                />
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        </LinearGradient>
+                      </ImageBackground>
+                    </TouchableOpacity>
+                  </MotiView>
+                );
+              }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRetryFetch}
+                  tintColor={Colors.headerOne[0]}
+                />
+              }
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconCircle}>
+                    <Ionicons
+                      name="heart-outline"
+                      size={32}
+                      color={Colors.white}
+                    />
+                  </View>
+                  <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Begin cultivating your aesthetic archive by saving items
+                    from the main collections.
+                  </Text>
+                </View>
+              }
+            />
+          )}
+        </>
+      )}
+      {wishMessage && <CustomErrorMessage>{wishMessage}</CustomErrorMessage>}
     </View>
   );
 };
@@ -229,13 +235,7 @@ export const WishlistScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  contentCanvas: {
-    flex: 1,
-    backgroundColor: "#F8FAFC", // High contrast background context canvas
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
-    overflow: "hidden",
+    backgroundColor: "#F8FAFC",
   },
   listContent: {
     paddingTop: 28,
@@ -336,13 +336,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 120,
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
   },
   emptyIconCircle: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#0F172A",
+    color: Colors.primary,
     marginBottom: 8,
   },
   emptySubtitle: {

@@ -18,8 +18,7 @@ export default function ProductLayout() {
               }
             />
           ),
-          animation: "slide_from_right",
-          // 🌟 FIX 4: Enables consistent hardware-backed screen pop animations
+          animation: "ios_from_right",
           animationTypeForReplace: "pop",
           animationDuration: 220,
           gestureEnabled: true,

@@ -68,3 +68,29 @@ export interface ProductByCategoryResponse {
     Category: string;
   };
 }
+
+export interface Banner {
+  BannerId: number;
+  Name: string;
+  ImageName: string;
+  SortOrder: number;
+  Status: number;
+  PlateForm: number;
+  Clickable: boolean;
+  CategoryId: number;
+  ImagePath: string;
+  ProductId: number;
+  TargetURL: number;
+  BannerText: string;
+  BannerSubText: string;
+}
+
+export interface BannerResponse {
+  Message: string;
+  Type: string;
+  HttpStatusCode: number;
+  Data: {
+    WebPlateFormBanners: Banner[];
+    MobilePlateFormBanners: Banner[];
+  };
+}

@@ -1,5 +1,4 @@
-// features/shop/components/CategoryBreadcrumbs.tsx
-import React from "react";
+import React, { useRef } from "react";
 import {
   ScrollView,
   View,
@@ -9,7 +8,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Colors } from "../../../constants/Theme";
 
 interface Crumb {
   id: number;
@@ -18,11 +16,12 @@ interface Crumb {
 }
 
 export const CategoryBreadcrumbs = ({
-  breadcrumbs,
+  breadcrumbs = [],
 }: {
   breadcrumbs: Crumb[];
 }) => {
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
 
   const handlePress = (crumb: Crumb, isLast: boolean) => {
     if (isLast) return;
@@ -35,9 +34,14 @@ export const CategoryBreadcrumbs = ({
 
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      onContentSizeChange={() => {
+        // Auto-scrolls to focus bold, current screen heading text dynamically
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }}
     >
       <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
         <Text style={styles.inactiveCrumb}>Home</Text>
@@ -46,11 +50,11 @@ export const CategoryBreadcrumbs = ({
       {breadcrumbs.map((crumb, idx) => {
         const isLast = idx === breadcrumbs.length - 1;
         return (
-          <View key={crumb.id} style={styles.wrapper}>
+          <View key={`${crumb.id}-${idx}`} style={styles.wrapper}>
             <Ionicons
               name="chevron-forward"
               size={12}
-              color="rgba(255,255,255,0.6)"
+              color="rgba(255,255,255,0.4)"
               style={styles.chevron}
             />
             <TouchableOpacity
@@ -59,6 +63,7 @@ export const CategoryBreadcrumbs = ({
             >
               <Text
                 style={[styles.inactiveCrumb, isLast && styles.activeCrumb]}
+                numberOfLines={1}
               >
                 {crumb.name}
               </Text>
@@ -71,13 +76,25 @@ export const CategoryBreadcrumbs = ({
 };
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", paddingVertical: 8, paddingRight: 16 },
-  wrapper: { flexDirection: "row", alignItems: "center" },
-  chevron: { marginHorizontal: 4 },
+  container: {
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingRight: 24,
+  },
+  wrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  chevron: {
+    marginHorizontal: 6,
+  },
   inactiveCrumb: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.6)",
     fontWeight: "400",
   },
-  activeCrumb: { color: "#FFFFFF", fontWeight: "800" },
+  activeCrumb: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
 });

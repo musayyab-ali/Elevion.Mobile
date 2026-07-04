@@ -5,8 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import ConfettiCannon from "react-native-confetti-cannon";
 const { width, height } = Dimensions.get("window");
 
-const STREAMER_COUNT = 18;
-const STAR_COUNT = 10;
 const COLORS = [
   "#0077b6",
   "#00b4d8",
