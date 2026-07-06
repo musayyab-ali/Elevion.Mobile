@@ -49,12 +49,6 @@ export function useCustomerOrders() {
     }
   };
 
-  // const triggerCancelConfirmation = (orderId: string) => {
-  //   setActiveCancelOrderId(orderId);
-  //   setIsCancelConfirmVisible(true);
-  //   setCancelMessage({ type: null, text: "" }); // Reset errors on fresh interaction
-  // };
-
   const fetchOrders = useCallback(
     async (statusFilter?: number, isSilent = false) => {
       if (!isAuthenticated) {
@@ -70,9 +64,6 @@ export function useCustomerOrders() {
 
         if (res?.StatusCode === 200 && res?.Data?.CustomerOrders) {
           const rawList = res.Data.CustomerOrders;
-
-          // 2. Local Filtering Logic
-          // If statusFilter is -1 (All), show everything. Otherwise, match the 'Status' field.
           const filteredList =
             statusFilter === undefined || statusFilter === -1
               ? rawList
@@ -83,7 +74,7 @@ export function useCustomerOrders() {
           setOrders([]);
         }
       } catch (err) {
-        console.log("🚨 Error pulling new customer orders:", err);
+        console.log("Error pulling new customer orders:", err);
         setServerError(true);
         setOrders([]);
       } finally {
@@ -121,46 +112,6 @@ export function useCustomerOrders() {
     },
     [],
   );
-
-  // const executeOrderCancellation = async (onCompletion?: () => void) => {
-  //   console.log("🚀 Executing order cancellation...,", activeCancelOrderId);
-  //   if (!activeCancelOrderId) return;
-
-  //   setIsCanceling(true);
-  //   setCancelMessage({ type: null, text: "" });
-
-  //   try {
-  //     console.log("📤 Sending cancellation request...");
-  //     const res = await orderApi.cancelCustomerOrder(activeCancelOrderId);
-
-  //     if (res?.HttpStatusCode === 200 || res?.Type === "Success") {
-  //       setCancelMessage({
-  //         type: "success",
-  //         text: res.Message || "The order has been cancelled successfully.",
-  //       });
-
-  //       setIsCancelConfirmVisible(false);
-  //       if (onCompletion) onCompletion();
-  //     } else {
-  //       const errorMsg =
-  //         res.Errors?.[0]?.Message ||
-  //         res.Message ||
-  //         "Cancellation request rejected by server application logic.";
-
-  //       setCancelMessage({ type: "error", text: errorMsg });
-  //     }
-  //   } catch (err: any) {
-  //     console.log("Cancellation Endpoint Error Context:", err);
-  //     setCancelMessage({
-  //       type: "error",
-  //       text: "System communication exception. Failed to connect with server payload gateway.",
-  //     });
-  //   } finally {
-  //     setIsCanceling(false);
-  //     setTimeout(() => setCancelMessage({ type: null, text: "" }), 3000);
-  //   }
-  // };
-
   const executeOrderCancellation = async (onCompletion?: () => void) => {
     if (!activeCancelOrderId) return;
     if (!selectedReason) {

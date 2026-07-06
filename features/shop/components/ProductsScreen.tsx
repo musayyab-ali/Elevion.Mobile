@@ -35,7 +35,7 @@ export const ProductsScreen = () => {
     breadcrumbs,
     loading: discoveryLoading,
   } = useDiscovery(categoryId);
-  console.log("Category Products:", categoryProducts?.length);
+
   const { wishlistMap, isProcessing, toggleWishlist } = useWishlist();
 
   const safeBreadcrumbs = breadcrumbs?.length
@@ -112,9 +112,8 @@ export const ProductsScreen = () => {
             ) : null
           }
           renderItem={({ item, index }) => {
-            const targetDetailId =
-              item.ProductVariantDetail?.productVariantCombinationList?.[0]
-                ?.ProductDetailId || item.ProductId;
+            // const targetDetailId = item.ProductDetailId;
+
             const isItemWishlisted = wishlistMap.has(item.ProductId);
 
             return (
@@ -129,7 +128,7 @@ export const ProductsScreen = () => {
                       setModalVisible(true);
                       return;
                     }
-                    toggleWishlist(item.ProductId, targetDetailId, item);
+                    toggleWishlist(item.ProductId, item.ProductDetailId, item);
                   }}
                   onPress={() =>
                     router.navigate({

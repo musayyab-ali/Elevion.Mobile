@@ -67,20 +67,6 @@ export const authApi = {
       body: JSON.stringify(data),
     }).then(handleResponse),
 
-  verifyPhoneOtp: (data: { phoneNumber: string; otp: string }) =>
-    fetch(`${BASE_URL}/Account/VerifyPhoneOtp`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleResponse),
-
-  resendPhoneOtp: (phoneNumber: string) =>
-    fetch(`${BASE_URL}/Account/ResendPhoneOtp`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({ phoneNumber }),
-    }).then(handleResponse),
-
   isUserUnique: (value: string, type: "userName" | "email" | "phone") =>
     fetch(
       `${BASE_URL_TWO}/Account/IsUserUnique?Value=${encodeURIComponent(value)}&Type=${type}`,
@@ -97,14 +83,6 @@ export const authApi = {
       body: JSON.stringify(credentials),
     }).then(handleResponse);
   },
-
-  // Added this for your client's email testing requirement
-  verifyEmailOtp: (data: { email: string; otp: string }) =>
-    fetch(`${BASE_URL}/Account/VerifyEmailOtp`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleResponse),
 
   // Body: { OTP, PhoneCode, PhoneNumber, UpdateAuthToken }
   verifyOtp: (payload: {
@@ -123,6 +101,13 @@ export const authApi = {
         Username: payload.userName || "",
         UpdateAuthToken: true,
       }),
+    }).then(handleResponse),
+
+  verifyPhoneOtp: (data: { UserName: string; Otp: string }) =>
+    fetch(`${BASE_URL}/Account/VerifyPhoneOtp`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
     }).then(handleResponse),
 
   // Body: { UserName } - Note: Ensure you pass the username here now

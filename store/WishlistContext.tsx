@@ -13,10 +13,8 @@ interface WishlistContextType {
   items: any[];
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   loading: boolean;
-  setLoading: (loading: boolean) => void;
   refreshing: boolean;
   serverError: boolean;
-  setRefreshing: (refreshing: boolean) => void;
   wishMessage: string | null;
   setWishMessage: (msg: string | null) => void;
   processingIds: Set<number>;
@@ -31,7 +29,6 @@ const WishlistContext = createContext<WishlistContextType | undefined>(
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Consume live authentication dependencies directly
   const { isAuthenticated } = useAuth();
 
   const [items, setItems] = useState<any[]>([]);
@@ -43,7 +40,6 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchWishlist = useCallback(
     async (isRefresh = false) => {
-      // 🛑 Hard stop if the explicit user security parameters are missing
       if (!isAuthenticated) {
         setItems([]);
         return;
@@ -51,9 +47,10 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
+      setServerError(false);
 
       try {
-        const result = await wishlistApi.getWishlist(10, 1);
+        const result = await wishlistApi.getWishlist(20, 1);
         setItems(result?.Data?.WishItemList ?? []);
       } catch (error) {
         console.log("Wishlist Fetch Core Exception:", error);
@@ -66,12 +63,11 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
     [isAuthenticated],
   );
 
-  // Dynamic initialization sync: Triggers every single time user auth token state toggles
   useEffect(() => {
     if (isAuthenticated) {
       fetchWishlist();
     } else {
-      setItems([]); // Clear out local collection cache cleanly on user exit
+      setItems([]);
     }
   }, [isAuthenticated, fetchWishlist]);
 
@@ -80,9 +76,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       items,
       setItems,
       loading,
-      setLoading,
       refreshing,
-      setRefreshing,
       wishMessage,
       setWishMessage,
       processingIds,

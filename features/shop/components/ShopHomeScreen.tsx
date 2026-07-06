@@ -33,6 +33,66 @@ export const ShopHomeScreen = () => {
   } = useDiscovery();
   const { width } = useWindowDimensions();
 
+  const handleBannerPress = useCallback(
+    (banner: any) => {
+      // 1. Guard check: if clickable flag is explicitly false or evaluated falsy, reject interaction
+      if (!banner?.Clickable) {
+        console.log(`Banner ${banner?.BannerId} is set to non-clickable.`);
+        return;
+      }
+
+      // 2. Branch choice A: Product Banner Type
+      if (banner.ProductId) {
+        router.push({
+          pathname: "/(product)/product-details",
+          params: { productId: banner.ProductId },
+        });
+        return;
+      }
+
+      // 3. Branch choice B: Category Banner Type
+      if (banner.CategoryId) {
+        // Deep find inside the currently active category tree array to see if it's a Leaf
+        const findCategoryInTree = (tree: any[], targetId: number): any => {
+          for (const node of tree) {
+            if (node.CategoryId === targetId) return node;
+            const children = node.children || node.Children || [];
+            if (children.length > 0) {
+              const found = findCategoryInTree(children, targetId);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        const matchedCategory = findCategoryInTree(
+          subCategories,
+          Number(banner.CategoryId),
+        );
+
+        // If it's a leaf node or has no sub-children arrays, route straight to product grid display
+        if (matchedCategory?.IsLeafNode) {
+          router.push({
+            pathname: "/(product)/products",
+            params: {
+              categoryId: banner.CategoryId.toString(),
+              categoryName: matchedCategory.Name || "Products",
+            },
+          });
+        } else {
+          // Fallback context: Go deep to the nested [id] sub-category collection grid view
+          router.push({
+            pathname: "/(product)/[id]",
+            params: {
+              id: banner.CategoryId.toString(),
+              name: matchedCategory?.Name || "Collection",
+            },
+          });
+        }
+      }
+    },
+    [router, subCategories],
+  );
+
   const handleCategoryPress = useCallback(
     (category: any) => {
       if (category?.IsLeafNode) {
@@ -199,7 +259,7 @@ export const ShopHomeScreen = () => {
                   <View style={styles.bannerContainer}>
                     <FeaturedBanner
                       data={bannerProducts}
-                      onPress={handleProductPress}
+                      onPress={handleBannerPress}
                     />
                   </View>
                 )}

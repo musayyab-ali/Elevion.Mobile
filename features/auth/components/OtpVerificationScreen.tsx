@@ -31,16 +31,9 @@ export default function OtpVerificationScreen() {
     flowType,
   } = useLocalSearchParams<any>();
 
-  console.log(
-    "search params are :",
-    phoneCode,
-    phoneNumber,
-    userName,
-    flowType,
-  );
-
   const {
     verifyOtp,
+    verifyPhoneNumber,
     resendOtp,
     loading,
     apiMessage,
@@ -79,13 +72,6 @@ export default function OtpVerificationScreen() {
 
     const parsedCode = phoneCode ? parseInt(phoneCode, 10) : 92;
     const res = await verifyOtp(
-      // otp,
-      // phoneNumber,
-      // userName,
-      // parsedCode,
-      // isRestorationFlow,
-      // restorationToken,
-      // flowType,
       otp, // 1st: string
       phoneNumber, // 2nd: string | undefined
       userName, // 3rd: string | undefined
@@ -96,6 +82,27 @@ export default function OtpVerificationScreen() {
 
     if (res?.success) {
       await SecureStore.setItemAsync("SHOW_WELCOME_MODAL", "true");
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    setFieldError("");
+    if (!otp || otp.length < 6) {
+      setFieldError("Please enter a valid 6-digit OTP");
+      return;
+    }
+    const res = await verifyPhoneNumber(userName, otp);
+
+    if (res?.success) {
+      await SecureStore.setItemAsync("SHOW_WELCOME_MODAL", "true");
+    }
+  };
+
+  const handleVerifyButtonPress = () => {
+    if (fromLogin === "true") {
+      handleVerifyPhone();
+    } else {
+      handleVerify();
     }
   };
 
@@ -199,7 +206,7 @@ export default function OtpVerificationScreen() {
                     ? "SENDING..."
                     : "VERIFY & PROCEED"
               }
-              onPress={handleVerify}
+              onPress={handleVerifyButtonPress}
               style={styles.verifyBtn}
               disabled={otp.length < 6 || loading || resetLoading}
             />

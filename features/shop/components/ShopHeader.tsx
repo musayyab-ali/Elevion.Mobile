@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../../constants/Theme";
@@ -17,12 +16,14 @@ import { AddressModal } from "@/features/customer/components/AddressModal";
 import { useAddress } from "@/features/customer/hooks/useAddress";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/store/AuthContext";
+import { useSharedCartData } from "@/store/CartContext";
 const { width } = Dimensions.get("window");
 
 export const ShopHeader = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { cartCount } = useSharedCartData();
   const [userName, setUserName] = useState("Customer");
   const { activeAddress, saveActiveAddress, loading } = useAddress();
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -116,21 +117,15 @@ export const ShopHeader = () => {
         <View style={styles.rightHeader}>
           <TouchableOpacity
             style={styles.iconCircle}
-            // onPress={() => router.push("/search")}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="search-outline"
-              size={22}
-              color={Colors.white || "#FFF"}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconCircle}
             onPress={() => router.push("/(cart)/cart")}
             activeOpacity={0.8}
           >
             <Ionicons name="cart" size={22} color={Colors.white || "#FFF"} />
+            {cartCount > 0 && (
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>{cartCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -209,5 +204,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 12,
+  },
+  badgeContainer: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#FF3B30", // Professional iOS-style vibrant red
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

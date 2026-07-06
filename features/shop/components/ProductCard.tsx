@@ -96,7 +96,7 @@ const ProductCard = ({
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#EF4444" />
+                <ActivityIndicator size="small" color={Colors.white} />
               ) : (
                 <Ionicons
                   name={isWishlisted ? "heart" : "heart-outline"}

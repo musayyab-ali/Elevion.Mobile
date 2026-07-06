@@ -7,14 +7,12 @@ import {
   ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
-  useWindowDimensions,
   RefreshControl,
 } from "react-native";
 import { MotiView } from "moti";
-import { LinearGradient } from "expo-linear-gradient"; // Ensure expo-linear-gradient is installed
+import { LinearGradient } from "expo-linear-gradient";
 import { Skeleton } from "moti/skeleton";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Colors } from "@/constants/Theme";
 import { useWishlistScreen } from "../hooks/useWishlistScreen";
 import { useAuth } from "@/store/AuthContext";
@@ -22,33 +20,30 @@ import { useWishlist } from "../hooks/useWishlist";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { PremiumGuestGate } from "@/components/PremiumGuestGate";
 import { EmptyState } from "@/components/EmptyState";
-import { useSharedWishlistData } from "@/store/WishlistContext";
 
 const PLACEHOLDER_IMAGE_BANNER =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/No-Image-Placeholder-banner.svg/1280px-No-Image-Placeholder-banner.svg.png";
 
 export const WishlistScreen = () => {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
-  const { width } = useWindowDimensions();
   const {
     wishlistItems,
     loading,
+    refreshing,
+    serverError,
     isProcessing,
     handleNavigateToDetails,
     handleRemoveItem,
+    handleRefresh,
+    handleRetryFetch,
   } = useWishlistScreen();
+
   const { wishMessage } = useWishlist();
-  const { serverError, fetchWishlist, refreshing } = useSharedWishlistData();
-  const handleRetryFetch = () => {
-    fetchWishlist();
-  };
 
   if (!isAuthenticated) {
     return <PremiumGuestGate screenType="wishlist" />;
   }
 
-  // 1:1 Matching Immersive Horizontal Banner Shimmer
   const renderSkeletons = () => (
     <View style={styles.skeletonContainer}>
       {Array.from({ length: 3 }).map((_, index) => (
@@ -65,13 +60,12 @@ export const WishlistScreen = () => {
           style={styles.skeletonBannerCard}
         >
           <Skeleton colorMode="light" width="100%" height="100%" radius={24} />
-          {/* Mock Floating Content Elements */}
           <View style={styles.skeletonAbsoluteContent}>
             <View style={{ gap: 8 }}>
               <Skeleton colorMode="light" width={180} height={18} radius={6} />
               <Skeleton colorMode="light" width={100} height={14} radius={4} />
             </View>
-            <Skeleton colorMode="light" width={40} height={40} radius={20} />
+            <Skeleton colorMode="light" width={46} height={46} radius={23} />
           </View>
         </MotiView>
       ))}
@@ -80,7 +74,7 @@ export const WishlistScreen = () => {
 
   return (
     <View style={styles.container}>
-      {loading ? (
+      {loading && !refreshing ? (
         renderSkeletons()
       ) : (
         <>
@@ -98,21 +92,30 @@ export const WishlistScreen = () => {
               keyExtractor={(item) => `wish-${item.ProductId}`}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={Colors.primary}
+                />
+              }
               ListHeaderComponent={
                 wishlistItems.length > 0 ? (
                   <View style={styles.headerTextContainer}>
-                    <Text style={styles.savedCounterSubtext}>
-                      {wishlistItems.length}{" "}
-                      {wishlistItems.length === 1
-                        ? "Premium Masterpiece"
-                        : "Premium Masterpieces"}
-                    </Text>
+                    <View style={styles.headerFlexRow}>
+                      <Text style={styles.headerTitleText}>My Wishlist</Text>
+                      <Text style={styles.savedCounterCount}>
+                        {wishlistItems.length}{" "}
+                        {wishlistItems.length === 1 ? "Item" : "Items"}
+                      </Text>
+                    </View>
+                    <View style={styles.headerUnderline} />
                   </View>
                 ) : null
               }
               renderItem={({ item, index }) => {
                 const imageUri = item.ProductImage
-                  ? item?.ProductImage
+                  ? item.ProductImage
                   : PLACEHOLDER_IMAGE_BANNER;
                 const processingState = isProcessing(item.ProductId);
 
@@ -131,13 +134,11 @@ export const WishlistScreen = () => {
                       onPress={() => handleNavigateToDetails(item.ProductId)}
                       style={styles.bannerWrapper}
                     >
-                      {/* Image Fills Entire Background Card */}
                       <ImageBackground
                         source={{ uri: imageUri }}
                         style={styles.backgroundImage}
                         imageStyle={styles.backgroundImageRadius}
                       >
-                        {/* Premium Cinematic Scrim Gradient Overlay */}
                         <LinearGradient
                           colors={[
                             "rgba(15, 23, 42, 0.1)",
@@ -145,16 +146,14 @@ export const WishlistScreen = () => {
                           ]}
                           style={styles.gradientOverlay}
                         >
-                          {/* Stock Level Luxury Accent Badge */}
                           {!item.InStock && (
                             <View style={styles.outOfStockBadge}>
                               <Text style={styles.outOfStockText}>
-                                Archived / Out of Stock
+                                Out of Stock
                               </Text>
                             </View>
                           )}
 
-                          {/* Core Typography & Bottom Alignment Layer */}
                           <View style={styles.bottomMetaContainer}>
                             <View style={styles.textContainer}>
                               <Text
@@ -173,7 +172,6 @@ export const WishlistScreen = () => {
                               </Text>
                             </View>
 
-                            {/* Interactive Action Heart Wrapper */}
                             <TouchableOpacity
                               style={styles.removeFloatingButton}
                               activeOpacity={0.8}
@@ -183,7 +181,7 @@ export const WishlistScreen = () => {
                               {processingState ? (
                                 <ActivityIndicator
                                   size="small"
-                                  color="#FFFFFF"
+                                  color="#FF3B30"
                                 />
                               ) : (
                                 <Ionicons
@@ -200,21 +198,10 @@ export const WishlistScreen = () => {
                   </MotiView>
                 );
               }}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRetryFetch}
-                  tintColor={Colors.headerOne[0]}
-                />
-              }
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <View style={styles.emptyIconCircle}>
-                    <Ionicons
-                      name="heart-outline"
-                      size={32}
-                      color={Colors.white}
-                    />
+                    <Ionicons name="heart-outline" size={32} color="#FFFFFF" />
                   </View>
                   <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
                   <Text style={styles.emptySubtitle}>
@@ -238,7 +225,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   listContent: {
-    paddingTop: 28,
+    paddingTop: 24,
     paddingBottom: 120,
     paddingHorizontal: 16,
   },
@@ -246,18 +233,33 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 4,
   },
-
-  savedCounterSubtext: {
+  headerFlexRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    paddingBottom: 8,
+  },
+  headerTitleText: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: Colors.accent,
+    letterSpacing: -0.5,
+  },
+  savedCounterCount: {
     fontSize: 14,
     color: Colors.darkError,
-    fontWeight: "600",
-    marginTop: 2,
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+  headerUnderline: {
+    height: 2,
+    backgroundColor: Colors.darkError,
+    width: 50,
+  },
   bannerWrapper: {
     width: "100%",
-    height: 180, // Substantial lookbook banner presentation height
+    height: 180,
     marginBottom: 16,
     borderRadius: 24,
     backgroundColor: "#E2E8F0",
@@ -292,13 +294,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   bottomMetaContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: "auto", // Forces layout convergence directly into the shaded baseline zone
+    marginTop: "auto",
   },
   textContainer: {
     flex: 1,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   priceString: {
-    color: "#38BDF8", // Brilliant premium skylight blue typography signature
+    color: "#38BDF8",
     fontSize: 15,
     fontWeight: "700",
     marginTop: 4,
@@ -323,14 +324,15 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    backdropFilter: "blur(10px)", // For iOS compliance matching web engine standards
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  /* Empty States definitions */
   emptyContainer: {
     flex: 1,
     alignItems: "center",
@@ -342,17 +344,15 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: Colors.primary,
+    color: Colors.accent,
     marginBottom: 8,
   },
   emptySubtitle: {
@@ -362,7 +362,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: "500",
   },
-  /* Full Width Symmetric Shimmer Modules */
   skeletonContainer: {
     paddingHorizontal: 16,
     paddingTop: 50,
@@ -374,7 +373,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     marginBottom: 16,
     position: "relative",
-
     paddingTop: 25,
   },
   skeletonAbsoluteContent: {

@@ -44,7 +44,7 @@ export const FeaturedBanner = ({
 
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       setActiveIndex(nextIndex);
-    }, 4000); // 4 seconds is standard for smooth user tracking readability
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [activeIndex, data.length]);
@@ -68,7 +68,8 @@ export const FeaturedBanner = ({
           isMinimal && styles.minimalCard,
         ]}
         onPress={() => onPress(item)}
-        activeOpacity={0.95}
+        disabled={!item.Clickable}
+        activeOpacity={item.Clickable ? 0.85 : 1}
       >
         <View style={styles.imageWrapper}>
           <Image
@@ -85,7 +86,7 @@ export const FeaturedBanner = ({
               <Text style={styles.bannerText} numberOfLines={2}>
                 {title}
               </Text>
-              {!isMinimal && (
+              {!isMinimal && item.BannerSubText && (
                 <Text style={styles.actionSubtitle} numberOfLines={3}>
                   {item.BannerSubText}
                 </Text>
@@ -117,7 +118,12 @@ export const FeaturedBanner = ({
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) =>
-          (item.ProductId || item.CategoryId || index).toString()
+          (
+            item.BannerId ||
+            item.ProductId ||
+            item.CategoryId ||
+            index
+          ).toString()
         }
         onMomentumScrollEnd={handleScroll}
       />
@@ -147,7 +153,6 @@ export const FeaturedBanner = ({
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   featuredWrapper: {
     paddingTop: 16, // Cleaned up header breathing space clearance matrix

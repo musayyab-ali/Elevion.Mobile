@@ -122,7 +122,7 @@ export default function RestoreProfileScreen() {
   };
 
   return (
-    <AuthContainer title="Identity Verification" apiMessage={uiError}>
+    <AuthContainer apiMessage={uiError}>
       <View style={styles.formCard}>
         <Text style={styles.infoLabel}>
           To protect your privacy parameters, verify the contact details

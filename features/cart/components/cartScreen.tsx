@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
-  SafeAreaView,
 } from "react-native";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
@@ -299,8 +297,8 @@ export const CartScreen = () => {
                 <View style={styles.emptyIconCircle}>
                   <Ionicons
                     name="bag-handle-outline"
-                    size={44}
-                    color="#64748B"
+                    size={36}
+                    color={Colors.white}
                   />
                 </View>
                 <Text style={styles.emptyTitle}>Your Bag is Empty</Text>
@@ -308,6 +306,15 @@ export const CartScreen = () => {
                   Looks like you haven't added anything to your cart yet.
                   Explore our latest collections to get started!
                 </Text>
+                <TouchableOpacity
+                  style={styles.premiumErrorActionCTA}
+                  onPress={() => router.back()}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.premiumErrorCTALabel}>
+                    Return to Catalog
+                  </Text>
+                </TouchableOpacity>
               </View>
             }
           />
@@ -386,7 +393,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#0F172A",
+    color: Colors.accent,
     letterSpacing: -0.5,
   },
   badgeCount: {
@@ -603,22 +610,37 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.accent,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#1E293B",
+    fontSize: 20,
+    fontWeight: 800,
+    color: Colors.accent,
   },
   emptySubtitle: {
     fontSize: 13,
     color: "#64748B",
     textAlign: "center",
-    marginTop: 8,
+    marginVertical: 8,
     lineHeight: 20,
+  },
+  premiumErrorActionCTA: {
+    paddingVertical: 13,
+    paddingHorizontal: 28,
+    backgroundColor: Colors.accent,
+    borderRadius: 30,
+    width: "100%",
+    marginTop: 10,
+    alignItems: "center",
+  },
+  premiumErrorCTALabel: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   /* --- Compact Side-by-Side Professional Bottom Bar --- */
   compactStickyFooter: {

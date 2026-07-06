@@ -40,11 +40,7 @@ export default function LoginScreen() {
     handleLogin(userName, password);
   };
   return (
-    <AuthContainer
-      title="Login to Account"
-      apiMessage={apiMessage}
-      loading={loading}
-    >
+    <AuthContainer apiMessage={apiMessage} loading={loading}>
       <RestoreAccountModal
         visible={showDeletionModal}
         scheduledPurgeDate={pendingDeletionData?.ScheduledPurgeOn}
@@ -98,7 +94,7 @@ export default function LoginScreen() {
             >
               <AppInput
                 label="UserName"
-                placeholder="Enter userName"
+                placeholder="Enter UserName"
                 value={userName}
                 onChangeText={setUserName}
               />

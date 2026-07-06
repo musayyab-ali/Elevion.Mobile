@@ -60,7 +60,6 @@ export const useDiscovery = (categoryId?: string) => {
         // --- ROOT HOME VIEW ---
         const bannerRes = await shopApi.getMobileBanners();
 
-        // Extracting mobile-specific platforms arrays from response body
         setMobileBanners(bannerRes?.Data?.MobilePlateFormBanners ?? []);
         setSubCategories(masterCategoryTree);
         setHomeSections(landingPageProducts);
@@ -81,7 +80,6 @@ export const useDiscovery = (categoryId?: string) => {
 
         // Fix: Querying directly against the category items list endpoint
         const productDataRes = await shopApi.getProductsByCategory(numericId);
-        console.log("Product Data Response:", productDataRes);
         setCategoryProducts(productDataRes?.Data?.productListViewModel ?? []);
         setMobileBanners([]); // Clear home banners when looking at sub-categories
       }

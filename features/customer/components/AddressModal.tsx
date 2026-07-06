@@ -16,7 +16,7 @@ import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useGlobalAddress } from "@/store/AddressContext";
 import { useAuth } from "@/store/AuthContext";
-
+import { Colors } from "@/constants/Theme";
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -785,43 +785,6 @@ export const AddressModal = ({
                 )}
 
                 {/* 6. Phone Number Compound Input Section */}
-                {/* <Text style={styles.fieldLabelText}>Phone Number</Text>
-                <View style={styles.phoneInputCompoundRow}>
-                  <View
-                    style={[
-                      styles.staticCountryCodeDeck,
-                      formErrors.PhoneNumber ? styles.inputErrorBorder : null,
-                    ]}
-                  >
-                    <Text style={styles.countryCodeLabelText}>
-                      +{selectedCountryCode}
-                    </Text>
-                  </View>
-                  <TextInput
-                    placeholder="**********"
-                    placeholderTextColor="#94A3B8"
-                    style={[
-                      styles.phoneInputFieldElement,
-                      formErrors.PhoneNumber ? styles.inputErrorBorder : null,
-                    ]}
-                    keyboardType="number-pad"
-                    maxLength={11}
-                    value={formData.PhoneNumber}
-                    onChangeText={(t) => {
-                      updatePhoneNumberPayload(t, selectedCountryCode);
-                      if (formErrors.PhoneNumber)
-                        setFormErrors({ ...formErrors, PhoneNumber: "" });
-                    }}
-            
-                  />
-                </View>
-                {formErrors.PhoneNumber && (
-                  <Text style={styles.errorSubtext}>
-                    {formErrors.PhoneNumber}
-                  </Text>
-                )} */}
-
-                {/* 6. Phone Number Compound Input Section */}
                 <Text style={styles.fieldLabelText}>Phone Number</Text>
                 <View style={styles.phoneInputCompoundRow}>
                   <View
@@ -1168,7 +1131,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   saveBtn: {
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.accent,
     padding: 16,
     borderRadius: 14,
     width: "68%",
@@ -1179,7 +1142,7 @@ const styles = StyleSheet.create({
   saveBtnText: { color: "#fff", fontWeight: "600", fontSize: 15 },
   cancelBtn: {
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.darkError,
     backgroundColor: "#FFFFFF",
     padding: 16,
     borderRadius: 14,
@@ -1188,5 +1151,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 52,
   },
-  cancelBtnText: { color: "#64748B", fontWeight: "600", fontSize: 15 },
+  cancelBtnText: { color: Colors.darkError, fontWeight: "600", fontSize: 15 },
 });

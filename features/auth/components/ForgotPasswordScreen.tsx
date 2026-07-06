@@ -101,7 +101,7 @@ export default function ForgotPasswordScreen() {
                 ? "mail-unread-outline"
                 : "shield-checkmark-outline"
             }
-            size={isTablet ? 55 : 40}
+            size={isTablet ? 55 : 35}
             color={Colors.accent}
           />
         </MotiView>
@@ -219,8 +219,8 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   iconCircle: {
-    width: isTablet ? 120 : 90,
-    height: isTablet ? 120 : 90,
+    width: isTablet ? 120 : 80,
+    height: isTablet ? 120 : 80,
     borderRadius: 60,
     backgroundColor: "#f1f5f9",
     alignSelf: "center",
