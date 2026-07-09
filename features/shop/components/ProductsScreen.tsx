@@ -168,7 +168,12 @@ export const ProductsScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.white },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+  },
   contentCanvas: { flex: 1 },
   listContent: { padding: 16 },
   headerBlock: {

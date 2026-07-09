@@ -284,14 +284,6 @@ export default function RegisterScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Global intercepting activity indicator layer when screen is locked */}
-      {/* {!loading && (
-        <View style={styles.globalLockOverlay}>
-          <ActivityIndicator size="large" color="#0077b6" />
-          <Text style={styles.lockText}>Securing Account Matrix...</Text>
-        </View>
-      )} */}
     </AuthContainer>
   );
 }

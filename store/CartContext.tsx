@@ -134,10 +134,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // 2. Fetch cart contents with conditional gates
   const fetchCart = useCallback(
     async (isRefreshing = false) => {
-      // 🛑 GATE 1: Wait until Auth state is resolved from SecureStore
       if (isAuthSettled === false) return;
 
-      // 🛑 GATE 2: Wait until guest tracking keys are fully loaded from storage
       if (!isSessionReady) return;
       if (isRefreshing) setRefreshing(true);
       else setLoading(true);
@@ -215,7 +213,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             quantity,
           );
         }
-
         if (result?.HttpStatusCode === 200 || result?.Data) {
           await fetchCart();
           await triggerBannerOnNewAddition();

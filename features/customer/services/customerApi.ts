@@ -22,18 +22,6 @@ export const customerApi = {
     }
   },
 
-  getOrders: async (pageSize: number, pageNumber: number) => {
-    try {
-      const responce = await apiClient.get("/Customer/orders", {
-        params: { PageSize: pageSize, PageNumber: pageNumber },
-      });
-      return responce.data;
-    } catch (error: any) {
-      console.log("orders fetching error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
   getAddresses: async (pageSize = 10, pageNumber = 1) => {
     return await apiClient.get(
       `/Customer/addresses?PageSize=${pageSize}&PageNumber=${pageNumber}`,

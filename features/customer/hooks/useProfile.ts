@@ -24,10 +24,15 @@ export const useProfile = () => {
   };
 
   const validateProfileData = (data: any) => {
-    const fieldErrors: { fullName?: string; phone?: string; country?: string } =
-      {};
+    const fieldErrors: {
+      fullName?: string;
+      phone?: string;
+      country?: string;
+      dob?: string;
+      gender?: string;
+    } = {};
 
-    // 1. Full Name Text Form Protections
+    // 1. Full Name Verification
     if (!data.FullName || data.FullName.trim().length === 0) {
       fieldErrors.fullName = "Full Name is strictly required.";
     } else if (!/^[a-zA-Z\s]+$/.test(data.FullName)) {
@@ -35,20 +40,18 @@ export const useProfile = () => {
         "Name contains invalid characters. Use letters only.";
     }
 
-    // 2. Strict Country Domain Check
+    // 2. Country Domain Check
     const allowedCountries = ["Pakistan", "United Kingdom"];
     if (!data.Country || !allowedCountries.includes(data.Country)) {
       fieldErrors.country = "Please select either Pakistan or United Kingdom.";
     }
 
-    // 3. Country-Phone Interlocking Joint Alignment Validation
+    // 3. Country-Phone Interlocking Alignment
     if (!data.PhoneNumber) {
       fieldErrors.phone = "Phone number tracking string cannot be empty.";
     } else {
       const sanitizedPhone = data.PhoneNumber.replace(/\s+/g, "");
-
       if (data.Country === "Pakistan") {
-        // Must not start with prefix variants like 03 or 923
         if (/^(03|923|\+92)/.test(sanitizedPhone)) {
           fieldErrors.phone =
             "Enter raw number only. Drop leading 0, 92, or +92.";
@@ -57,7 +60,6 @@ export const useProfile = () => {
             "Invalid Pakistani raw format. Exactly 10 digits starting with 3.";
         }
       } else if (data.Country === "United Kingdom") {
-        // UK cellular numbers must start with a raw 7 (dropping leading 0 or +44)
         if (/^(07|447|\+44)/.test(sanitizedPhone)) {
           fieldErrors.phone =
             "Enter raw UK number only. Drop leading 0, 44, or +44.";
@@ -65,6 +67,19 @@ export const useProfile = () => {
           fieldErrors.phone =
             "Invalid UK raw format. Exactly 10 digits starting with 7.";
         }
+      }
+    }
+
+    // 4. Future Date Protection for DOB
+    if (!data.DOB) {
+      fieldErrors.dob = "Date of Birth is required.";
+    } else {
+      const inputDate = new Date(data.DOB);
+      const currentDate = new Date();
+      if (isNaN(inputDate.getTime())) {
+        fieldErrors.dob = "Invalid date format structural configuration.";
+      } else if (inputDate > currentDate) {
+        fieldErrors.dob = "Date of birth cannot be set in the future.";
       }
     }
 
@@ -83,10 +98,17 @@ export const useProfile = () => {
     setUpdating(true);
     setProfileMessage(null);
     try {
+      // Ensure the exact backend payload formatting schema requested by the client
       const payload = {
-        ...updatedData,
-        Gender: 0,
-        DOB: new Date().toISOString(),
+        FullName: updatedData.FullName,
+        PhoneNumber: updatedData.PhoneNumber,
+        PhoneCode:
+          updatedData.PhoneCode ||
+          (updatedData.Country === "Pakistan" ? "92" : "44"),
+        Email: updatedData.Email,
+        DOB: new Date(updatedData.DOB).toISOString(),
+        Country: updatedData.Country,
+        Gender: Number(updatedData.Gender),
       };
 
       const result = await customerApi.updateProfile(payload);

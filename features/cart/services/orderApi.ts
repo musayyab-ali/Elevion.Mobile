@@ -55,22 +55,6 @@ export const orderApi = {
     return response.data;
   },
 
-  // cancelCustomerOrder: async (orderId: string) => {
-  //   const formData = new FormData();
-  //   formData.append("files", "");
-  //   const response = await apiClient.post(
-  //     `/Order/CancelCustomerOrder`,
-  //     formData,
-  //     {
-  //       params: { OrderId: orderId },
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     },
-  //   );
-  //   return response.data;
-  // },
-
   // Add these to your orderApi mapping structure
   getOrderCancellationReasons: async () => {
     return await apiClient.get(`/Common/orderreason`);

@@ -75,6 +75,13 @@ const COUNTRY_PHONE_CONFIGS: Record<
   GB: { rawLength: 10, prefix: "+44" },
 };
 
+const PHONE_CODE_TO_ISO: Record<string, string> = {
+  "+92": "PK",
+  "92": "PK",
+  "+44": "GB",
+  "44": "GB",
+};
+
 const FIELD_LABELS: Record<string, string> = {
   fullName: "Shipping Full Name",
   email: "Shipping Email Address",
@@ -393,16 +400,44 @@ export default function CheckoutSummaryScreen() {
                     <Text style={styles.fieldLabel}>
                       Billing Contact Phone *
                     </Text>
+
                     <View style={styles.phoneInputWrapper}>
-                      <View style={styles.phonePrefixContainer}>
+                      {/* Interactively tap prefix to switch between PK and GB */}
+                      <TouchableOpacity
+                        style={styles.phonePrefixContainer}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          const currentCode =
+                            hook.billingForm?.phoneCode || "+92";
+                          const nextCode = currentCode.includes("44")
+                            ? "+92"
+                            : "+44";
+
+                          hook.setBillingForm?.((p: any) => ({
+                            ...p,
+                            phoneCode: nextCode,
+                            // Re-clean existing phone numbers against the newly selected country config
+                            phone: cleanRawPhoneNumber(
+                              p.phone,
+                              PHONE_CODE_TO_ISO[nextCode] || "PK",
+                            ),
+                          }));
+                        }}
+                      >
                         <Text style={styles.phonePrefixText}>
-                          {COUNTRY_PHONE_CONFIGS[
-                            (hook.addressForm?.isoCode || "PK").toUpperCase()
-                          ]?.prefix || "+92"}
+                          {hook.billingForm?.phoneCode || "+92"}
                         </Text>
-                      </View>
+                        {/* Subtle down indicator arrow showing it is interactively changeable */}
+                        <Ionicons
+                          name="chevron-down"
+                          size={12}
+                          color="#64748B"
+                          style={{ marginLeft: 2 }}
+                        />
+                      </TouchableOpacity>
+
                       <TextInput
-                        placeholder="3001234567"
+                        placeholder="**********"
                         placeholderTextColor="#94A3B8"
                         keyboardType="phone-pad"
                         style={[
@@ -412,22 +447,28 @@ export default function CheckoutSummaryScreen() {
                         ]}
                         value={hook.billingForm?.phone}
                         onChangeText={(txt) => {
-                          const cleaned = cleanRawPhoneNumber(
-                            txt,
-                            hook.addressForm?.isoCode || "PK",
-                          );
+                          const activeCode =
+                            hook.billingForm?.phoneCode || "+92";
+                          const targetIso =
+                            PHONE_CODE_TO_ISO[activeCode] || "PK";
+
+                          const cleaned = cleanRawPhoneNumber(txt, targetIso);
+
                           hook.setBillingForm?.((p: any) => ({
                             ...p,
                             phone: cleaned,
                           }));
-                          if (billingErrors.phone)
+
+                          if (billingErrors.phone) {
                             setBillingErrors((p) => ({
                               ...p,
                               phone: undefined,
                             }));
+                          }
                         }}
                       />
                     </View>
+
                     {billingErrors.phone && (
                       <Text style={styles.errorTextInline}>
                         {billingErrors.phone}
@@ -440,7 +481,7 @@ export default function CheckoutSummaryScreen() {
                       Billing Notification Email *
                     </Text>
                     <TextInput
-                      placeholder="billing@domain.com"
+                      placeholder="xyz@gmail.com"
                       placeholderTextColor="#94A3B8"
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -671,7 +712,7 @@ export default function CheckoutSummaryScreen() {
                       Receiver's Full Name *
                     </Text>
                     <TextInput
-                      placeholder="e.g. Babar"
+                      placeholder="Your name"
                       placeholderTextColor="#94A3B8"
                       style={[
                         styles.input,
@@ -702,7 +743,7 @@ export default function CheckoutSummaryScreen() {
                       Receiver's Email Address *
                     </Text>
                     <TextInput
-                      placeholder="customer@store.com"
+                      placeholder="xyz@gmail.com"
                       placeholderTextColor="#94A3B8"
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -741,7 +782,7 @@ export default function CheckoutSummaryScreen() {
                         </Text>
                       </View>
                       <TextInput
-                        placeholder="3076840971"
+                        placeholder="**********"
                         placeholderTextColor="#94A3B8"
                         keyboardType="phone-pad"
                         style={[
@@ -1243,16 +1284,18 @@ const styles = StyleSheet.create({
   },
 
   phoneInputWrapper: { flexDirection: "row", alignItems: "center" },
+
   phonePrefixContainer: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E2E8F0",
     borderRightWidth: 0,
     borderTopLeftRadius: 8,
     borderBottomLeftRadius: 8,
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    backgroundColor: "#E2E8F0",
+    borderColor: "#CBD5E1",
+    height: "100%",
   },
   phonePrefixText: { fontSize: 14, color: "#475569", fontWeight: "500" },
   phoneInputFieldOverride: {

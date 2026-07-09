@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-
+import { Colors } from "@/constants/Theme";
 interface ProductProps {
   product: {
     ProductId: number;
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+    objectFit: "fill",
   },
   metaFrame: {
     marginTop: 6,
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#059669", // Premium emerald green tone for pricing metrics
+    color: Colors.darkError, // Premium emerald green tone for pricing metrics
     marginTop: 2,
   },
 });

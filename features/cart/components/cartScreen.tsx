@@ -39,7 +39,6 @@ export const CartScreen = () => {
   const {
     cartMessage,
     loading,
-
     serverError,
     fetchCart,
     markCartAsVisited,
@@ -176,6 +175,7 @@ export const CartScreen = () => {
                       ) ? (
                         <TouchableOpacity
                           onPress={() => handleRemove(item.CartId)}
+                          disabled={checkoutLoading}
                           style={styles.deleteButtonContainer}
                           activeOpacity={0.7}
                         >
@@ -222,6 +222,7 @@ export const CartScreen = () => {
                             }
                             handleDecrement(item.CartId, item.Quantity);
                           }}
+                          disabled={checkoutLoading || deleteLoading.active}
                         >
                           <Ionicons name="remove" size={14} color="#0F172A" />
                         </TouchableOpacity>
@@ -240,6 +241,7 @@ export const CartScreen = () => {
                             }
                             handleIncrement(item.CartId, item.Quantity);
                           }}
+                          disabled={checkoutLoading || deleteLoading.active}
                         >
                           <Ionicons name="add" size={14} color="#0F172A" />
                         </TouchableOpacity>
@@ -332,7 +334,7 @@ export const CartScreen = () => {
               <TouchableOpacity
                 style={styles.splitCheckoutBtn}
                 activeOpacity={0.85}
-                disabled={checkoutLoading}
+                disabled={checkoutLoading || deleteLoading.active}
                 onPress={handleProcessCheckoutPipeline}
               >
                 {checkoutLoading ? (

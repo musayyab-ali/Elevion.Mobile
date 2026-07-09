@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
   Modal,
@@ -265,7 +264,7 @@ export const OrdersHistoryScreen = () => {
           );
           setCancelMessage({
             type: "error", // Uses your existing banner error UI styling
-            text: "Your payment could not be verified automatically. please contact our support team for manual activation.",
+            text: "Your payment could not be verified. please contact our support team.",
           });
         }
       } else {
@@ -291,8 +290,7 @@ export const OrdersHistoryScreen = () => {
       });
     } finally {
       setVerifyingOrderId(null);
-      // Keep the error banner visible on the screen for 4 seconds instead of 3
-      // so the user has plenty of time to read the support message.
+
       setTimeout(() => setCancelMessage({ type: null, text: "" }), 4000);
     }
   };
@@ -1359,7 +1357,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 12,
   },
-  bannerErrorText: { color: "#EF4444", fontWeight: "600", fontSize: 13 },
+  bannerErrorText: {
+    color: "#EF4444",
+    fontWeight: "600",
+    fontSize: 13,
+    paddingHorizontal: 5,
+  },
   bannerSuccess: {
     flexDirection: "row",
     alignItems: "center",
@@ -1370,7 +1373,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 12,
   },
-  bannerSuccessText: { color: "#16A34A", fontWeight: "600", fontSize: 13 },
+  bannerSuccessText: {
+    color: "#16A34A",
+    fontWeight: "600",
+    fontSize: 13,
+    paddingHorizontal: 5,
+  },
   modalCancelBtn: {
     flexDirection: "row",
     backgroundColor: "#FEF2F2", // Soft red background

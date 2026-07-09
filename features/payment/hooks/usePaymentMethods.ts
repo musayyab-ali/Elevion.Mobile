@@ -452,59 +452,6 @@ export function usePaymentMethods(orderId: string) {
     }
   };
 
-  // const executeOrderCancellation = async (onCompletion?: () => void) => {
-  //   if (!activeCancelOrderId) return;
-  //   if (!selectedReason) {
-  //     setCancelMessage({
-  //       type: "error",
-  //       text: "Please select a reason for cancellation.",
-  //     });
-  //     return;
-  //   }
-
-  //   setIsCanceling(true);
-  //   setCancelMessage({ type: null, text: "" });
-
-  //   try {
-  //     const res = await orderApi.cancelCustomerOrder(
-  //       activeCancelOrderId,
-  //       selectedReason,
-  //     );
-  //     const dataPayload = res?.data || res;
-  //     if (
-  //       dataPayload?.HttpStatusCode === 200 ||
-  //       dataPayload?.Type === "Success"
-  //     ) {
-  //       setCancelMessage({
-  //         type: "success",
-  //         text:
-  //           dataPayload.Message || "The order has been cancelled successfully.",
-  //       });
-
-  //       setTimeout(() => {
-  //         setIsCancelConfirmVisible(false);
-  //         if (onCompletion) onCompletion();
-  //         fetchOrders();
-  //       }, 1500);
-  //     } else {
-  //       setCancelMessage({
-  //         type: "error",
-  //         text:
-  //           dataPayload?.Message ||
-  //           "Cancellation request rejected by server application logic.",
-  //       });
-  //     }
-  //   } catch (err: any) {
-  //     console.log("Cancellation Endpoint Error Context:", err);
-  //     setCancelMessage({
-  //       type: "error",
-  //       text: "System communication exception.",
-  //     });
-  //   } finally {
-  //     setIsCanceling(false);
-  //     setTimeout(() => setCancelMessage({ type: null, text: "" }), 3000);
-  //   }
-  // };
   const executeOrderCancellation = async (onCompletion?: () => void) => {
     if (!activeCancelOrderId) return;
     if (!selectedReason) {

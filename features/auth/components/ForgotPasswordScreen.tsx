@@ -42,6 +42,7 @@ export default function ForgotPasswordScreen() {
   const handleRequest = async () => {
     if (!username.trim()) {
       setApiMessage("Please enter your username first.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
     await sendResetEmail(username);
@@ -51,11 +52,13 @@ export default function ForgotPasswordScreen() {
     // Basic structural guards validating values before dispatching network payloads
     if (!code.trim() || !password || !confirmPassword) {
       setApiMessage("All authentication fields are strictly required.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 
     if (password !== confirmPassword) {
       setApiMessage("Passwords do not match. Please verify.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 

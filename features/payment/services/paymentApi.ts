@@ -13,7 +13,7 @@ export const paymentApi = {
     const response = await apiClient.get(`/Order/SelectPayment`, {
       params: { OrderId: orderId },
     });
-    console.log("Payment Setup Response:", response.data);
+
     return response.data;
   },
 

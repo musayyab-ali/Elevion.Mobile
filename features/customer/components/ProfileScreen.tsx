@@ -20,7 +20,14 @@ import { useReviews } from "../hooks/useReviews";
 import { ReviewItem } from "./ReviewItem";
 import { useAuth } from "@/store/AuthContext";
 import { PremiumGuestGate } from "@/components/PremiumGuestGate";
-
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Platform } from "react-native";
+// Helper helper functions to display gender text inside view modes
+const getGenderLabel = (value: number) => {
+  if (value === 1) return "Male";
+  if (value === 2) return "Female";
+  return "Not Set";
+};
 export const ProfileScreen = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
@@ -43,10 +50,12 @@ export const ProfileScreen = () => {
     fullName?: string;
     phone?: string;
     country?: string;
+    dob?: string;
   }>({});
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [countryDropdownVisible, setCountryDropdownVisible] = useState(false);
-
+  const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   useEffect(() => {
     if (profile) setFormData(profile);
   }, [profile]);
@@ -62,6 +71,7 @@ export const ProfileScreen = () => {
         setErrors(result.fieldErrors);
       } else {
         setProfileMessage(result.error || "Could not update profile details.");
+        setTimeout(() => setProfileMessage(null), 3000);
       }
       return;
     }
@@ -71,9 +81,20 @@ export const ProfileScreen = () => {
   };
 
   const handleCountrySelect = (selectedCountry: string) => {
-    setFormData({ ...formData, Country: selectedCountry, PhoneNumber: "" });
+    const nextCode = selectedCountry === "Pakistan" ? "92" : "44";
+    setFormData({
+      ...formData,
+      Country: selectedCountry,
+      PhoneCode: nextCode,
+      PhoneNumber: "",
+    });
     setErrors({ ...errors, country: undefined, phone: undefined });
     setCountryDropdownVisible(false);
+  };
+
+  const handleGenderSelect = (genderValue: number) => {
+    setFormData({ ...formData, Gender: genderValue });
+    setGenderDropdownVisible(false);
   };
 
   if (loading) {
@@ -255,6 +276,128 @@ export const ProfileScreen = () => {
             )}
           </View>
 
+          {/* NEW FIELD: Date of Birth (DOB) Picker Architecture */}
+          <View style={styles.inputContainerField}>
+            <Text style={styles.fieldHeaderLabel}>Date of Birth</Text>
+            <TouchableOpacity
+              style={[
+                styles.interactiveInputRow,
+                isEditing && styles.activeEditingFrame,
+                errors.dob && styles.errorFrameHighlight,
+              ]}
+              disabled={!isEditing}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color="#0284C7"
+                style={styles.leadingRowIcon}
+              />
+              <Text
+                style={[
+                  styles.coreInputFieldCountry, // Uses text layout styling instead of TextInput
+                  !isEditing && styles.lockedInputText,
+                  !formData.DOB && { color: "#94A3B8" },
+                ]}
+              >
+                {formData.DOB
+                  ? formData.DOB.substring(0, 10)
+                  : "Select Date of Birth"}
+              </Text>
+            </TouchableOpacity>
+            {errors.dob && (
+              <Text style={styles.inlineErrorFeedback}>{errors.dob}</Text>
+            )}
+          </View>
+
+          {/* NATIVE CALENDAR INTERFACE LAYER */}
+          {showDatePicker && (
+            <DateTimePicker
+              value={formData.DOB ? new Date(formData.DOB) : new Date()}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              maximumDate={new Date()} // Hardware protection: Prevents picking future dates in the calendar UI
+              onChange={(event, selectedDate) => {
+                // Hide the picker instantly for Android
+                if (Platform.OS !== "ios") {
+                  setShowDatePicker(false);
+                }
+
+                if (event.type === "set" && selectedDate) {
+                  // Formats to YYYY-MM-DD cleanly using local date boundaries
+                  const formattedDate = selectedDate
+                    .toISOString()
+                    .split("T")[0];
+                  setFormData({ ...formData, DOB: formattedDate });
+                  if (errors.dob) setErrors({ ...errors, dob: undefined });
+                } else if (event.type === "dismissed") {
+                  setShowDatePicker(false);
+                }
+              }}
+            />
+          )}
+
+          {/* iOS Specific Confirmation Controls Layer */}
+          {Platform.OS === "ios" && showDatePicker && (
+            <TouchableOpacity
+              style={{
+                alignment: "center",
+                padding: 10,
+                backgroundColor: "#E2E8F0",
+                marginTop: 4,
+                borderRadius: 8,
+              }}
+              onPress={() => setShowDatePicker(false)}
+            >
+              <Text
+                style={{
+                  color: "#0284C7",
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Confirm Date Selection
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* NEW FIELD: Gender Selector Dropdown Architecture */}
+          <View style={styles.inputContainerField}>
+            <Text style={styles.fieldHeaderLabel}>Gender</Text>
+            <TouchableOpacity
+              style={[
+                styles.interactiveInputRow,
+                isEditing && styles.activeEditingFrame,
+              ]}
+              disabled={!isEditing}
+              onPress={() => setGenderDropdownVisible(true)}
+            >
+              <Ionicons
+                name="transgender-outline"
+                size={18}
+                color="#0284C7"
+                style={styles.leadingRowIcon}
+              />
+              <Text
+                style={[
+                  styles.coreInputFieldCountry,
+                  !isEditing && styles.lockedInputText,
+                ]}
+              >
+                {getGenderLabel(formData.Gender)}
+              </Text>
+              {isEditing && (
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color="#64748B"
+                  style={{ marginLeft: "auto" }}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+
           {/* ACTIONS INTERACTION ROWS */}
           {isEditing ? (
             <View style={styles.btnEditStyle}>
@@ -371,6 +514,29 @@ export const ProfileScreen = () => {
               <Text style={styles.dropdownOptionText}>
                 United Kingdom (+44)
               </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      <Modal visible={genderDropdownVisible} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.dropdownModalOverlay}
+          activeOpacity={1}
+          onPress={() => setGenderDropdownVisible(false)}
+        >
+          <View style={styles.dropdownCardContainer}>
+            <Text style={styles.dropdownTitleLabel}>Select Gender</Text>
+            <TouchableOpacity
+              style={styles.dropdownOptionRow}
+              onPress={() => handleGenderSelect(1)}
+            >
+              <Text style={styles.dropdownOptionText}>Male</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dropdownOptionRow}
+              onPress={() => handleGenderSelect(2)}
+            >
+              <Text style={styles.dropdownOptionText}>Female</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

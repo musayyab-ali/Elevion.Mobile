@@ -48,6 +48,20 @@ export const shopApi = {
     return response.data;
   },
 
+  // Add this inside the shopApi object in shopApi.ts
+  getFlaggedProducts: async (params: {
+    IsNew: boolean;
+    IsFeatured: boolean;
+  }): Promise<{ Data: Product[] }> => {
+    const response = await apiClient.get("/Product/featured", {
+      params: {
+        IsNew: params.IsNew,
+        IsFeatured: params.IsFeatured,
+      },
+    });
+    return response.data;
+  },
+
   getProductDetails: async (
     productId: number,
     productDetailId?: number,

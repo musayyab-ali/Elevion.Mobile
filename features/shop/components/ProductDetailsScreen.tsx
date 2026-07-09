@@ -58,7 +58,6 @@ export const ProductDetailsScreen = () => {
   const numericProductId = Number(productId);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isRemovingFromCart, setIsRemovingFromCart] = useState(false);
-
   // Ratings & Feedback States
   const [ratingGraph, setRatingGraph] = useState<GraphRatingData[]>([]);
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
@@ -93,6 +92,93 @@ export const ProductDetailsScreen = () => {
     product?.ProductVariantDetail?.productVariantCombinationList ?? [];
   const relatedProducts = product?.relatedProductList ?? [];
 
+  // 1. GENERIC STATE FOR DYNAMIC ATTRIBUTES
+  const [selectedAttr1, setSelectedAttr1] = useState<string | null>(null);
+  const [selectedAttr2, setSelectedAttr2] = useState<string | null>(null);
+
+  // 2. EXTRACT GROUP LABELS DYNAMICALLY FROM RESPONSE
+  // Defaults to "Size" and "Color" if metadata is missing, but adapts to "Pack Size", "Pack Type", etc.
+  const attr1Label =
+    product?.ProductVariantGroups?.[0]?.VariantGroupName || "Size";
+  const attr2Label =
+    product?.ProductVariantGroups?.[1]?.VariantGroupName || "Color";
+
+  // Check if this product utilizes a dual attribute structure (indicated by a comma in the variant string)
+  const hasTwoAttributes = combinations.some((c: any) =>
+    c.VariantName?.includes(","),
+  );
+
+  // Helper function to extract individual variant segments cleanly
+  const getVariantParts = (variantName: string) => {
+    if (!variantName) return { attr1: null, attr2: null };
+    const parts = variantName.split(",");
+
+    if (hasTwoAttributes) {
+      return {
+        attr1: parts[0]?.trim() || null,
+        attr2: parts[1]?.trim() || null,
+      };
+    } else {
+      // Single attribute structure maps everything directly to attribute 1
+      return {
+        attr1: variantName.trim(),
+        attr2: null,
+      };
+    }
+  };
+
+  // 3. DYNAMICALLY EXTRACT UNIQUE LISTS
+  const uniqueAttr1Options = Array.from(
+    new Set(
+      combinations
+        .map((c: any) => getVariantParts(c.VariantName).attr1)
+        .filter(Boolean),
+    ),
+  );
+
+  const uniqueAttr2Options = Array.from(
+    new Set(
+      combinations
+        .map((c: any) => getVariantParts(c.VariantName).attr2)
+        .filter(Boolean),
+    ),
+  );
+
+  // 4. BIDIRECTIONAL SYNC: Card Selection -> Updates Selector Chips
+  useEffect(() => {
+    if (selectedVariant?.VariantName) {
+      const { attr1, attr2 } = getVariantParts(selectedVariant.VariantName);
+      setSelectedAttr1(attr1);
+      setSelectedAttr2(attr2);
+    }
+  }, [selectedVariant, hasTwoAttributes]);
+
+  // 5. MATRIX VALIDATION CHECK
+  const isOptionAvailable = (type: "attr1" | "attr2", value: string) => {
+    return combinations.some((c: any) => {
+      const { attr1, attr2 } = getVariantParts(c.VariantName);
+      if (type === "attr1") {
+        return (
+          attr1 === value && (selectedAttr2 ? attr2 === selectedAttr2 : true)
+        );
+      } else {
+        return (
+          attr2 === value && (selectedAttr1 ? attr1 === selectedAttr1 : true)
+        );
+      }
+    });
+  };
+
+  // 6. CHIP SELECTION HANDLER
+  const handleChipSelect = (attr1: string | null, attr2: string | null) => {
+    const match = combinations.find((c: any) => {
+      const p = getVariantParts(c.VariantName);
+      return (
+        (attr1 ? p.attr1 === attr1 : true) && (attr2 ? p.attr2 === attr2 : true)
+      );
+    });
+    if (match) setSelectedVariant(match);
+  };
   // Keyboard Visibility Listeners Setup
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener("keyboardDidShow", () => {
@@ -466,15 +552,117 @@ export const ProductDetailsScreen = () => {
                 {product?.MaxPrice?.toLocaleString()}]
               </Text>
             )}
+
+            {product.Discount > 0 && (
+              <Text
+                style={[
+                  styles.brandTitle,
+                  { color: Colors.success, marginLeft: 5 },
+                ]}
+              >
+                Discount {product.Discount}
+              </Text>
+            )}
           </View>
 
           <View style={styles.dividerLine} />
-
-          {/* SPECIFICATION SELECTION */}
           {combinations.length > 0 && (
             <View style={styles.sectionContainer}>
+              {/* DYNAMIC ATTRIBUTE 1 ROW (e.g., Size, Pack Size, Pack Type) */}
+              {uniqueAttr1Options.length > 0 && (
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={styles.attributeGroupTitle}>
+                    Select {attr1Label}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipRowContainer}
+                  >
+                    {uniqueAttr1Options.map((opt: any) => {
+                      const isSelected = selectedAttr1 === opt;
+                      const isAvailable = isOptionAvailable("attr1", opt);
+
+                      return (
+                        <TouchableOpacity
+                          key={opt}
+                          disabled={!isAvailable}
+                          activeOpacity={0.7}
+                          style={[
+                            styles.textSelectorChip,
+                            isSelected && styles.textSelectorChipActive,
+                            !isAvailable && styles.textSelectorChipDisabled,
+                          ]}
+                          onPress={() => {
+                            setSelectedAttr1(opt);
+                            handleChipSelect(opt, selectedAttr2);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.chipText,
+                              isSelected && styles.chipTextActive,
+                              !isAvailable && styles.chipTextDisabled,
+                            ]}
+                          >
+                            {opt}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* DYNAMIC ATTRIBUTE 2 ROW (e.g., Color - Only shows if data demands it) */}
+              {hasTwoAttributes && uniqueAttr2Options.length > 0 && (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={styles.attributeGroupTitle}>
+                    Select {attr2Label}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipRowContainer}
+                  >
+                    {uniqueAttr2Options.map((opt: any) => {
+                      const isSelected = selectedAttr2 === opt;
+                      const isAvailable = isOptionAvailable("attr2", opt);
+
+                      return (
+                        <TouchableOpacity
+                          key={opt}
+                          disabled={!isAvailable}
+                          activeOpacity={0.7}
+                          style={[
+                            styles.textSelectorChip,
+                            isSelected && styles.textSelectorChipActive,
+                            !isAvailable && styles.textSelectorChipDisabled,
+                          ]}
+                          onPress={() => {
+                            setSelectedAttr2(opt);
+                            handleChipSelect(selectedAttr1, opt);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.chipText,
+                              isSelected && styles.chipTextActive,
+                              !isAvailable && styles.chipTextDisabled,
+                            ]}
+                          >
+                            {opt}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* OVERVIEW SPECIFICATION COMBINATION CARDS SECTION */}
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionLabel}>Select Specification</Text>
+                <Text style={styles.sectionLabel}>Available Options</Text>
                 {selectedVariant?.SKU && (
                   <Text style={styles.skuLabel}>
                     Ref: {selectedVariant.SKU}
@@ -491,7 +679,7 @@ export const ProductDetailsScreen = () => {
                   const isSelected =
                     selectedVariant?.ProductDetailId ===
                     variant.ProductDetailId;
-                  const label = variant.VariantName || `Edition 0${idx + 1}`;
+                  const label = variant.VariantName || `Option 0${idx + 1}`;
 
                   return (
                     <TouchableOpacity
@@ -538,6 +726,7 @@ export const ProductDetailsScreen = () => {
                   );
                 })}
               </ScrollView>
+
               <View style={styles.dividerLine} />
             </View>
           )}
@@ -790,12 +979,7 @@ export const ProductDetailsScreen = () => {
 
       {/* DOCK PURCHASE STICKER BAR - CONDITIONAL KEYBOARD DISMISSAL */}
       {!isKeyboardVisible && (
-        <View
-          style={[
-            styles.actionDockBar,
-            { paddingBottom: Math.max(insets.bottom + 12, 16) },
-          ]}
-        >
+        <View style={styles.actionDockBar}>
           <View style={styles.actionDockRow}>
             <TouchableOpacity
               style={[
@@ -1135,6 +1319,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+
+  // Add these layout rule sets inside your current styles object
+  attributeGroupTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.textMain,
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  chipRowContainer: {
+    gap: 8,
+    paddingRight: 16,
+  },
+  textSelectorChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    minWidth: 60,
+    alignItems: "center",
+  },
+  textSelectorChipActive: {
+    backgroundColor: "#0284C7", // Matches your primary color layout
+    borderColor: "#0284C7",
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  chipTextActive: {
+    color: "#FFFFFF",
+  },
+  textSelectorChipDisabled: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    opacity: 0.4,
+  },
+  chipTextDisabled: {
+    color: "#94A3B8",
+    textDecorationLine: "line-through", // Optional decorative cross-out
+  },
   sectionLabel: { fontSize: 15, fontWeight: "700", color: Colors.textMain },
   skuLabel: { fontSize: 12, color: "#64748B", fontWeight: "500" },
   variantsHorizontalContainer: { gap: 12, paddingRight: 20 },
@@ -1158,7 +1386,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
-  variantCardThumbnail: { width: "100%", height: "100%", resizeMode: "cover" },
+  variantCardThumbnail: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
   variantSelectedCheckBadge: { position: "absolute", top: 4, right: 4 },
   variantGridMetaPane: { marginTop: 6 },
   variantCardNameText: { fontSize: 12, fontWeight: "500", color: "#475569" },
@@ -1319,6 +1551,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#F1F5F9",
     paddingHorizontal: 20,
     paddingTop: 12,
+    paddingBottom: 16,
     zIndex: 10,
   },
   actionDockRow: { flexDirection: "row", alignItems: "center", gap: 12 },

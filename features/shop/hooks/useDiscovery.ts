@@ -40,8 +40,30 @@ export const useDiscovery = (categoryId?: string) => {
   const [breadcrumbs, setBreadcrumbs] = useState<
     { id: number; name: string; isLeaf: boolean }[]
   >([]);
+
+  const [flaggedProducts, setFlaggedProducts] = useState<Product[]>([]);
+  const [flaggedLoading, setFlaggedLoading] = useState(false);
+  const [activeFlagTab, setActiveFlagTab] = useState<"NEW" | "FEATURED">("NEW");
+
   const [loading, setLoading] = useState(true);
   const [serverError, setServerError] = useState(false);
+
+  // FIXED: Moved function up here so it is in the correct hook scope
+  const fetchFlaggedCollection = async (tab: "NEW" | "FEATURED") => {
+    setFlaggedLoading(true);
+    try {
+      const params = {
+        IsNew: tab === "NEW",
+        IsFeatured: tab === "FEATURED",
+      };
+      const response = await shopApi.getFlaggedProducts(params);
+      setFlaggedProducts(response?.Data ?? []);
+    } catch (error) {
+      console.log("Error loading flagged micro-collections:", error);
+    } finally {
+      setFlaggedLoading(false);
+    }
+  };
 
   const loadDiscoveryData = async () => {
     setLoading(true);
@@ -63,6 +85,10 @@ export const useDiscovery = (categoryId?: string) => {
         setMobileBanners(bannerRes?.Data?.MobilePlateFormBanners ?? []);
         setSubCategories(masterCategoryTree);
         setHomeSections(landingPageProducts);
+
+        // This will now correctly reference the scoped function above
+        fetchFlaggedCollection("NEW");
+
         setCategoryProducts([]);
         setBreadcrumbs([]);
       } else {
@@ -104,10 +130,12 @@ export const useDiscovery = (categoryId?: string) => {
     loading,
     serverError,
     loadDiscoveryData,
-
-    // 🌟 BACKWARDS COMPATIBILITY ALIAS:
-    // This trick ensures that your screens using "bannerProducts" will get banners on home screen,
-    // and correctly get items/products inside sub-category screens without breaking your UI.
     bannerProducts: categoryId ? categoryProducts : mobileBanners,
+
+    flaggedProducts,
+    flaggedLoading,
+    activeFlagTab,
+    setActiveFlagTab,
+    fetchFlaggedCollection, // Now successfully exported!
   };
 };

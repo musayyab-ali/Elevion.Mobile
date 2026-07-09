@@ -1134,6 +1134,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 13,
     lineHeight: 18,
+    paddingHorizontal: 5,
   },
   bgError: { backgroundColor: "#FEF2F2", borderColor: "#FEE2E2" },
   bgSuccess: { backgroundColor: "#F0FDF4", borderColor: "#DCFCE7" },

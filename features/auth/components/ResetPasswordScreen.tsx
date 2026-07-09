@@ -33,11 +33,13 @@ export default function ResetPasswordScreen() {
     // Basic structural guards validating values before dispatching network payloads
     if (!password || !confirmPassword) {
       setApiMessage("All authentication fields are strictly required.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 
     if (password !== confirmPassword) {
       setApiMessage("Passwords do not match. Please verify.");
+      setTimeout(() => setApiMessage(null), 3000);
       return;
     }
 

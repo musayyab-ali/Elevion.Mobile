@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0077b6",
         "foregroundImage": "./assets/images/gemini-logo.png",
         "backgroundImage": "./assets/images/gemini-logo.png",
         "monochromeImage": "./assets/images/gemini-logo.png"
@@ -32,7 +32,6 @@
       "output": "static",
       "favicon": "./assets/images/gemini-logo.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -41,9 +40,9 @@
           "image": "./assets/images/gemini-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0077b6",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0077b6"
           }
         }
       ],
@@ -55,9 +54,9 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

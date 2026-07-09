@@ -13,7 +13,7 @@ export const CategorySquareCard = React.memo(({ category, onPress }: any) => {
     >
       <Image
         source={{
-          uri: category?.ImagePath || PLACEHOLDER_IMAGE,
+          uri: category?.IconPath || PLACEHOLDER_IMAGE,
         }}
         style={styles.image}
       />
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: 100,
-    objectFit: "cover",
+    objectFit: "fill",
   },
   textContainer: {
     padding: 10,
