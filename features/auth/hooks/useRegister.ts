@@ -162,7 +162,10 @@ export const useRegister = (resetFormCallback?: () => void) => {
           params: {
             phoneNumber: payload.PhoneNumber,
             userName: payload.UserName,
-            message: "We've sent a 6-digit verification code to your phone.",
+            phoneCode: payload.PhoneCode,
+            flowtype: "registration",
+            message:
+              "We've sent a 6-digit verification code to your registered Email.",
           },
         });
       }

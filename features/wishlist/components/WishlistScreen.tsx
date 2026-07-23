@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from "react-native";
 import { MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,6 +25,10 @@ import { EmptyState } from "@/components/EmptyState";
 const PLACEHOLDER_IMAGE_BANNER =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/No-Image-Placeholder-banner.svg/1280px-No-Image-Placeholder-banner.svg.png";
 
+const { width } = Dimensions.get("window");
+// (Screen width - horizontal padding - gap between columns) / 2
+const CARD_WIDTH = (width - 32 - 12) / 2;
+
 export const WishlistScreen = () => {
   const { isAuthenticated } = useAuth();
   const {
@@ -32,10 +37,12 @@ export const WishlistScreen = () => {
     refreshing,
     serverError,
     isProcessing,
+    loadingMore,
     handleNavigateToDetails,
     handleRemoveItem,
     handleRefresh,
     handleRetryFetch,
+    handleLoadMore,
   } = useWishlistScreen();
 
   const { wishMessage } = useWishlist();
@@ -44,11 +51,12 @@ export const WishlistScreen = () => {
     return <PremiumGuestGate screenType="wishlist" />;
   }
 
+  // Updated skeleton to reflect the 2-column layout
   const renderSkeletons = () => (
-    <View style={styles.skeletonContainer}>
-      {Array.from({ length: 3 }).map((_, index) => (
+    <View style={styles.skeletonGridContainer}>
+      {Array.from({ length: 6 }).map((_, index) => (
         <MotiView
-          key={`skel-banner-${index}`}
+          key={`skel-grid-${index}`}
           from={{ opacity: 0.6 }}
           animate={{ opacity: 1 }}
           transition={{
@@ -57,20 +65,33 @@ export const WishlistScreen = () => {
             loop: true,
             repeatReverse: true,
           }}
-          style={styles.skeletonBannerCard}
+          style={styles.skeletonGridCard}
         >
-          <Skeleton colorMode="light" width="100%" height="100%" radius={24} />
-          <View style={styles.skeletonAbsoluteContent}>
-            <View style={{ gap: 8 }}>
-              <Skeleton colorMode="light" width={180} height={18} radius={6} />
-              <Skeleton colorMode="light" width={100} height={14} radius={4} />
-            </View>
-            <Skeleton colorMode="light" width={46} height={46} radius={23} />
+          <Skeleton colorMode="light" width="100%" height="100%" radius={16} />
+          {/* Top Right Heart Skeleton */}
+          <View style={styles.skeletonTopRight}>
+            <Skeleton colorMode="light" width={32} height={32} radius={16} />
+          </View>
+          {/* Bottom Meta Skeleton */}
+          <View style={styles.skeletonBottomContent}>
+            <Skeleton colorMode="light" width="80%" height={14} radius={4} />
+            <Skeleton colorMode="light" width="50%" height={12} radius={4} />
           </View>
         </MotiView>
       ))}
     </View>
   );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.listFooter}>
+        {loadingMore && (
+          <ActivityIndicator size="small" color={Colors.primary} />
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -90,8 +111,15 @@ export const WishlistScreen = () => {
             <FlatList
               data={wishlistItems}
               keyExtractor={(item) => `wish-${item.ProductId}`}
+              numColumns={2}
+              columnWrapperStyle={styles.columnWrapper}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.3}
+              maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+              removeClippedSubviews={true}
+              ListFooterComponent={renderFooter}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -121,18 +149,18 @@ export const WishlistScreen = () => {
 
                 return (
                   <MotiView
-                    from={{ opacity: 0, scale: 0.95, translateY: 30 }}
+                    from={{ opacity: 0, scale: 0.92, translateY: 20 }}
                     animate={{ opacity: 1, scale: 1, translateY: 0 }}
                     transition={{
                       type: "timing",
-                      duration: 500,
-                      delay: index * 60,
+                      duration: 400,
+                      delay: index * 40,
                     }}
                   >
                     <TouchableOpacity
                       activeOpacity={0.9}
                       onPress={() => handleNavigateToDetails(item.ProductId)}
-                      style={styles.bannerWrapper}
+                      style={styles.gridCardWrapper}
                     >
                       <ImageBackground
                         source={{ uri: imageUri }}
@@ -141,36 +169,24 @@ export const WishlistScreen = () => {
                       >
                         <LinearGradient
                           colors={[
-                            "rgba(15, 23, 42, 0.1)",
+                            "rgba(15, 23, 42, 0.25)",
+                            "transparent",
                             "rgba(15, 23, 42, 0.85)",
                           ]}
+                          locations={[0, 0.4, 1]}
                           style={styles.gradientOverlay}
                         >
-                          {!item.InStock && (
-                            <View style={styles.outOfStockBadge}>
-                              <Text style={styles.outOfStockText}>
-                                Out of Stock
-                              </Text>
-                            </View>
-                          )}
-
-                          <View style={styles.bottomMetaContainer}>
-                            <View style={styles.textContainer}>
-                              <Text
-                                style={styles.productName}
-                                numberOfLines={1}
-                              >
-                                {item.ProductName}
-                              </Text>
-                              <Text
-                                style={styles.priceString}
-                                numberOfLines={1}
-                              >
-                                {item.MinPrice === item.MaxPrice
-                                  ? `Rs. ${item.MinPrice.toLocaleString()}`
-                                  : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
-                              </Text>
-                            </View>
+                          {/* Top Row: Out of Stock Badge (Left) & Heart Button (Right) */}
+                          <View style={styles.topRowContainer}>
+                            {!item.InStock ? (
+                              <View style={styles.outOfStockBadge}>
+                                <Text style={styles.outOfStockText}>
+                                  Out of Stock
+                                </Text>
+                              </View>
+                            ) : (
+                              <View /> // Empty spacer when stock is fine
+                            )}
 
                             <TouchableOpacity
                               style={styles.removeFloatingButton}
@@ -186,11 +202,23 @@ export const WishlistScreen = () => {
                               ) : (
                                 <Ionicons
                                   name="heart"
-                                  size={20}
+                                  size={16}
                                   color="#FF3B30"
                                 />
                               )}
                             </TouchableOpacity>
+                          </View>
+
+                          {/* Bottom Row: Product Name & Price */}
+                          <View style={styles.bottomMetaContainer}>
+                            <Text style={styles.productName} numberOfLines={1}>
+                              {item.ProductName}
+                            </Text>
+                            <Text style={styles.priceString} numberOfLines={1}>
+                              {item.MinPrice === item.MaxPrice
+                                ? `Rs. ${item.MinPrice.toLocaleString()}`
+                                : `Rs. ${item.MinPrice.toLocaleString()} - ${item.MaxPrice.toLocaleString()}`}
+                            </Text>
                           </View>
                         </LinearGradient>
                       </ImageBackground>
@@ -226,11 +254,20 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: 24,
-    paddingBottom: 120,
+    paddingBottom: 30,
     paddingHorizontal: 16,
   },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  listFooter: {
+    paddingBottom: 104,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerTextContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
     paddingHorizontal: 4,
   },
   headerFlexRow: {
@@ -257,82 +294,84 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.darkError,
     width: 50,
   },
-  bannerWrapper: {
-    width: "100%",
-    height: 180,
-    marginBottom: 16,
-    borderRadius: 24,
+
+  // Grid Card Styles
+  gridCardWrapper: {
+    width: CARD_WIDTH,
+    height: 220,
+    borderRadius: 16,
     backgroundColor: "#E2E8F0",
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
   backgroundImage: {
     width: "100%",
     height: "100%",
   },
   backgroundImageRadius: {
-    borderRadius: 24,
+    borderRadius: 16,
   },
   gradientOverlay: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 16,
     justifyContent: "space-between",
-    padding: 18,
+    padding: 10,
+  },
+
+  // Card Content Layout
+  topRowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   outOfStockBadge: {
-    alignSelf: "flex-start",
     backgroundColor: "rgba(239, 68, 68, 0.9)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   outOfStockText: {
     color: "#FFFFFF",
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "800",
     textTransform: "uppercase",
   },
-  bottomMetaContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: "auto",
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 16,
-  },
-  productName: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-    textShadowColor: "rgba(0, 0, 0, 0.4)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  priceString: {
-    color: "#38BDF8",
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: 4,
-  },
   removeFloatingButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
     elevation: 3,
   },
+  bottomMetaContainer: {
+    marginTop: "auto",
+  },
+  productName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  priceString: {
+    color: "#38BDF8",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+
+  // Empty State Styles
   emptyContainer: {
     flex: 1,
     alignItems: "center",
@@ -362,26 +401,33 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: "500",
   },
-  skeletonContainer: {
+
+  // Skeleton Styles
+  skeletonGridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 50,
   },
-  skeletonBannerCard: {
-    width: "100%",
-    height: 180,
-    borderRadius: 24,
+  skeletonGridCard: {
+    width: CARD_WIDTH,
+    height: 220,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
-    marginBottom: 16,
+    marginBottom: 12,
     position: "relative",
-    paddingTop: 25,
   },
-  skeletonAbsoluteContent: {
+  skeletonTopRight: {
     position: "absolute",
-    bottom: 18,
-    left: 18,
-    right: 18,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    top: 10,
+    right: 10,
+  },
+  skeletonBottomContent: {
+    position: "absolute",
+    bottom: 10,
+    left: 10,
+    right: 10,
+    gap: 6,
   },
 });

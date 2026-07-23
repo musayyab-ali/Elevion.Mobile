@@ -8,7 +8,8 @@ import React, {
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { customerApi } from "../features/customer/services/customerApi";
-
+import { useAuth } from "./AuthContext";
+import { Ionicons } from "@expo/vector-icons";
 const STORAGE_KEY = "active_customer_address";
 
 // Location Droplist Element Interfaces
@@ -95,7 +96,7 @@ export const AddressProvider = ({
   const [areas, setAreas] = useState<LocationLookupItem[]>([]);
   const [branches, setBranches] = useState<LocationLookupItem[]>([]);
   const [dropdownLoading, setDropdownLoading] = useState<boolean>(false);
-
+  const { isAuthenticated } = useAuth();
   // Global Professional Modal Alert State
   const [alertConfig, setAlertConfig] = useState<AlertState>({
     visible: false,
@@ -117,6 +118,10 @@ export const AddressProvider = ({
 
   // 1. Fetch address books from API source
   const fetchAddresses = useCallback(async () => {
+    if (!isAuthenticated) {
+      setAddresses([]);
+      return;
+    }
     setLoading(true);
     try {
       const res = await customerApi.getAddresses();
@@ -363,7 +368,17 @@ export const AddressProvider = ({
                     alertConfig.type === "success" ? "#10B981" : "#EF4444",
                 },
               ]}
-            />
+            >
+              <Ionicons
+                name={
+                  alertConfig.type === "success"
+                    ? "checkmark-circle"
+                    : "alert-circle"
+                }
+                size={25}
+                color="#FFF"
+              />
+            </View>
             <Text style={styles.modalTitle}>{alertConfig.title}</Text>
             <Text style={styles.modalMessage}>{alertConfig.message}</Text>
             <TouchableOpacity
@@ -420,6 +435,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 16,
     opacity: 0.9,
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,

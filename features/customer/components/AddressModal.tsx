@@ -264,7 +264,6 @@ export const AddressModal = ({
       Longitude: formData.Longitude,
       Latitude: formData.Latitude,
     };
-    console.log("sending payload :", finalPayload);
     try {
       setIsSaving(true);
       const res = await handleSaveAddress(finalPayload);
@@ -305,7 +304,7 @@ export const AddressModal = ({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View style={styles.modalOverlay}>
@@ -457,8 +456,9 @@ export const AddressModal = ({
               /* FORM CONTROLLER VIEW SCREEN */
               <ScrollView
                 style={styles.form}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} // <--- ADD THIS
                 showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="always"
+                keyboardShouldPersistTaps="handled"
               >
                 {/* 1. Recipient Full Name */}
                 <Text style={styles.fieldLabelText}>Full Name</Text>

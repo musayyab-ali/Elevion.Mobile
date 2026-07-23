@@ -254,7 +254,7 @@ export function usePaymentMethods(orderId: string) {
       } else {
         setPromoNotification({
           type: "error",
-          text: res?.Message || "Code could not be verified against entries.",
+          text: "Code could not be verified against entries.",
         });
       }
     } catch (err: any) {
@@ -416,7 +416,6 @@ export function usePaymentMethods(orderId: string) {
         TenantPaymentGatewayId: selectedGatewayId,
         PaymentGateway: activeGateway ? activeGateway.PGId : 1,
       };
-
       const res = await paymentApi.payInvoice(payload);
       if (res?.StatusCode === 200 && res?.Data) {
         const transaction = res.Data.Transaction;

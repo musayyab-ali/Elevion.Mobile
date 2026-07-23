@@ -20,11 +20,17 @@ interface WishlistContextType {
   processingIds: Set<number>;
   setProcessingIds: React.Dispatch<React.SetStateAction<Set<number>>>;
   fetchWishlist: (isRefresh?: boolean) => Promise<void>;
+  // Pagination Extensions
+  loadingMore: boolean;
+  hasMore: boolean;
+  loadMoreWishlist: () => Promise<void>;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(
   undefined,
 );
+
+const BASE_PAGE_SIZE = 10;
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -38,6 +44,11 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [serverError, setServerError] = useState<boolean>(false);
 
+  // Pagination Window Metrics
+  const [currentSize, setCurrentSize] = useState<number>(BASE_PAGE_SIZE);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+
   const fetchWishlist = useCallback(
     async (isRefresh = false) => {
       if (!isAuthenticated) {
@@ -45,13 +56,23 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+      if (isRefresh) {
+        setCurrentSize(BASE_PAGE_SIZE);
+        setHasMore(true);
+      } else setLoading(true);
+
       setServerError(false);
+      setCurrentSize(BASE_PAGE_SIZE);
+      setHasMore(true);
 
       try {
-        const result = await wishlistApi.getWishlist(20, 1);
-        setItems(result?.Data?.WishItemList ?? []);
+        const result = await wishlistApi.getWishlist(BASE_PAGE_SIZE, 1);
+        const fetchedItems = result?.Data?.WishItemList ?? [];
+        setItems(fetchedItems);
+
+        if (fetchedItems.length < BASE_PAGE_SIZE) {
+          setHasMore(false);
+        }
       } catch (error) {
         console.log("Wishlist Fetch Core Exception:", error);
         setServerError(true);
@@ -62,6 +83,31 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [isAuthenticated],
   );
+
+  const loadMoreWishlist = useCallback(async () => {
+    if (loadingMore || !hasMore || !isAuthenticated) return;
+
+    setLoadingMore(true);
+    const nextSize = currentSize + BASE_PAGE_SIZE;
+
+    try {
+      const result = await wishlistApi.getWishlist(nextSize, 1);
+      const incomingItems = result?.Data?.WishItemList ?? [];
+      if (incomingItems.length < nextSize) {
+        setHasMore(false);
+      }
+      if (incomingItems.length > items.length) {
+        setItems(incomingItems);
+        setCurrentSize(nextSize);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.log("Wishlist Pagination Window Exception:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentSize, hasMore, loadingMore, isAuthenticated, items.length]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -83,6 +129,9 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       setProcessingIds,
       fetchWishlist,
       serverError,
+      loadingMore,
+      hasMore,
+      loadMoreWishlist,
     }),
     [
       items,
@@ -92,6 +141,9 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
       processingIds,
       fetchWishlist,
       serverError,
+      loadingMore,
+      hasMore,
+      loadMoreWishlist,
     ],
   );
 

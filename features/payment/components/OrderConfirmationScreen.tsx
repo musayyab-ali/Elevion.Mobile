@@ -73,12 +73,7 @@ export const OrderConfirmationScreen = () => {
       try {
         // 🛠️ STEP 1: Verify Core payment route using base Order Tracking ID
         const targetId = invoiceId || orderId;
-        console.log(
-          `📡 Pinging verifyPayment with baseline key value: ${targetId}`,
-        );
-
         const verifyRes = await paymentApi.verifyPayment(Number(targetId));
-        console.log("📥 Verify Payment API Response:", verifyRes);
 
         if (
           verifyRes?.StatusCode === 200 &&
@@ -92,11 +87,6 @@ export const OrderConfirmationScreen = () => {
             Number(orderId),
             formData,
           );
-          console.log(
-            "📥 checkOrderPaymentStatus Payload Response:",
-            statusRes,
-          );
-
           const isSuccessStatus =
             statusRes?.HttpStatusCode === 200 ||
             statusRes?.StatusCode === 200 ||

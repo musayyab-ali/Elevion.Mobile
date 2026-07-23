@@ -47,8 +47,6 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Extract both authenticated state and a settled flag from AuthContext
-  // If your AuthContext doesn't have isAuthSettled, we add a fallback check below
   const { isAuthenticated, isAuthSettled } = useAuth() as any;
   const router = useRouter();
   const [cartData, setCartData] = useState<CartResponse["Data"] | null>(null);
@@ -62,7 +60,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 🌟 Pass the exact object shape directly into the useState generic wrapper
   const [deleteLoading, setDeleteLoading] = useState<{
     active: boolean;
     cartId: number | null;
@@ -90,8 +87,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     initializeSessionId();
   }, []);
-
-  console.log(`fuck you : ${guestSessionId}`);
 
   const [isCartBannerDismissed, setIsCartBannerDismissed] =
     useState<boolean>(false);
@@ -153,15 +148,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (response?.Data) {
           setCartData(response.Data);
-          const count =
-            response.Data.CartItemList?.reduce(
-              (sum, item) => sum + (item.Quantity || 0),
-              0,
-            ) || 0;
-          console.log("count is :", count);
+          const count = response.Data.CartItemList?.length || 0;
           setCartCount(count);
         } else {
-          // Fallback clear reset rules if backend data arrives clean empty
           setCartData(null);
           setCartCount(0);
         }
@@ -243,24 +232,38 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setCartData((prev) => {
         if (!prev) return null;
-        const updatedList = prev.CartItemList.map((item: any) =>
-          item.CartId === cartId
-            ? {
-                ...item,
-                Quantity: quantity,
-                TotalAmount: item.Price * quantity,
-              }
-            : item,
-        );
-        const newTotal = updatedList.reduce(
-          (sum: number, i: any) => sum + i.TotalAmount,
+
+        const updatedList = prev.CartItemList.map((item: any) => {
+          if (item.CartId === cartId) {
+            // Check if there's a per-item discount applied natively
+            const singleDiscount = item.Discount / (item.Quantity || 1);
+            return {
+              ...item,
+              Quantity: quantity,
+              TotalAmount: item.Price * quantity,
+              Discount: singleDiscount * quantity,
+            };
+          }
+          return item;
+        });
+
+        // Recalculate values smoothly across the full array mapping
+        const newSubtotal = updatedList.reduce(
+          (sum: number, i: any) => sum + i.Price * i.Quantity,
           0,
         );
+        const newDiscount = updatedList.reduce(
+          (sum: number, i: any) => sum + (i.Discount || 0),
+          0,
+        );
+        const newNetTotal = newSubtotal - newDiscount;
+
         return {
           ...prev,
           CartItemList: updatedList,
-          NetTotal: newTotal,
-          TotalPrice: newTotal,
+          TotalPrice: newSubtotal,
+          TotalDiscount: newDiscount,
+          NetTotal: newNetTotal,
         };
       });
 
@@ -278,9 +281,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [fetchCart],
   );
+
   const removeCartItem = useCallback(
     async (cartId: number) => {
-      // 🌟 1. Store the exact item ID currently being deleted
       setDeleteLoading({ active: true, cartId: cartId });
 
       try {
@@ -292,36 +295,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        // Update global count tracking cleanly
         setCartCount(response.Data.CartCount);
 
         setCartData((prevItems) => {
           if (!prevItems) return prevItems;
 
           const currentItems = prevItems?.CartItemList || [];
-          // Filter out the deleted item
           const updatedList = currentItems.filter(
             (item: any) => item.CartId !== cartId,
           );
 
-          // 🔥 FIX: Recalculate totals dynamically so pricing summary updates immediately!
-          const newTotal = updatedList.reduce(
-            (sum: number, i: any) => sum + (i.TotalAmount || 0),
+          // Recalculate values directly from the remaining array items
+          const newSubtotal = updatedList.reduce(
+            (sum: number, i: any) => sum + i.Price * i.Quantity,
             0,
           );
+          const newDiscount = updatedList.reduce(
+            (sum: number, i: any) => sum + (i.Discount || 0),
+            0,
+          );
+          const newNetTotal = newSubtotal - newDiscount;
 
           return {
             ...prevItems,
             CartItemList: updatedList,
-            NetTotal: newTotal,
-            TotalPrice: newTotal,
+            TotalPrice: newSubtotal,
+            TotalDiscount: newDiscount,
+            NetTotal: newNetTotal,
           };
         });
       } catch (error) {
         console.log("Cart deletion routine exception:", error);
         setCartMessage("There is something wrong! Check your connection.");
       } finally {
-        // 🌟 3. Clear the explicit loading ID state by passing null
         setDeleteLoading({ active: false, cartId: null });
         setTimeout(() => setCartMessage(null), 2000);
       }

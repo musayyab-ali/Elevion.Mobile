@@ -25,7 +25,7 @@ export const CategoryCard = React.memo(
         <View style={styles.circleOuterRing}>
           <Image
             source={{
-              uri: category.IconPath || PLACEHOLDER_IMAGE,
+              uri: category.ImagePath || PLACEHOLDER_IMAGE,
             }}
             style={styles.image}
           />

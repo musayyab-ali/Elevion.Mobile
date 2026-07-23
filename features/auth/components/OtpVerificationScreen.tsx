@@ -64,6 +64,7 @@ export default function OtpVerificationScreen() {
   }, []);
 
   const handleVerify = async () => {
+    console.log("");
     setFieldError("");
     if (!otp || otp.length < 6) {
       setFieldError("Please enter a valid 6-digit OTP");
@@ -183,7 +184,7 @@ export default function OtpVerificationScreen() {
             </View>
             <Text style={styles.instructionText}>
               {fromLogin === "true"
-                ? "We've sent a fresh confirmation code to your device."
+                ? "We've sent a fresh confirmation code to your registered email."
                 : message || "Verify OTP"}
             </Text>
 

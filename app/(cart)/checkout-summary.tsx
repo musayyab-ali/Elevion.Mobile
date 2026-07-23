@@ -17,9 +17,10 @@ import {
 import { useAuth } from "@/store/AuthContext";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/Theme";
 import {
   useCheckoutSummary,
-  DeliveryOption,
+  // DeliveryOption,
 } from "@/features/cart/hooks/useCheckoutSummary";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { SearchableDropdownPicker } from "@/components/SearchableDropdownPicker";
@@ -90,6 +91,7 @@ const FIELD_LABELS: Record<string, string> = {
   countryId: "Country Selection",
   stateId: "State Selection",
   cityId: "City Selection",
+  areaId: "Area Selection",
   billingFullName: "Billing Full Name",
   billingEmail: "Billing Email Address",
   billingPhone: "Billing Phone Number",
@@ -223,6 +225,77 @@ export default function CheckoutSummaryScreen() {
     return cleaned;
   };
 
+  // const handleSaveBilling = (): boolean => {
+  //   const errors: ErrorState = {};
+  //   const currentIso = hook.addressForm?.isoCode || "PK";
+  //   const phoneConfig = COUNTRY_PHONE_CONFIGS[currentIso.toUpperCase()];
+
+  //   if (!hook.billingForm?.fullName?.trim())
+  //     errors.fullName = "Full name is required.";
+  //   if (!hook.billingForm?.email?.trim()) {
+  //     errors.email = "Email address is required.";
+  //   } else if (!/\S+@\S+\.\S+/.test(hook.billingForm.email)) {
+  //     errors.email = "Please enter a valid email address.";
+  //   }
+
+  //   const billingPhone = hook.billingForm?.phone || "";
+  //   if (!billingPhone.trim()) {
+  //     errors.phone = "Phone number is required.";
+  //   } else if (phoneConfig && billingPhone.length !== phoneConfig.rawLength) {
+  //     errors.phone = `Phone number must be exactly ${phoneConfig.rawLength} digits long.`;
+  //   }
+
+  //   if (Object.keys(errors).length > 0) {
+  //     setBillingErrors(errors);
+  //     return false;
+  //   }
+
+  //   setBillingErrors({});
+  //   setIsEditingBilling(false);
+  //   return true;
+  // };
+
+  // const handleSaveShipping = (): boolean => {
+  //   const errors: ErrorState = {};
+  //   const currentIso = hook.addressForm?.isoCode || "PK";
+  //   const phoneConfig = COUNTRY_PHONE_CONFIGS[currentIso.toUpperCase()];
+
+  //   if (!hook.addressForm?.fullName?.trim())
+  //     errors.fullName = "Receiver's name is required.";
+  //   if (!hook.addressForm?.email?.trim()) {
+  //     errors.email = "Email address is required.";
+  //   } else if (!/\S+@\S+\.\S+/.test(hook.addressForm.email)) {
+  //     errors.email = "Please enter a valid email address.";
+  //   }
+
+  //   const shippingPhone = hook.addressForm?.phone || "";
+  //   if (!shippingPhone.trim()) {
+  //     errors.phone = "Phone number is required.";
+  //   } else if (phoneConfig && shippingPhone.length !== phoneConfig.rawLength) {
+  //     errors.phone = `Phone number must be exactly ${phoneConfig.rawLength} digits long.`;
+  //   }
+
+  //   if (!hook.addressForm?.address?.trim())
+  //     errors.address = "Street address location is required.";
+  //   if (!hook.addressForm?.countryId)
+  //     errors.countryId = "Please pick your country destination.";
+  //   if (!hook.addressForm?.stateId)
+  //     errors.stateId = "Please pick your state or region.";
+  //   if (!hook.addressForm?.cityId)
+  //     errors.cityId = "Please pick your city destination.";
+  //   if (!hook.addressForm?.areaId)
+  //     errors.areaId = "Please pick your area destination.";
+
+  //   if (Object.keys(errors).length > 0) {
+  //     setShippingErrors(errors);
+  //     return false;
+  //   }
+
+  //   setShippingErrors({});
+  //   setIsEditingShipping(false);
+  //   return true;
+  // };
+
   const handleSaveBilling = (): boolean => {
     const errors: ErrorState = {};
     const currentIso = hook.addressForm?.isoCode || "PK";
@@ -230,10 +303,12 @@ export default function CheckoutSummaryScreen() {
 
     if (!hook.billingForm?.fullName?.trim())
       errors.fullName = "Full name is required.";
-    if (!hook.billingForm?.email?.trim()) {
+
+    const rawEmail = hook.billingForm?.email || "";
+    if (!rawEmail.trim()) {
       errors.email = "Email address is required.";
-    } else if (!/\S+@\S+\.\S+/.test(hook.billingForm.email)) {
-      errors.email = "Please enter a valid email address.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+      errors.email = "Please enter a valid email address without spaces.";
     }
 
     const billingPhone = hook.billingForm?.phone || "";
@@ -260,10 +335,12 @@ export default function CheckoutSummaryScreen() {
 
     if (!hook.addressForm?.fullName?.trim())
       errors.fullName = "Receiver's name is required.";
-    if (!hook.addressForm?.email?.trim()) {
+
+    const rawEmail = hook.addressForm?.email || "";
+    if (!rawEmail.trim()) {
       errors.email = "Email address is required.";
-    } else if (!/\S+@\S+\.\S+/.test(hook.addressForm.email)) {
-      errors.email = "Please enter a valid email address.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+      errors.email = "Please enter a valid email address without spaces.";
     }
 
     const shippingPhone = hook.addressForm?.phone || "";
@@ -312,6 +389,9 @@ export default function CheckoutSummaryScreen() {
     setShippingErrors({});
     setIsEditingShipping(true);
   };
+
+  const IMAGE_PLACEHOLDER =
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
 
   const itemsList = checkoutData?.CartItemDtos?.CartItemList || [];
 
@@ -476,7 +556,7 @@ export default function CheckoutSummaryScreen() {
                     )}
                   </View>
 
-                  <View style={styles.inputGroupContainer}>
+                  {/* <View style={styles.inputGroupContainer}>
                     <Text style={styles.fieldLabel}>
                       Billing Notification Email *
                     </Text>
@@ -494,6 +574,40 @@ export default function CheckoutSummaryScreen() {
                         hook.setBillingForm?.((p: any) => ({
                           ...p,
                           email: txt,
+                        }));
+                        if (billingErrors.email)
+                          setBillingErrors((p) => ({ ...p, email: undefined }));
+                      }}
+                    />
+                    {billingErrors.email && (
+                      <Text style={styles.errorTextInline}>
+                        {billingErrors.email}
+                      </Text>
+                    )}
+                  </View> */}
+
+                  <View style={styles.inputGroupContainer}>
+                    <Text style={styles.fieldLabel}>
+                      Billing Notification Email *
+                    </Text>
+                    <TextInput
+                      placeholder="xyz@gmail.com"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={[
+                        styles.input,
+                        billingErrors.email && styles.inputErrorFrame,
+                      ]}
+                      value={hook.billingForm?.email}
+                      onChangeText={(txt) => {
+                        // Instantly remove any spaces or whitespace tabs
+                        const cleanedEmail = txt.replace(/\s+/g, "");
+
+                        hook.setBillingForm?.((p: any) => ({
+                          ...p,
+                          email: cleanedEmail,
                         }));
                         if (billingErrors.email)
                           setBillingErrors((p) => ({ ...p, email: undefined }));
@@ -738,7 +852,7 @@ export default function CheckoutSummaryScreen() {
                     )}
                   </View>
 
-                  <View style={styles.inputGroupContainer}>
+                  {/* <View style={styles.inputGroupContainer}>
                     <Text style={styles.fieldLabel}>
                       Receiver's Email Address *
                     </Text>
@@ -756,6 +870,43 @@ export default function CheckoutSummaryScreen() {
                         hook.setAddressForm?.((p: any) => ({
                           ...p,
                           email: txt,
+                        }));
+                        if (shippingErrors.email)
+                          setShippingErrors((p) => ({
+                            ...p,
+                            email: undefined,
+                          }));
+                      }}
+                    />
+                    {shippingErrors.email && (
+                      <Text style={styles.errorTextInline}>
+                        {shippingErrors.email}
+                      </Text>
+                    )}
+                  </View> */}
+
+                  <View style={styles.inputGroupContainer}>
+                    <Text style={styles.fieldLabel}>
+                      Receiver's Email Address *
+                    </Text>
+                    <TextInput
+                      placeholder="xyz@gmail.com"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={[
+                        styles.input,
+                        shippingErrors.email && styles.inputErrorFrame,
+                      ]}
+                      value={hook.addressForm?.email}
+                      onChangeText={(txt) => {
+                        // Instantly remove any spaces or whitespace tabs
+                        const cleanedEmail = txt.replace(/\s+/g, "");
+
+                        hook.setAddressForm?.((p: any) => ({
+                          ...p,
+                          email: cleanedEmail,
                         }));
                         if (shippingErrors.email)
                           setShippingErrors((p) => ({
@@ -883,7 +1034,7 @@ export default function CheckoutSummaryScreen() {
                 </View>
               )}
             </View>
-
+            {/* 
             <View style={styles.card}>
               <TouchableOpacity
                 style={styles.cardHeaderToggle}
@@ -951,7 +1102,10 @@ export default function CheckoutSummaryScreen() {
                   })}
                 </View>
               )}
-            </View>
+
+
+            </View> */}
+
             {/* 🛍️ 4. ORDER ITEMS SPECIFICATION LIST */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
@@ -967,7 +1121,7 @@ export default function CheckoutSummaryScreen() {
                   return (
                     <View key={itemKey} style={styles.itemRowNode}>
                       <Image
-                        source={{ uri: item.ProductImage }}
+                        source={{ uri: item.ProductImage || IMAGE_PLACEHOLDER }}
                         style={styles.itemThumbnail}
                         resizeMode="cover"
                       />
@@ -1071,16 +1225,22 @@ export default function CheckoutSummaryScreen() {
                   Rs. {hook.discount.toLocaleString()}
                 </Text>
               </View>
-
               <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Delivery Charges</Text>
+                <Text style={styles.priceValue}>
+                  Rs. {hook.deliveryCharge.toLocaleString()}
+                </Text>
+              </View>
+
+              {/* <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>
                   Delivery & Handling (
                   {hook.selectedOption?.DisplayName || "Standard"})
                 </Text>
                 <Text style={styles.priceValue}>
-                  Rs. {hook.deliveryCharge.toLocaleString()}
+                  Rs. {hook.deliverySelection.toLocaleString()}
                 </Text>
-              </View>
+              </View> */}
               <View style={styles.divider} />
               <View style={styles.priceRow}>
                 <Text style={styles.totalLabel}>Grand Total</Text>
@@ -1317,7 +1477,7 @@ const styles = StyleSheet.create({
   geoTabText: { fontSize: 13, color: "#64748B" },
   geoTabTextActive: { color: "#E11D48", fontWeight: "600" },
   saveBtn: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.primary,
     height: 44,
     borderRadius: 8,
     justifyContent: "center",

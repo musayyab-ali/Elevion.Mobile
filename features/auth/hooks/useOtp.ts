@@ -20,7 +20,7 @@ export const useOtp = () => {
     otp: string,
     phoneNumber?: string,
     userName?: string,
-    phoneCode: number = 92,
+    phoneCode?: number,
     flowType:
       | "registration"
       | "verification"

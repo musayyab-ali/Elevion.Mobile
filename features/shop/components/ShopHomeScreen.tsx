@@ -386,7 +386,7 @@ export const ShopHomeScreen = () => {
                       /* Proportional Empty State Frame */
                       <View style={styles.emptyCollectionFrame}>
                         <Ionicons
-                          name="shirt-outline"
+                          name="radio-outline"
                           size={28}
                           color="#94A3B8"
                           style={{ marginBottom: 6 }}
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
-  seeAllText: { fontSize: 12, fontWeight: "700", color: "#475569" },
+  seeAllText: { fontSize: 12, fontWeight: "700", color: Colors.primary },
   dividerLine: {
     height: 1,
     backgroundColor: "#EDF2F7",

@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { useRouter } from "expo-router";
 import { useWishlist } from "./useWishlist";
@@ -6,8 +7,14 @@ import { useSharedWishlistData } from "@/store/WishlistContext";
 export function useWishlistScreen() {
   const router = useRouter();
   const { wishlistMap, isProcessing, toggleWishlist } = useWishlist();
-  const { loading, refreshing, serverError, fetchWishlist } =
-    useSharedWishlistData();
+  const {
+    loading,
+    refreshing,
+    serverError,
+    fetchWishlist,
+    loadingMore,
+    loadMoreWishlist,
+  } = useSharedWishlistData();
 
   const wishlistItems = useMemo(() => {
     return Array.from(wishlistMap.values()).map((item: any) => ({
@@ -42,9 +49,11 @@ export function useWishlistScreen() {
     refreshing,
     serverError,
     isProcessing,
+    loadingMore,
     handleNavigateToDetails,
     handleRemoveItem,
-    handleRefresh: () => fetchWishlist(true),
-    handleRetryFetch: () => fetchWishlist(false),
+    handleRefresh: () => fetchWishlist(),
+    handleRetryFetch: () => fetchWishlist(),
+    handleLoadMore: loadMoreWishlist,
   };
 }

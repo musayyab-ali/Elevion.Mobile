@@ -72,6 +72,9 @@ export const PaymentMethodsScreen = () => {
     }
   };
 
+  const IMAGE_PLACEHOLDER =
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
+
   if (checkingStatus) {
     return (
       <View style={styles.centerGateContainer}>
@@ -235,7 +238,7 @@ export const PaymentMethodsScreen = () => {
                       {item.ProductImageURL ? (
                         <Image
                           source={{ uri: item.ProductImageURL }}
-                          style={styles.productThumbnail}
+                          style={styles.productThumbnail || IMAGE_PLACEHOLDER}
                         />
                       ) : (
                         <View style={styles.productThumbnailPlaceholder}>

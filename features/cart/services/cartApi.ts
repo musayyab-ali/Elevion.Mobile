@@ -73,14 +73,12 @@ export const cartApi = {
   // 3. Get Authenticated Cart
   getCart: async (): Promise<CartResponse> => {
     const response = await apiClient.get("/Cart/GetCart/current");
-    console.log("API Response for Get Cart:", response.data);
     return response.data;
   },
 
   // 4. Get Guest Cart
   getCartGuest: async (sessionId: string): Promise<CartResponse> => {
     const response = await apiClient.get(`/Cart/GetCart/session/${sessionId}`);
-    console.log("API Response for Get Cart session:", response.data);
     return response.data;
   },
 

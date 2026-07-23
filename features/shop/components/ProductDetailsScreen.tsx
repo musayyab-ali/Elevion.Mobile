@@ -31,7 +31,7 @@ import { useSharedWishlistData } from "@/store/WishlistContext";
 import { customerApi } from "../../customer/services/customerApi";
 
 const IMAGE_PLACEHOLDER =
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
 
 interface GraphRatingData {
   Rating: number;
@@ -293,8 +293,6 @@ export const ProductDetailsScreen = () => {
 
   const structuralUserReview = reviewsList.find(
     (item) => item.Email?.toLowerCase() === user?.Email?.toLowerCase(),
-    // ||
-    //   item.Customer?.trim().toLowerCase() === user?.Name?.trim().toLowerCase(),
   );
   const hasUserAlreadyReviewed = !!structuralUserReview;
   const DEFAULT_VISIBLE_COUNT = 3;

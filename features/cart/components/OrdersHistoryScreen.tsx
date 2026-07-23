@@ -122,6 +122,8 @@ export const OrdersHistoryScreen = () => {
     loading: globalLoading,
     orders,
     setOrders,
+    fetchNextPage,
+    loadingMore,
     currentOrderDetail,
     fetchOrders,
     fetchSingleOrderDetail,
@@ -217,12 +219,9 @@ export const OrdersHistoryScreen = () => {
 
     try {
       const verifyRes = await paymentApi.verifyPayment(Number(orderId));
-      console.log("📥 Verify Payment API Response:", verifyRes);
-
       if (verifyRes?.StatusCode === 200) {
         // Scenario A: The backend successfully validated the transaction
         if (verifyRes?.Data?.IsPaymentVerify === true) {
-          console.log("✅ Payment verified successfully for order", orderId);
           setCancelMessage({
             type: "success",
             text: "The Payment has been verified successfully.",
@@ -469,6 +468,8 @@ export const OrdersHistoryScreen = () => {
               keyExtractor={(item) => item.OrderId?.toString()}
               contentContainerStyle={styles.listContentSpace}
               showsVerticalScrollIndicator={false}
+              onEndReached={fetchNextPage}
+              onEndReachedThreshold={0.3} // Fires when the user is 30% away from the bottom of the list
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -476,6 +477,13 @@ export const OrdersHistoryScreen = () => {
                   colors={["#0284C7"]}
                   tintColor="#0284C7"
                 />
+              }
+              ListFooterComponent={
+                loadingMore ? (
+                  <View style={{ paddingVertical: 20, alignItems: "center" }}>
+                    <ActivityIndicator size="small" color="#0284C7" />
+                  </View>
+                ) : null
               }
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
@@ -665,223 +673,6 @@ export const OrdersHistoryScreen = () => {
           )}
         </>
       )}
-      {/* <Modal
-        visible={detailModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeDetailInspector}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Order Summary</Text>
-              <TouchableOpacity
-                onPress={closeDetailInspector}
-                style={styles.closeButton}
-              >
-                <Ionicons name="close" size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-
-            {modalLoading ? (
-              <DetailSkeleton />
-            ) : modalError ? (
-              <View style={styles.errorStateView}>
-                <Ionicons
-                  name="cloud-offline-outline"
-                  size={44}
-                  color="#EF4444"
-                />
-                <Text style={styles.errorStateText}>{modalError}</Text>
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={() =>
-                    currentOrderDetail?.OrderId &&
-                    openDetailInspector(currentOrderDetail.OrderId.toString())
-                  }
-                >
-                  <Text style={styles.retryButtonText}>Retry Lookup</Text>
-                </TouchableOpacity>
-              </View>
-            ) : currentOrderDetail ? (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 34 }}
-              >
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryNum}>
-                    {currentOrderDetail.OrderNumber}
-                  </Text>
-                  <Text style={styles.summaryTotal}>
-                    Rs. {currentOrderDetail.NetAmount?.toLocaleString()}
-                  </Text>
-
-                  <View style={styles.badgeRow}>
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor: getStatusMetaConfig(
-                            currentOrderDetail.OrderStatusDisplayName,
-                          ).bg,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          {
-                            color: getStatusMetaConfig(
-                              currentOrderDetail.OrderStatusDisplayName,
-                            ).text,
-                          },
-                        ]}
-                      >
-                        Order: {currentOrderDetail.OrderStatusDisplayName}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor: getPaymentStatusMeta(
-                            currentOrderDetail.PaymentStatus,
-                            currentOrderDetail.PaymentStatusDisplayName,
-                          ).bg,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          {
-                            color: getPaymentStatusMeta(
-                              currentOrderDetail.PaymentStatus,
-                              currentOrderDetail.PaymentStatusDisplayName,
-                            ).text,
-                          },
-                        ]}
-                      >
-                        Payment: {currentOrderDetail.PaymentStatusDisplayName}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <Text style={styles.sectionHeader}>Items Ordered</Text>
-                {currentOrderDetail.OrderDetails?.OrderItemList?.map(
-                  (item: any, index: number) => (
-                    <View
-                      style={styles.itemRow}
-                      key={item.OrderDetailId || index}
-                    >
-                      <View style={styles.itemIconBox}>
-                        <Ionicons
-                          name="shirt-outline"
-                          size={18}
-                          color="#0284C7"
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.itemName}>{item.ProductName}</Text>
-                        <Text style={styles.itemSpecs}>
-                          Variant: {item.VariantName || "Standard"} • Qty:{" "}
-                          {item.Quantity}
-                        </Text>
-                      </View>
-                      <Text style={styles.itemPrice}>
-                        Rs. {item.TotalAmount?.toLocaleString()}
-                      </Text>
-                    </View>
-                  ),
-                )}
-
-                <Text style={styles.sectionHeader}>Shipping Target</Text>
-                <View style={styles.shippingCard}>
-                  <Text style={styles.shipName}>
-                    {currentOrderDetail.OrderShippingDetails?.FullName}
-                  </Text>
-                  <Text style={styles.shipAddress}>
-                    {currentOrderDetail.OrderShippingDetails?.Address}
-                  </Text>
-                  <Text style={styles.shipPhone}>
-                    <Ionicons name="call-outline" size={12} />{" "}
-                    {currentOrderDetail.OrderShippingDetails?.Phone}
-                  </Text>
-                </View>
-
-                {currentOrderDetail.SpecialInstructions ? (
-                  <>
-                    <Text style={styles.sectionHeader}>Special Notes</Text>
-                    <View style={styles.notesCard}>
-                      <Text style={styles.notesText}>
-                        "{currentOrderDetail.SpecialInstructions}"
-                      </Text>
-                    </View>
-                  </>
-                ) : null}
-
-                <View style={styles.modalActionsStack}>
-                  {currentOrderDetail.PaymentStatus !== 4 &&
-                    currentOrderDetail.PaymentStatusDisplayName?.toLowerCase() !==
-                      "completed" &&
-                    currentOrderDetail.PaymentStatusDisplayName?.toLowerCase() !==
-                      "paid" &&
-                    (currentOrderDetail.Status === 15 ||
-                      currentOrderDetail.OrderStatusDisplayName?.toLowerCase().includes(
-                        "pending",
-                      )) && (
-                      <TouchableOpacity
-                        style={styles.modalPayBtn}
-                        onPress={() =>
-                          handleProceedToPayment(currentOrderDetail.OrderId)
-                        }
-                      >
-                        <Ionicons
-                          name="shield-checkmark-outline"
-                          size={18}
-                          color="#FFF"
-                        />
-                        <Text style={styles.modalPayBtnText}>
-                          Complete Secure Payment
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  {(currentOrderDetail.Status === 15 ||
-                    currentOrderDetail.OrderStatusDisplayName?.toLowerCase().includes(
-                      "pending",
-                    )) && (
-                    <TouchableOpacity
-                      style={styles.modalCancelBtn}
-                      disabled={isCanceling}
-                      onPress={() =>
-                        triggerCancelConfirmation(
-                          currentOrderDetail.OrderId?.toString(),
-                        )
-                      } // Opens your pre-existing confirmation modal
-                    >
-                      {isCanceling ? (
-                        <ActivityIndicator size="small" color="#EF4444" />
-                      ) : (
-                        <>
-                          <Ionicons
-                            name="trash-outline"
-                            size={18}
-                            color="#EF4444"
-                          />
-                          <Text style={styles.modalCancelBtnText}>
-                            Cancel Order
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </ScrollView>
-            ) : null}
-          </View>
-        </View>
-      </Modal> */}
 
       <Modal
         visible={detailModalVisible}

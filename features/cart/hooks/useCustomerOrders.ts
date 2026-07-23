@@ -1,9 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { orderApi } from "../services/orderApi";
 import { useAuth } from "@/store/AuthContext";
 export function useCustomerOrders() {
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [currentOrderDetail, setCurrentOrderDetail] = useState<any>(null);
   const [isCanceling, setIsCanceling] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -15,8 +18,6 @@ export function useCustomerOrders() {
     type: "success" | "error" | null;
     text: string;
   }>({ type: null, text: "" });
-
-  // Controlled UI State instead of Alert.alert
 
   const [isCancelConfirmVisible, setIsCancelConfirmVisible] = useState(false);
   const [activeCancelOrderId, setActiveCancelOrderId] = useState<string | null>(
@@ -48,6 +49,8 @@ export function useCustomerOrders() {
       setLoadingReasons(false);
     }
   };
+  const PAGE_SIZE = 10;
+  const activeFilterRef = useRef<number | undefined>(undefined);
 
   const fetchOrders = useCallback(
     async (statusFilter?: number, isSilent = false) => {
@@ -56,33 +59,82 @@ export function useCustomerOrders() {
         setOrders([]);
         return;
       }
+
+      activeFilterRef.current = statusFilter;
+
       if (!isSilent) {
         setLoading(true);
       }
+
       try {
-        const res = await orderApi.getOrders(50, 1);
+        setServerError(false);
+        // Reset back to page 1 on a fresh pull-down or filter switch
+        const res = await orderApi.getOrders(PAGE_SIZE, 1);
 
         if (res?.StatusCode === 200 && res?.Data?.CustomerOrders) {
           const rawList = res.Data.CustomerOrders;
+
           const filteredList =
             statusFilter === undefined || statusFilter === -1
               ? rawList
               : rawList.filter((order: any) => order.Status === statusFilter);
 
           setOrders(filteredList);
+          setPage(1);
+          // If the returned backend items are less than our request size, we've hit the end
+          setHasMore(rawList.length === PAGE_SIZE);
         } else {
           setOrders([]);
+          setHasMore(false);
         }
       } catch (err) {
-        console.log("Error pulling new customer orders:", err);
+        console.log("Error pulling customer orders:", err);
         setServerError(true);
         setOrders([]);
       } finally {
         setLoading(false);
       }
     },
-    [],
+    [isAuthenticated],
   );
+
+  const fetchNextPage = useCallback(async () => {
+    // Block if already loading, or if we know there's no more data to fetch
+    if (loading || loadingMore || !hasMore || !isAuthenticated) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const res = await orderApi.getOrders(PAGE_SIZE, nextPage);
+
+      if (res?.StatusCode === 200 && res?.Data?.CustomerOrders) {
+        const rawList = res.Data.CustomerOrders;
+
+        if (rawList.length === 0) {
+          setHasMore(false);
+          return;
+        }
+
+        const currentFilter = activeFilterRef.current;
+        const filteredList =
+          currentFilter === undefined || currentFilter === -1
+            ? rawList
+            : rawList.filter((order: any) => order.Status === currentFilter);
+
+        // Append the new orders to your existing arrays cleanly
+        setOrders((prevOrders) => [...prevOrders, ...filteredList]);
+        setPage(nextPage);
+        setHasMore(rawList.length === PAGE_SIZE);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.log("Error loading next order block page:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, hasMore, loading, loadingMore, isAuthenticated]);
 
   const fetchSingleOrderDetail = useCallback(
     async (orderId: string, isSilent = false) => {
@@ -166,11 +218,15 @@ export function useCustomerOrders() {
   };
 
   return {
-    loading,
+    loadingMore,
     orders,
+    hasMore,
+    fetchOrders,
+    fetchNextPage,
+    loading,
     setOrders,
     currentOrderDetail,
-    fetchOrders,
+
     fetchSingleOrderDetail,
     setCurrentOrderDetail,
     isCanceling,

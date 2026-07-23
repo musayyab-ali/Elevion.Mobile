@@ -6,6 +6,7 @@ import { emitLogout } from "../../utils/authEvents";
 // const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
 const BASE_URL = "http://thelink.innovex.biz/api/v1";
 const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
+
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -13,6 +14,21 @@ const apiClient = axios.create({
     "api-security-key": SECURITY_KEY,
   },
 });
+
+// Queue variables to handle concurrent API 401 blockages securely
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 apiClient.interceptors.request.use(
   async (config) => {
@@ -30,18 +46,32 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Strict validation verification checking
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If a refresh process is already in mid-flight, hold back additional concurrent requests
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       const accessToken = await SecureStore.getItemAsync("accessToken");
       const refreshToken = await SecureStore.getItemAsync("refreshToken");
 
       if (!accessToken || !refreshToken) {
+        isRefreshing = false;
         return Promise.reject(error);
       }
 
       try {
-        console.log("Attempting Token Refresh Process Workflow Step...");
         const response = await axios.post(
           `${BASE_URL}/oauth/token/refresh`,
           {
@@ -52,18 +82,32 @@ apiClient.interceptors.response.use(
             headers: { "api-security-key": SECURITY_KEY },
           },
         );
+        if (
+          response.status === 200 &&
+          response.data?.StatusCode === 200 &&
+          response.data?.Data
+        ) {
+          const freshNewAccessToken = response.data.Data.AccessToken;
+          const freshNewRefreshToken = response.data.Data.RefreshToken;
 
-        if (response.status === 200 && response.data?.Data) {
-          const { AccessToken, RefreshToken } = response.data.Data;
+          await SecureStore.setItemAsync("accessToken", freshNewAccessToken);
+          await SecureStore.setItemAsync("refreshToken", freshNewRefreshToken);
 
-          await SecureStore.setItemAsync("accessToken", AccessToken);
-          await SecureStore.setItemAsync("refreshToken", RefreshToken);
+          originalRequest.headers.Authorization = `Bearer ${freshNewAccessToken}`;
 
-          console.log("Tokens synchronized successfully.");
-          originalRequest.headers.Authorization = `Bearer ${AccessToken}`;
+          // Release all stalled requests waiting in line with the fresh token
+          processQueue(null, freshNewAccessToken);
+          isRefreshing = false;
+
           return apiClient(originalRequest);
+        } else {
+          // Fallthrough handler for 200 responses that contain functional backend errors
+          throw new Error("Invalid token refresh payload structure");
         }
       } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+
         console.log(
           "Session expired completely. Clearing application state instances.",
         );
@@ -74,8 +118,9 @@ apiClient.interceptors.response.use(
         await SecureStore.deleteItemAsync("full_name");
         await SecureStore.deleteItemAsync("user_email");
         await SecureStore.deleteItemAsync("user_phone");
+        await SecureStore.deleteItemAsync("phone_code");
 
-        emitLogout(); // Emits forceLogout back out to global layout context instances
+        emitLogout();
         return Promise.reject(refreshError);
       }
     }

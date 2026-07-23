@@ -17,7 +17,7 @@ import { AuthGuardModal } from "@/components/AuthGuardModal";
 import { useAuth } from "@/store/AuthContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useSharedWishlistData } from "@/store/WishlistContext";
-import Ionicons from "@expo/vector-icons/build/Ionicons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export const ProductsScreen = () => {
   const { isAuthenticated } = useAuth();
@@ -29,11 +29,13 @@ export const ProductsScreen = () => {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Hook extracts both structural crumbs and matching results
+  // Added loadingMore and loadMoreProducts handlers from the updated hook
   const {
-    categoryProducts = [], // Maps securely to your fetched productListViewModel data
+    categoryProducts = [],
     breadcrumbs,
     loading: discoveryLoading,
+    loadingMore,
+    loadMoreProducts,
   } = useDiscovery(categoryId);
 
   const { wishlistMap, isProcessing, toggleWishlist } = useWishlist();
@@ -92,6 +94,9 @@ export const ProductsScreen = () => {
           keyExtractor={(item) => `prod-list-${item.ProductId}`}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          // Infinite Scroll Pagination triggers
+          onEndReached={loadMoreProducts}
+          onEndReachedThreshold={0.5}
           ListHeaderComponent={
             categoryProducts.length > 0 ? (
               <View style={styles.headerBlock}>
@@ -106,14 +111,11 @@ export const ProductsScreen = () => {
                     </Text>
                   </View>
                 </View>
-                {/* Decorative premium ambient accent line */}
                 <View style={styles.accentLine} />
               </View>
             ) : null
           }
           renderItem={({ item, index }) => {
-            // const targetDetailId = item.ProductDetailId;
-
             const isItemWishlisted = wishlistMap.has(item.ProductId);
 
             return (
@@ -152,6 +154,14 @@ export const ProductsScreen = () => {
               <Text style={styles.emptyTitle}>No Products available</Text>
             </View>
           }
+          // Display an inline trailing loader at the bottom while next chunks append
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.footerLoaderFrame}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+              </View>
+            ) : null
+          }
         />
       </View>
 
@@ -189,14 +199,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "700", // Extra bold weight for maximum visual dominance
+    fontWeight: "700",
     color: Colors.primary,
     letterSpacing: -0.5,
-    flex: 1, // Forces the text wrapper to gracefully take up available space and truncate before colliding
+    flex: 1,
     paddingRight: 16,
   },
   badgeBubble: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)", // Semi-transparent glassmorphic backing
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -208,7 +218,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: "600",
-    color: Colors.primary || "#38BDF8", // Uses your core brand theme color
+    color: Colors.primary || "#38BDF8",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -228,7 +238,6 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     marginBottom: 8,
   },
-
   emptyIconCircle: {
     width: 88,
     height: 88,
@@ -237,5 +246,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
+  },
+  footerLoaderFrame: {
+    paddingVertical: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

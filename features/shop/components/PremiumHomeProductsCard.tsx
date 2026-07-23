@@ -21,7 +21,7 @@ export const CARD_WIDTH = (width - 48) / 2;
 export const PremiumHomeProductsCard: React.FC<
   PremiumHomeProductsCardProps
 > = ({ product, onPress }) => {
-  const imageSource = product.ThumbnailImagePath || product.IconImagePath;
+  const imageSource = product.LargeImagePath || product.ThumbnailImagePath;
 
   return (
     <TouchableOpacity

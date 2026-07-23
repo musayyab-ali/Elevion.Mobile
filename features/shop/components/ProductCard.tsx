@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
 
 const ProductCard = ({
   product,

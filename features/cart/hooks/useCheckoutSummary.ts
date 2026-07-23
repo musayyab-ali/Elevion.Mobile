@@ -7,7 +7,6 @@ import { useGlobalAddress } from "../../../store/AddressContext";
 import apiClient from "../../../services/api/apiClient";
 import * as SecureStore from "expo-secure-store";
 import { sanitizeRawPhoneNumber } from "@/utils/sanatizeNumber";
-
 interface GeoItem {
   Disabled: boolean;
   Group: any;
@@ -32,18 +31,18 @@ interface AddressForm {
   addressBookId: number;
 }
 
-export interface DeliveryOption {
-  DeliveryTypeId: number;
-  Name: string;
-  DisplayName: string;
-  EstimatedDays: number;
-  Charge: number;
-}
+// export interface DeliveryOption {
+//   DeliveryTypeId: number;
+//   Name: string;
+//   DisplayName: string;
+//   EstimatedDays: number;
+//   Charge: number;
+// }
 
 export function useCheckoutSummary(checkoutData: any) {
   const router = useRouter();
   const { user, login: saveAuth } = useAuth();
-  const { guestSessionId } = useSharedCartData();
+  const { guestSessionId, fetchCart } = useSharedCartData();
 
   const {
     addresses,
@@ -67,7 +66,7 @@ export function useCheckoutSummary(checkoutData: any) {
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [modalBody, setModalBody] = useState({ title: "", description: "" });
-  const [showDeliveryOptions, setShowDeliveryOptions] = useState(false);
+  // const [showDeliveryOptions, setShowDeliveryOptions] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(!hasSavedAddresses);
   const [isEditingBilling, setIsEditingBilling] = useState(!hasSavedAddresses);
@@ -100,11 +99,11 @@ export function useCheckoutSummary(checkoutData: any) {
   const [formErrors, setFormErrors] = useState<any>({});
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
-  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
-  const [selectedOption, setSelectedOption] = useState<DeliveryOption | null>(
-    null,
-  );
-  const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
+  // const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
+  // const [selectedOption, setSelectedOption] = useState<DeliveryOption | null>(
+  //   null,
+  // );
+  // const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
 
   // Reusable initialization logic block built to clean form state structures cleanly
@@ -112,8 +111,8 @@ export function useCheckoutSummary(checkoutData: any) {
     // 1. Erase descriptive typing text entries completely
     setSpecialInstructions("");
     setDeliveryInstructions("");
-    setSelectedOption(null);
-    setShowDeliveryOptions(false);
+    // setSelectedOption(null);
+    // setShowDeliveryOptions(false);
     setFormErrors({});
 
     // 2. Clear out cascading local address layout states cached inside Context API
@@ -151,7 +150,7 @@ export function useCheckoutSummary(checkoutData: any) {
   useEffect(() => {
     if (hasSavedAddresses && addresses && addresses.length > 0) {
       const defaultAddr = addresses[0];
-      console.log("tati is area :", defaultAddr.AreaId);
+
       const fallbackCountryId = defaultAddr?.CountryId
         ? Number(defaultAddr.CountryId)
         : 0;
@@ -238,25 +237,25 @@ export function useCheckoutSummary(checkoutData: any) {
     }
   }, [addressForm.cityId, loadAreasAndBranches]);
 
-  const fetchDeliveryOptions = useCallback(async () => {
-    setLoadingOptions(true);
-    try {
-      const response = await apiClient.get(
-        "/Setting/delivery/services/options",
-      );
-      if (response.data?.Data) {
-        setDeliveryOptions(response.data.Data);
-      }
-    } catch (error) {
-      console.log("Failed fetching live dispatch rates:", error);
-    } finally {
-      setLoadingOptions(false);
-    }
-  }, []);
+  // const fetchDeliveryOptions = useCallback(async () => {
+  //   setLoadingOptions(true);
+  //   try {
+  //     const response = await apiClient.get(
+  //       "/Setting/delivery/services/options",
+  //     );
+  //     if (response.data?.Data) {
+  //       setDeliveryOptions(response.data.Data);
+  //     }
+  //   } catch (error) {
+  //     console.log("Failed fetching live dispatch rates:", error);
+  //   } finally {
+  //     setLoadingOptions(false);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    fetchDeliveryOptions();
-  }, [fetchDeliveryOptions]);
+  // useEffect(() => {
+  //   fetchDeliveryOptions();
+  // }, [fetchDeliveryOptions]);
 
   const handleCountryChange = (id: number) => {
     const country = filteredCountries.find((c) => Number(c.Value) === id);
@@ -421,7 +420,8 @@ export function useCheckoutSummary(checkoutData: any) {
       ISOCode: addressForm.isoCode,
       PhoneCode: addressForm.phoneCode,
       IsAddNewAddress: addressForm.addressBookId === 0,
-      DeliveryOption: selectedOption?.DeliveryTypeId || 0,
+      // DeliveryOption: selectedOption?.DeliveryTypeId || 0,
+      DeliveryOption: 0,
       SpecialInstructions: specialInstructions || "None",
       DeliveryInstructions: deliveryInstructions || "None",
       OrderSource: 1,
@@ -451,7 +451,7 @@ export function useCheckoutSummary(checkoutData: any) {
         }
 
         // 🌟 SUCCESS FIX: Scrub the checkout screen data prior to committing navigation transition
-
+        fetchCart();
         resetCheckoutStatesToDefault();
         router.push({
           pathname: "/(cart)/payment-methods",
@@ -459,6 +459,7 @@ export function useCheckoutSummary(checkoutData: any) {
         });
       }
     } catch (error: any) {
+      console.log("error is :", error);
       setCheckoutMessage(
         error?.response?.data?.Message || "Order execution pipeline failed.",
       );
@@ -477,14 +478,21 @@ export function useCheckoutSummary(checkoutData: any) {
     [checkoutData],
   );
   const deliveryCharge = useMemo(
-    () => selectedOption?.Charge || 0,
-    [selectedOption],
+    () => checkoutData?.DeliveryCharges || 0,
+    [checkoutData],
   );
+  // const deliverySelection = useMemo(
+  //   () => selectedOption?.Charge || 0,
+  //   [selectedOption],
+  // );
+  // const grandTotal = useMemo(
+  //   () => subtotal + deliveryCharge + deliverySelection - discount,
+  //   [subtotal, deliveryCharge, discount, deliverySelection],
+  // );
   const grandTotal = useMemo(
     () => subtotal + deliveryCharge - discount,
     [subtotal, deliveryCharge, discount],
   );
-
   return {
     hasSavedAddresses,
     isEditingAddress,
@@ -507,16 +515,17 @@ export function useCheckoutSummary(checkoutData: any) {
     setSpecialInstructions,
     deliveryInstructions,
     setDeliveryInstructions,
-    deliveryOptions,
-    selectedOption,
-    setSelectedOption,
-    showDeliveryOptions,
-    setShowDeliveryOptions,
+    // deliveryOptions,
+    // selectedOption,
+    // setSelectedOption,
+    // showDeliveryOptions,
+    // setShowDeliveryOptions,
     isSubmittingOrder,
     checkoutMessage,
-    loadingOptions,
+    // loadingOptions,
     subtotal,
     deliveryCharge,
+    // deliverySelection,
     discount,
     grandTotal,
     errorModalVisible,

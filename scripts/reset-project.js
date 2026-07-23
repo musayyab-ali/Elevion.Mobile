@@ -63,7 +63,7 @@ const moveDirectories = async (userInput) => {
           console.log(`➡️ /${dir} moved to /${exampleDir}/${dir}.`);
         } else {
           await fs.promises.rm(oldDirPath, { recursive: true, force: true });
-          console.log(`❌ /${dir} deleted.`);
+          console.log(`❌ /${dir}.`);
         }
       } else {
         console.log(`➡️ /${dir} does not exist, skipping.`);

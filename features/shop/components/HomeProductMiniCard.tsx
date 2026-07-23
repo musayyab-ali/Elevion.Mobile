@@ -21,7 +21,7 @@ interface ProductProps {
 }
 
 const IMAGE_PLACEHOLDER =
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&q=80";
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
 
 export const HomeProductMiniCard = React.memo(
   ({ product, onPress }: ProductProps) => {
