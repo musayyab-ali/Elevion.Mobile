@@ -16,6 +16,7 @@ import { CategorySkeleton } from "./CategorySkeleton";
 import { FeaturedBanner } from "./FeaturedBanner";
 import { ShopHeader } from "./ShopHeader";
 import { HomeProductMiniCard } from "./HomeProductMiniCard";
+import { RecentlyViewedRail } from "./RecentlyViewedRail";
 import { useDiscovery } from "../hooks/useDiscovery";
 import { EmptyState } from "@/components/EmptyState";
 import { ProductMiniSkeleton } from "./ProductMiniSkeleton";
@@ -307,6 +308,8 @@ export const ShopHomeScreen = () => {
                     />
                   </View>
                 )}
+
+                <RecentlyViewedRail />
 
                 {/* 2. Primary Top Categories Row Header Section */}
                 <View style={styles.sectionHeaderRow}>

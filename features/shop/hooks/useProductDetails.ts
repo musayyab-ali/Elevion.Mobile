@@ -1,6 +1,7 @@
 // Create features/shop/hooks/useProductDetails.ts
 import { useState, useEffect } from "react";
 import { shopApi } from "../services/shopApi";
+import { addRecentlyViewed } from "../utils/recentlyViewed";
 
 export const useProductDetails = (productId: string | undefined) => {
   const [product, setProduct] = useState<any>(null);
@@ -16,6 +17,15 @@ export const useProductDetails = (productId: string | undefined) => {
         const response = await shopApi.getProductDetails(Number(productId));
         const data = response?.Data;
         setProduct(data);
+
+        if (data?.ProductId) {
+          void addRecentlyViewed({
+            ProductId: data.ProductId,
+            ProductName: data.Name ?? "",
+            MinPrice: Number(data.MinPrice) || 0,
+            ThumbnailImagePath: data.ProductImages?.[0]?.LargeImagePath || data.ProductImages?.[0]?.IconImagePath || undefined,
+          });
+        }
 
         // Auto-select the default SKU variant array combination if available
         if (
