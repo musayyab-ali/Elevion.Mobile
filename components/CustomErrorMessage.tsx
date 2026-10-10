@@ -1,7 +1,10 @@
-import { View, Text, StyleSheet } from "react-native";
+import { Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import type { ReactNode } from "react";
 import { Colors } from "../constants/Theme";
 import { MotiView } from "moti";
-export const CustomErrorMessage = ({ children, style }) => (
+type Props = { children: ReactNode; style?: StyleProp<ViewStyle> };
+
+export const CustomErrorMessage = ({ children, style }: Props) => (
   <MotiView
     from={{ opacity: 0, translateY: -20 }}
     animate={{ opacity: 1, translateY: 0 }}

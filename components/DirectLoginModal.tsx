@@ -98,7 +98,7 @@ export const DirectLoginModal: React.FC = () => {
       } else {
         setStatusMessage({
           type: "error",
-          text: result?.Message || "Failed to establish profile password.",
+          text: result?.message || "Failed to establish profile password.",
         });
       }
     } catch (err) {

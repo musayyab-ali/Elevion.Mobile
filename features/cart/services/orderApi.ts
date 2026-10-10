@@ -6,7 +6,10 @@ export interface CreateOrderPayload {
     FullName: string;
     EmailAddress: string;
     Phone: string;
-    Country: string;
+    Country?: string;
+    CountryId?: number;
+    StateId?: number;
+    ISOCode?: string;
     CityId: number;
     Address: string;
     City: string;
@@ -22,6 +25,8 @@ export interface CreateOrderPayload {
   SessionId?: string;
   BranchId: number;
   DeliveryDate: string;
+  ISOCode?: string;
+  PhoneCode?: string;
   IsAddNewAddress: boolean;
   DeliveryOption: number; // DeliveryTypeId from courier options API
   SpecialInstructions: string;

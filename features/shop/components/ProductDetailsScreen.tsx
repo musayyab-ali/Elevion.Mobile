@@ -204,7 +204,7 @@ export const ProductDetailsScreen = () => {
         customerApi.getDetailedReviews(numericProductId, 1, 10),
       ]);
 
-      const rawGraph = graphRes?.data?.Data || graphRes?.Data || [];
+      const rawGraph = graphRes?.data?.Data || [];
       const rawListPayload = listRes?.data || listRes;
       const rawList = rawListPayload?.Data?.ProductRatingReviewsDtoList || [];
       setRatingGraph(rawGraph);
@@ -470,7 +470,7 @@ export const ProductDetailsScreen = () => {
           />
           {imageGallery.length > 1 && (
             <View style={styles.dotRow}>
-              {imageGallery.map((_, idx) => (
+              {imageGallery.map((_: unknown, idx: number) => (
                 <View
                   key={idx}
                   style={[

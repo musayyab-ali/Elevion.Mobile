@@ -13,12 +13,19 @@ import { MotiView } from "moti";
 import { ScrollViewComponent } from "./ScrollViewComponent";
 import { CelebrationOverlay } from "./CelebrationOverlay";
 
+type Props = {
+  apiMessage?: string | null;
+  children: React.ReactNode;
+  celebration?: boolean;
+  loading?: boolean;
+};
+
 export const AuthContainer = ({
   apiMessage,
   children,
-  celebration,
-  loading,
-}) => {
+  celebration = false,
+  loading = false,
+}: Props) => {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width > 600;

@@ -382,6 +382,7 @@ export default function CheckoutSummaryScreen() {
       cityId: 0,
       areaId: 0,
       cityName: "",
+      areaName: "",
       isoCode: "PK",
       phoneCode: "",
       addressBookId: 0,

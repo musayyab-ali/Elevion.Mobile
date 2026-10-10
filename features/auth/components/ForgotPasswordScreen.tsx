@@ -117,8 +117,8 @@ export default function ForgotPasswordScreen() {
 
         {step === "request" ? (
           <MotiView
-            from={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            from={{ opacity: 0, translateX: -20 }}
+            animate={{ opacity: 1, translateX: 0 }}
           >
             <AppInput
               label="Username"
@@ -135,7 +135,7 @@ export default function ForgotPasswordScreen() {
             />
           </MotiView>
         ) : (
-          <MotiView from={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+          <MotiView from={{ opacity: 0, translateX: 20 }} animate={{ opacity: 1, translateX: 0 }}>
             <AppInput
               label="Reset Code"
               placeholder="Enter 6-digit code"

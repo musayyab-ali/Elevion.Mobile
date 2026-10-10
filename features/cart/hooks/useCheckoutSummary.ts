@@ -157,10 +157,10 @@ export function useCheckoutSummary(checkoutData: any) {
       const matchedCountry = rawCountries?.find(
         (c) => Number(c.Value) === fallbackCountryId,
       );
+      const isPakistan = matchedCountry?.Value === "169";
       const targetPhoneCode =
-        defaultAddr?.PhoneCode || matchedCountry?.Value === "169"
-          ? "92"
-          : "44" || "";
+        String(defaultAddr?.PhoneCode ?? "").replace(/\D/g, "") ||
+        (isPakistan ? "92" : "44");
       const boundForm = {
         fullName: defaultAddr?.FullName || user?.Name || "",
         email: defaultAddr?.EmailAddress || user?.Email || "",
@@ -175,10 +175,7 @@ export function useCheckoutSummary(checkoutData: any) {
         areaId: defaultAddr?.AreaId ? Number(defaultAddr.AreaId) : 0,
         cityName: defaultAddr?.City || "",
         areaName: defaultAddr?.Area || "",
-        isoCode:
-          defaultAddr?.ISOCode || matchedCountry?.Value === "169"
-            ? "PK"
-            : "GB" || "",
+        isoCode: defaultAddr?.ISOCode || (isPakistan ? "PK" : "GB"),
         phoneCode: targetPhoneCode,
         addressBookId: defaultAddr?.AddressBookId || 0,
       };
@@ -334,7 +331,8 @@ export function useCheckoutSummary(checkoutData: any) {
     const cityVal = addr?.CityId || 0;
     const areaVal = addr?.AreaId || 0;
     const targetPhoneCode =
-      addr?.PhoneCode || addr?.CountryId === 169 ? "92" : "44" || "";
+      String(addr?.PhoneCode ?? "").replace(/\D/g, "") ||
+      (addr?.CountryId === 169 ? "92" : "44");
     const chosenForm = {
       fullName: addr?.FullName || user?.Name || "",
       email: addr?.EmailAddress || user?.Email || "",
@@ -349,7 +347,7 @@ export function useCheckoutSummary(checkoutData: any) {
       areaId: areaVal ? Number(areaVal) : 0,
       cityName: addr?.City || "",
       areaName: addr?.Area || "",
-      isoCode: addr?.ISOCode || addr?.CountryId === 169 ? "PK" : "GB" || "",
+      isoCode: addr?.ISOCode || (addr?.CountryId === 169 ? "PK" : "GB"),
       phoneCode: targetPhoneCode,
       addressBookId: addr?.AddressBookId || 0,
     };

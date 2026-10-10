@@ -5,7 +5,7 @@ import { MotiView } from "moti";
 import { Colors } from "@/constants/Theme";
 
 interface EmptyStateProps {
-  iconName: keyof typeof Ionicons.images | string;
+  iconName: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
   actionLabel?: string;

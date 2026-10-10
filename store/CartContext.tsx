@@ -21,6 +21,7 @@ interface CartContextType {
   refreshing: boolean;
   processingIds: Set<number>;
   cartMessage: string | null;
+  guestSessionId: string | null;
   deleteLoading: {
     active: boolean;
     cartId: number | null;
@@ -106,7 +107,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // 2. Banner business rule: Show if items exist AND user hasn't explicitly hit 'X'
   const showCartBanner =
-    cartData?.CartItemList?.length > 0 && !isCartBannerDismissed;
+    (cartData?.CartItemList?.length ?? 0) > 0 && !isCartBannerDismissed;
 
   // Call this when user adds an item to cart
   const triggerBannerOnNewAddition = async () => {
@@ -269,7 +270,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         await cartApi.updateQuantity(cartId, quantity);
-      } catch (error) {
+      } catch (error: any) {
         console.log("Failed to sync structural quantity updates:", error);
         setCartMessage(
           error?.Message || "There is something wrong! Check your connection.",
@@ -371,6 +372,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       processingIds,
       cartMessage,
+      setCartMessage,
       fetchCart,
       addItemToCart,
       isAuthenticated,

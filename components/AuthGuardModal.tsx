@@ -16,7 +16,7 @@ interface AuthGuardModalProps {
   onClose: () => void;
   title: string;
   subtitle: string;
-  iconName: keyof typeof Ionicons.銘; // Ensures valid ionicon names
+  iconName: keyof typeof Ionicons.glyphMap; // Ensures valid ionicon names
 }
 
 export function AuthGuardModal({

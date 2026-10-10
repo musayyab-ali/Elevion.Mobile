@@ -113,7 +113,7 @@ export const useOtp = () => {
     }
   };
 
-  const verifyPhoneNumber = async (userName?: string, otp: string) => {
+  const verifyPhoneNumber = async (userName: string | undefined, otp: string) => {
     if (!otp && !userName) {
       setApiMessage("Error: Missing user registration identifier values.");
       return { success: false };
@@ -124,7 +124,7 @@ export const useOtp = () => {
     try {
       // 1. Submit Core Endpoint Code Verification Signature
       const result = await authApi.verifyPhoneOtp({
-        UserName: userName,
+        UserName: userName ?? "",
         Otp: otp,
       });
 

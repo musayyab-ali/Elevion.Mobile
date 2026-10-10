@@ -1,11 +1,11 @@
 import React from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions, StyleProp, ViewStyle } from "react-native";
 import { Colors } from "../../../constants/Theme";
 import { MotiView } from "moti";
 
 const { width } = Dimensions.get("window");
 import { Skeleton } from "moti/skeleton";
-export const CategorySkeleton = ({ style }) => {
+export const CategorySkeleton = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   return (
     <MotiView
       from={{ opacity: 0.6 }}

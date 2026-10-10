@@ -810,7 +810,7 @@ export const AddressModal = ({
                     maxLength={10} // Adjusted down to 10 for raw numbers
                     value={formData.PhoneNumber} // Displays only the raw numbers beautifully
                     onChangeText={(t) =>
-                      updatePhoneNumberPayload(t, selectedCountryCode)
+                      updatePhoneNumberPayload(t, selectedCountryCode ?? "")
                     }
                   />
                 </View>
@@ -1084,7 +1084,7 @@ const styles = StyleSheet.create({
   pseudoSelectorInput: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignEments: "center",
+    alignItems: "center",
   },
   selectorPlaceholderText: { color: "#94A3B8", fontSize: 14 },
   selectorValueText: { color: "#0F172A", fontSize: 14, fontWeight: "500" },

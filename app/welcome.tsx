@@ -19,7 +19,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface SlideItem {
   id: string;
-  icon: keyof typeof Ionicons.images | string;
+  icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
   accentColor: string;
@@ -36,7 +36,7 @@ const ONBOARDING_SLIDES: SlideItem[] = [
   },
   {
     id: "2",
-    icon: "search-heading", // Fallback text safely mapped below
+    icon: "search",
     title: "CHOOSE WHAT YOU WANT",
     description:
       "Filter catalog parameters seamlessly by variations, pricing segments, and real-time inventory specifications.",

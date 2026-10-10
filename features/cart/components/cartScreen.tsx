@@ -352,7 +352,7 @@
 //             onClose={() => setModalVisible(false)}
 //             title="Account Required"
 //             subtitle="You can't update your cart without an account."
-//             iconName="account-circle-outline"
+//             iconName="person-circle-outline"
 //           />
 //           {cartMessage && (
 //             <CustomErrorMessage>{cartMessage}</CustomErrorMessage>
@@ -735,7 +735,7 @@ export const CartScreen = () => {
             onClose={() => setModalVisible(false)}
             title="Account Required"
             subtitle="You can't update your cart without an account."
-            iconName="account-circle-outline"
+            iconName="person-circle-outline"
           />
           {cartMessage && (
             <CustomErrorMessage>{cartMessage}</CustomErrorMessage>

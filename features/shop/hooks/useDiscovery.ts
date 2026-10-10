@@ -254,8 +254,11 @@ export const useDiscovery = (categoryId?: string) => {
           numericId,
           1,
         );
+        // the API is inconsistent about the casing of this property
         const initialProducts =
-          productDataRes?.Data?.productListViewModel ?? [];
+          productDataRes?.Data?.ProductListViewModel ??
+          (productDataRes?.Data as any)?.productListViewModel ??
+          [];
 
         setCategoryProducts(initialProducts);
 
@@ -287,7 +290,10 @@ export const useDiscovery = (categoryId?: string) => {
         numericId,
         nextPage,
       );
-      const incomingProducts = productDataRes?.Data?.productListViewModel ?? [];
+      const incomingProducts =
+        productDataRes?.Data?.ProductListViewModel ??
+        (productDataRes?.Data as any)?.productListViewModel ??
+        [];
 
       if (incomingProducts.length < 10) {
         setHasMore(false); // No more entries remain on remote tables

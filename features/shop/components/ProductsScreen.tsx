@@ -61,7 +61,7 @@ export const ProductsScreen = () => {
             headerShadowVisible: false,
             headerStyle: { backgroundColor: Colors.headerOne[0] },
             headerTitleAlign: "left",
-            headerBackTitleVisible: false,
+            headerBackButtonDisplayMode: "minimal",
           }}
         />
         <ActivityIndicator size="small" color={Colors.primary} />
@@ -81,7 +81,7 @@ export const ProductsScreen = () => {
           headerShadowVisible: false,
           headerStyle: { backgroundColor: Colors.headerOne[0] },
           headerTitleAlign: "left",
-          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: "minimal",
         }}
       />
 
@@ -130,7 +130,7 @@ export const ProductsScreen = () => {
                       setModalVisible(true);
                       return;
                     }
-                    toggleWishlist(item.ProductId, item.ProductDetailId, item);
+                    toggleWishlist(item.ProductId, item.ProductDetailId ?? 0, item);
                   }}
                   onPress={() =>
                     router.navigate({

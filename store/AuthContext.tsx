@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             Name: name,
             Email: email,
             PhoneCode: phoneCode,
-            Phone: sanitizeRawPhoneNumber(phone, phoneCode),
+            Phone: sanitizeRawPhoneNumber(phone ?? "", phoneCode ?? ""),
           });
           setIsAuthenticated(true);
         } else {

@@ -51,6 +51,9 @@ export interface Product {
   IsFeaturedProduct: boolean;
   IsProductInStock: boolean;
   ThumbnailImagePath?: string;
+  LargeImagePath?: string;
+  /** The variant to add to cart / wishlist (not always returned by list endpoints). */
+  ProductDetailId?: number;
 }
 
 export interface LandingPageData {

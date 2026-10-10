@@ -32,6 +32,13 @@ export interface Address {
   Country: string;
   CityId: number;
   CountryId: number;
+  StateId?: number | null;
+  AreaId?: number | null;
+  /** Calling code and ISO country of the phone number, as the API returns them. */
+  PhoneCode?: string;
+  ISOCode?: string;
+  EmailAddress?: string;
+  Area?: string;
   Longitude: string;
   Latitude: string;
 }

@@ -3,7 +3,7 @@ import {
   Text,
   StyleSheet,
   ViewStyle,
-  TextStyle,
+  StyleProp,
 } from "react-native";
 import { Colors } from "../constants/Theme";
 
@@ -11,7 +11,8 @@ interface Props {
   title: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "outline"; // Choose the style
-  style?: ViewStyle; // Custom override
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>; // Custom override
 }
 
 export const AppButton = ({
@@ -27,6 +28,8 @@ export const AppButton = ({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
       style={[
         styles.button,
         isOutline ? styles.outlineButton : styles.primaryButton,

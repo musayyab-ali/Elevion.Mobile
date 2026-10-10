@@ -342,7 +342,7 @@ export const ProfileScreen = () => {
           {Platform.OS === "ios" && showDatePicker && (
             <TouchableOpacity
               style={{
-                alignment: "center",
+                alignSelf: "center",
                 padding: 10,
                 backgroundColor: "#E2E8F0",
                 marginTop: 4,

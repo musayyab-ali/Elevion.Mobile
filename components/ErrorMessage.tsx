@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import type { ReactNode } from "react";
 import { Colors } from "../constants/Theme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-export const ErrorMessage = ({ children, style }) => (
-  <View style={styles.errorOverlay}>
+type Props = { children: ReactNode; style?: StyleProp<ViewStyle> };
+
+export const ErrorMessage = ({ children, style }: Props) => (
+  <View style={[styles.errorOverlay, style]} accessibilityRole="alert">
     <MaterialIcons name="error" size={24} color="white" />
     <Text style={styles.errorOverlayText}>{children}</Text>
   </View>

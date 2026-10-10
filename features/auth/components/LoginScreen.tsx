@@ -89,8 +89,8 @@ export default function LoginScreen() {
               />
             </MotiView>
             <MotiView
-              from={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              from={{ opacity: 0, translateX: 20 }}
+              animate={{ opacity: 1, translateX: 0 }}
             >
               <AppInput
                 label="UserName"

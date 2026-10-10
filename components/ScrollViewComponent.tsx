@@ -4,13 +4,21 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  ScrollViewProps,
+  StyleProp,
+  ViewStyle,
 } from "react-native";
 
-export const ScrollViewComponent = ({ children, style }) => (
-  <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+type Props = ScrollViewProps & { style?: StyleProp<ViewStyle> };
+
+/** Scrolling form container. Every ScrollView prop is forwarded (e.g. keyboardShouldPersistTaps), which the old version silently dropped. */
+export const ScrollViewComponent = ({ children, style, contentContainerStyle, ...rest }: Props) => (
+  <KeyboardAvoidingView style={style} behavior={Platform.OS === "ios" ? "padding" : "height"}>
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+      {...rest}
+      contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
     >
       {children}
     </ScrollView>

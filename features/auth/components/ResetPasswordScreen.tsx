@@ -85,7 +85,7 @@ export default function ResetPasswordScreen() {
           password.
         </Text>
 
-        <MotiView from={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+        <MotiView from={{ opacity: 0, translateX: 20 }} animate={{ opacity: 1, translateX: 0 }}>
           <View style={styles.inputWrapper}>
             <AppInput
               label="New Password"

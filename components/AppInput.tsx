@@ -1,8 +1,14 @@
-import { View, TextInput, Text, StyleSheet } from "react-native";
+import type { ReactNode } from "react";
+import { View, TextInput, Text, StyleSheet, TextInputProps } from "react-native";
 import { Colors } from "../constants/Theme";
 
 // components/AppInput.tsx
-export const AppInput = ({ label, error, ...props }) => (
+type AppInputProps = TextInputProps & {
+  label: ReactNode;
+  error?: string | null;
+};
+
+export const AppInput = ({ label, error, ...props }: AppInputProps) => (
   <View style={styles.container}>
     <Text style={styles.label}>{label}</Text>
     <View style={[styles.inputWrapper, error && styles.errorBorder]}>

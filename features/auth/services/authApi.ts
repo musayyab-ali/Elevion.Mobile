@@ -104,7 +104,7 @@ export const authApi = {
     otp: string;
     phoneNumber?: string; // Optional now
     userName?: string; // Optional now
-    phoneCode: number;
+    phoneCode?: number;
   }) =>
     fetchWithTimeout(`${BASE_URL}/Account/VerifyOTP`, {
       method: "POST",
