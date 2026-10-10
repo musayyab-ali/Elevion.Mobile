@@ -117,6 +117,15 @@ export const ShopHeader = () => {
         <View style={styles.rightHeader}>
           <TouchableOpacity
             style={styles.iconCircle}
+            onPress={() => router.push("/(product)/search")}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Search products"
+          >
+            <Ionicons name="search" size={22} color={Colors.white || "#FFF"} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconCircle}
             onPress={() => router.push("/(cart)/cart")}
             activeOpacity={0.8}
           >

@@ -16,6 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npm test
       - run: npx expo export --platform android
         env:
           EXPO_PUBLIC_API_URL: http://localhost:5241/api/v1

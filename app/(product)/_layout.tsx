@@ -32,6 +32,7 @@ export default function ProductLayout() {
           }}
         />
         <Stack.Screen name="products" options={{ title: "Products" }} />
+        <Stack.Screen name="search" options={{ title: "Search" }} />
         <Stack.Screen
           name="product-details"
           options={{ title: "Product Details" }}
