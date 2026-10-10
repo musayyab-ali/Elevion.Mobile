@@ -1,0 +1,59 @@
+/**
+ * Reward points on an order. The API converts points to money with a fixed value per point and refuses a
+ * discount that would make the order free, so the screen limits the customer's choice to what will be accepted
+ * and says so, instead of quietly using a different number. Pure functions: the server still checks everything.
+ */
+
+export interface PointsInput {
+  /** Points the customer owns right now (the API already subtracts points applied to this order). */
+  balance: number;
+  /** Points already applied to this order. */
+  applied: number;
+  /** Amount to pay for the order with the applied points already taken off. */
+  payable: number;
+  /** Money value of one point. */
+  rate: number;
+}
+
+/** The most points that can be used on this order: limited by the balance and by keeping the total above zero. */
+export function maxRedeemablePoints({ balance, applied, payable, rate }: PointsInput): number {
+  if (!(rate > 0)) return 0;
+  const owned = Math.max(0, Math.floor(balance)) + Math.max(0, Math.floor(applied));
+  const payableWithoutPoints = Math.max(0, payable) + Math.max(0, applied) * rate;
+  const byAmount = Math.floor((payableWithoutPoints - 1) / rate);
+  return Math.max(0, Math.min(owned, byAmount));
+}
+
+export type PointsCheck = { ok: true; points: number } | { ok: false; message: string };
+
+export function checkPointsRequest(input: string, p: PointsInput): PointsCheck {
+  const text = input.trim();
+  const typed = Number(text);
+  if (!text || !Number.isFinite(typed) || typed <= 0) {
+    return { ok: false, message: "Enter how many points you want to use." };
+  }
+  if (!Number.isInteger(typed)) {
+    return { ok: false, message: "Points must be a whole number." };
+  }
+
+  const owned = Math.max(0, Math.floor(p.balance)) + Math.max(0, Math.floor(p.applied));
+  if (typed > owned) {
+    return { ok: false, message: `You only have ${owned} reward point${owned === 1 ? "" : "s"}.` };
+  }
+
+  const max = maxRedeemablePoints(p);
+  if (typed > max) {
+    return {
+      ok: false,
+      message:
+        max > 0
+          ? `You can use at most ${max} point${max === 1 ? "" : "s"} on this order.`
+          : "Reward points cannot be used on this order.",
+    };
+  }
+  return { ok: true, points: typed };
+}
+
+export function pointsValue(points: number, rate: number): number {
+  return Math.max(0, Math.floor(points)) * Math.max(0, rate);
+}

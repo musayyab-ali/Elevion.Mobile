@@ -11,6 +11,8 @@ import * as SecureStore from "expo-secure-store";
 import { cartApi, CartResponse } from "@/features/cart/services/cartApi";
 import { useAuth } from "./AuthContext";
 import { useRouter } from "expo-router";
+import { apiErrorMessage } from "@/utils/apiError";
+import { findStockIssues, toStockLine } from "@/features/cart/utils/cartStock";
 const GUEST_SESSION_KEY = "guest_cart_session_id";
 
 interface CartContextType {
@@ -36,6 +38,8 @@ interface CartContextType {
   updateCartItemQuantity: (cartId: number, quantity: number) => Promise<void>;
   removeCartItem: (cartId: number) => Promise<void>;
   executeCheckout: (attachments?: string[]) => Promise<any>;
+  /** Reduces lines to the stock that is left and removes sold-out lines. */
+  fixStockIssues: () => Promise<{ reduced: number; removed: number }>;
   isAuthenticated: boolean;
   isCartBannerDismissed: boolean;
   showCartBanner: boolean;
@@ -83,7 +87,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         setCartMessage("You are not Eligible! Please Reload.");
       } finally {
         setIsSessionReady(true);
-        setTimeout(() => setCartMessage(null), 2000);
+        setTimeout(() => setCartMessage(null), 4500);
       }
     };
     initializeSessionId();
@@ -212,11 +216,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error: any) {
         console.log("Add to cart error:", error);
         setCartMessage(
-          error?.Message || "Unable to update cart allocation values.",
+          apiErrorMessage(error, "Unable to update cart allocation values."),
         );
         return false;
       } finally {
-        setTimeout(() => setCartMessage(null), 2000);
+        setTimeout(() => setCartMessage(null), 4500);
         setProcessingIds((prev) => {
           const next = new Set(prev);
           next.delete(productDetailId);
@@ -273,11 +277,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error: any) {
         console.log("Failed to sync structural quantity updates:", error);
         setCartMessage(
-          error?.Message || "There is something wrong! Check your connection.",
+          apiErrorMessage(error, "There is something wrong! Check your connection."),
         );
         fetchCart();
       } finally {
-        setTimeout(() => setCartMessage(null), 2000);
+        setTimeout(() => setCartMessage(null), 4500);
       }
     },
     [fetchCart],
@@ -330,7 +334,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         setCartMessage("There is something wrong! Check your connection.");
       } finally {
         setDeleteLoading({ active: false, cartId: null });
-        setTimeout(() => setCartMessage(null), 2000);
+        setTimeout(() => setCartMessage(null), 4500);
       }
     },
     [setCartData, setCartCount],
@@ -356,14 +360,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error: any) {
         console.log("Checkout execution exception:", error);
         setCartMessage(
-          error?.Message || "Something went wrong processing your order.",
+          apiErrorMessage(error, "Something went wrong processing your order."),
         );
       } finally {
-        setTimeout(() => setCartMessage(null), 2000);
+        setTimeout(() => setCartMessage(null), 4500);
       }
     },
     [isAuthenticated, guestSessionId],
   );
+
+  const fixStockIssues = useCallback(async () => {
+    const issues = findStockIssues(((cartData as any)?.CartItemList ?? []).map(toStockLine));
+    const result = { reduced: 0, removed: 0 };
+
+    for (const issue of issues) {
+      try {
+        if (issue.kind === "soldout") {
+          await cartApi.deleteItem(issue.cartId);
+          result.removed += 1;
+        } else {
+          await cartApi.updateQuantity(issue.cartId, issue.available);
+          result.reduced += 1;
+        }
+      } catch (error) {
+        setCartMessage(apiErrorMessage(error, `Could not update ${issue.name}.`));
+      }
+    }
+
+    await fetchCart();
+    if (result.reduced + result.removed > 0) {
+      setCartMessage("Your cart now matches what we have in stock.");
+      setTimeout(() => setCartMessage(null), 4500);
+    }
+    return result;
+  }, [cartData, fetchCart]);
 
   const value = useMemo(
     () => ({
@@ -378,6 +408,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       isAuthenticated,
       updateCartItemQuantity,
       executeCheckout,
+      fixStockIssues,
       removeCartItem,
       guestSessionId,
       serverError,
@@ -399,6 +430,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       isAuthenticated,
       updateCartItemQuantity,
       executeCheckout,
+      fixStockIssues,
       removeCartItem,
       guestSessionId,
       serverError,

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Platform, Keyboard, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import { paymentApi } from "../services/paymentApi";
+import { checkPointsRequest } from "../utils/points";
 import { orderApi } from "@/features/cart/services/orderApi";
 export interface ScreenNotification {
   type: "success" | "error" | null;
@@ -51,6 +52,9 @@ export function usePaymentMethods(orderId: string) {
   const [pointsToRedeem, setPointsToRedeem] = useState("");
   const [pointsApplied, setPointsApplied] = useState(false);
   const [burnedPointsCount, setBurnedPointsCount] = useState(0);
+  // What the customer owns and what one point is worth (from the order, so the screen can say it before asking).
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [pointRate, setPointRate] = useState(0);
 
   // Notifications
   const [promoNotification, setPromoNotification] =
@@ -146,6 +150,8 @@ export function usePaymentMethods(orderId: string) {
           setGateways(res.Data?.PaymentGateways || []);
           setIsCODAvailable(orderDto?.IsCODPaymentEnable || false);
           setRewardPointsAllowed(res.Data?.RewardPointsAllowed || false);
+          setPointsBalance(Number(orderDto?.TotalEarnedPoints) || 0);
+          setPointRate(Number(orderDto?.BurnOnePointAmount) || 0);
 
           setTotals({
             subtotal: orderDto?.OrderAmount || 0,
@@ -164,6 +170,10 @@ export function usePaymentMethods(orderId: string) {
             setPointsApplied(true);
             setBurnedPointsCount(orderDto.BurnPoints);
             setPointsToRedeem(String(orderDto.BurnPoints));
+          } else {
+            // Points taken off (or never applied): the box must be usable again.
+            setPointsApplied(false);
+            setBurnedPointsCount(0);
           }
 
           if (orderDto?.PromoCode) {
@@ -300,14 +310,18 @@ export function usePaymentMethods(orderId: string) {
   };
 
   const handleApplyPoints = async () => {
-    const points = parseInt(pointsToRedeem);
-    if (isNaN(points) || points <= 0) {
-      setPointsNotification({
-        type: "error",
-        text: "Please enter a positive non-zero point value.",
-      });
+    // Say so when the customer asks for more than they have; never apply a different number quietly.
+    const check = checkPointsRequest(pointsToRedeem, {
+      balance: pointsBalance,
+      applied: pointsApplied ? burnedPointsCount : 0,
+      payable: totals.grandTotal,
+      rate: pointRate,
+    });
+    if (!check.ok) {
+      setPointsNotification({ type: "error", text: check.message });
       return;
     }
+    const points = check.points;
     setPointsNotification({ type: null, text: "" });
     setIsPointsLoading(true);
 
@@ -356,8 +370,30 @@ export function usePaymentMethods(orderId: string) {
       setPointsNotification({
         type: "error",
         text:
+          err?.response?.data?.Message ||
           err?.response?.data?.Detail ||
-          "Insufficient points balance or logic error.",
+          "Could not use your reward points. Please try again.",
+      });
+    } finally {
+      setIsPointsLoading(false);
+    }
+  };
+
+  // Sending 0 takes the points discount off the order again.
+  const handleRemovePoints = async () => {
+    setIsPointsLoading(true);
+    setPointsNotification({ type: null, text: "" });
+    try {
+      await paymentApi.redeemPoints(0, Number(orderId));
+      setPointsApplied(false);
+      setBurnedPointsCount(0);
+      setPointsToRedeem("");
+      await loadPaymentSetup(false);
+      setPointsNotification({ type: "success", text: "Reward points removed." });
+    } catch (err: any) {
+      setPointsNotification({
+        type: "error",
+        text: err?.response?.data?.Message || "Could not remove your reward points.",
       });
     } finally {
       setIsPointsLoading(false);
@@ -538,6 +574,9 @@ export function usePaymentMethods(orderId: string) {
     handleApplyPromo,
     handleCancelPromo,
     handleApplyPoints,
+    handleRemovePoints,
+    pointsBalance,
+    pointRate,
     handleProcessPayment,
     cancellationReasons,
     selectedReason,

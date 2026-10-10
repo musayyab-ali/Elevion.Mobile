@@ -10,6 +10,7 @@
 //   RefreshControl,
 // } from "react-native";
 // import { MotiView } from "moti";
+import { canIncrease, findStockIssues, stockNote, toStockLine } from "../utils/cartStock";
 // import { Ionicons } from "@expo/vector-icons";
 // import { useCartScreen } from "../hooks/useCartScreen";
 // import { useAuth } from "@/store/AuthContext";
@@ -400,6 +401,10 @@ export const CartScreen = () => {
     handleRemove,
     handleProcessCheckoutPipeline,
     checkoutLoading,
+    stockIssues,
+    stockProblem,
+    fixStock,
+    fixingStock,
   } = useCartScreen();
 
   const {
@@ -592,6 +597,17 @@ export const CartScreen = () => {
                         {item.ProductVariants || "Standard Configuration"}
                       </Text>
                     </View>
+                    {stockNote(toStockLine(item)) && (
+                      <Text
+                        style={[
+                          styles.stockNote,
+                          findStockIssues([toStockLine(item)]).length > 0 &&
+                            styles.stockNoteError,
+                        ]}
+                      >
+                        {stockNote(toStockLine(item))}
+                      </Text>
+                    )}
 
                     <View style={styles.priceRow}>
                       <Text style={styles.priceText}>
@@ -628,9 +644,22 @@ export const CartScreen = () => {
                             }
                             handleIncrement(item.CartId, item.Quantity);
                           }}
-                          disabled={checkoutLoading || deleteLoading.active}
+                          disabled={
+                            checkoutLoading ||
+                            deleteLoading.active ||
+                            !canIncrease(toStockLine(item))
+                          }
+                          accessibilityLabel={
+                            canIncrease(toStockLine(item))
+                              ? "Increase quantity"
+                              : "No more in stock"
+                          }
                         >
-                          <Ionicons name="add" size={14} color="#0F172A" />
+                          <Ionicons
+                            name="add"
+                            size={14}
+                            color={canIncrease(toStockLine(item)) ? "#0F172A" : "#CBD5E1"}
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -698,6 +727,24 @@ export const CartScreen = () => {
             }
           />
 
+          {stockProblem && (
+            <View style={styles.stockBanner} accessibilityRole="alert">
+              <Text style={styles.stockBannerText}>
+                {stockProblem} Please update your cart to continue.
+              </Text>
+              <TouchableOpacity
+                onPress={fixStock}
+                disabled={fixingStock}
+                style={styles.stockBannerBtn}
+                accessibilityRole="button"
+              >
+                <Text style={styles.stockBannerBtnText}>
+                  {fixingStock ? "Updating..." : "Fix my cart"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {cartItems.length > 0 && (
             <View style={styles.compactStickyFooter}>
               <View style={styles.metaPriceContainer}>
@@ -710,7 +757,9 @@ export const CartScreen = () => {
               <TouchableOpacity
                 style={styles.splitCheckoutBtn}
                 activeOpacity={0.85}
-                disabled={checkoutLoading || deleteLoading.active}
+                disabled={
+                  checkoutLoading || deleteLoading.active || stockIssues.length > 0
+                }
                 onPress={handleProcessCheckoutPipeline}
               >
                 {checkoutLoading ? (
@@ -747,6 +796,27 @@ export const CartScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  stockNote: { fontSize: 11.5, color: "#92400E", marginTop: 4, fontWeight: "600" },
+  stockNoteError: { color: "#B91C1C" },
+  stockBanner: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    gap: 8,
+  },
+  stockBannerText: { color: "#B91C1C", fontSize: 12.5, fontWeight: "600", lineHeight: 18 },
+  stockBannerBtn: {
+    alignSelf: "flex-start",
+    backgroundColor: "#B91C1C",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  stockBannerBtnText: { color: "#fff", fontSize: 12.5, fontWeight: "700" },
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",

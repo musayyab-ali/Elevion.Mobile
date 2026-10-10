@@ -358,10 +358,17 @@ export const PaymentMethodsScreen = () => {
             </View>
 
             {/* REWARD POINTS REDEMPTION MODULE */}
-            {hook.orderData?.RewardPointsAllowed && (
+            {(hook.rewardPointsAllowed || hook.pointsApplied) && hook.pointRate > 0 && (
               <View style={styles.card}>
                 <Text style={styles.sectionHeaderTitle}>
                   Redeem Store Loyalty Points
+                </Text>
+                <Text style={styles.inputFeedbackInlineLabel}>
+                  You have {hook.pointsBalance} points
+                  {hook.pointsBalance > 0
+                    ? ` (worth Rs. ${hook.pointsBalance * hook.pointRate})`
+                    : ""}
+                  . Each point is worth Rs. {hook.pointRate}.
                 </Text>
                 <View style={styles.promoFormInputRow}>
                   <TextInput
@@ -395,6 +402,17 @@ export const PaymentMethodsScreen = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
+                {hook.pointsApplied && (
+                  <TouchableOpacity
+                    onPress={hook.handleRemovePoints}
+                    disabled={hook.isProcessing || hook.isPointsLoading}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.removePromoActionLinkText}>
+                      Remove points
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 {hook.pointsNotification.type && (
                   <View
                     style={{

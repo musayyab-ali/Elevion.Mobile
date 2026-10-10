@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test \"features/**/*.test.ts\"",
+    "test": "node --test \"features/**/*.test.ts\" \"utils/**/*.test.ts\"",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",

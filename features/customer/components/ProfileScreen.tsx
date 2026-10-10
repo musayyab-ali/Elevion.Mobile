@@ -134,6 +134,17 @@ export const ProfileScreen = () => {
             <Text style={styles.emailValue}>
               {profile?.Email || "no-email-linked@domain.com"}
             </Text>
+            <TouchableOpacity
+              style={styles.pointsPill}
+              onPress={() => router.push("/(refNull)/rewards")}
+              accessibilityRole="button"
+              accessibilityLabel="Your reward points"
+            >
+              <Ionicons name="star" size={14} color="#B45309" />
+              <Text style={styles.pointsPillText}>
+                {Number(profile?.EarnedRewardPoints) || 0} reward points
+              </Text>
+            </TouchableOpacity>
           </View>
         </MotiView>
 
@@ -649,6 +660,18 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     letterSpacing: -0.3,
   },
+  pointsPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "center",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#FEF3C7",
+  },
+  pointsPillText: { fontSize: 12.5, fontWeight: "700", color: "#92400E" },
   emailValue: {
     fontSize: 13,
     color: "#64748B",

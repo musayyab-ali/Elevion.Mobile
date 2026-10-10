@@ -1,12 +1,30 @@
 import { useSharedCartData } from "@/store/CartContext";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import { findStockIssues, stockSummary, toStockLine } from "../utils/cartStock";
 export function useCartScreen() {
   const router = useRouter();
-  const { cartData, updateCartItemQuantity, removeCartItem, executeCheckout } =
-    useSharedCartData();
+  const {
+    cartData,
+    updateCartItemQuantity,
+    removeCartItem,
+    executeCheckout,
+    fixStockIssues,
+  } = useSharedCartData();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [fixingStock, setFixingStock] = useState(false);
   const cartItems = cartData?.CartItemList ?? [];
+  const stockIssues = findStockIssues(cartItems.map(toStockLine));
+  const stockProblem = stockSummary(stockIssues);
+
+  const fixStock = async () => {
+    setFixingStock(true);
+    try {
+      await fixStockIssues();
+    } finally {
+      setFixingStock(false);
+    }
+  };
   const pricingSummary = {
     subtotal: cartData?.TotalPrice ?? 0,
     discount: cartData?.TotalDiscount ?? 0,
@@ -27,10 +45,11 @@ export function useCartScreen() {
   };
 
   const handleProcessCheckoutPipeline = async () => {
+    // The button is disabled too; this keeps any other caller honest.
+    if (stockIssues.length > 0) return;
     setCheckoutLoading(true);
     try {
       const invoiceReceipt = await executeCheckout([]);
-      console.log("cart fuck");
       if (invoiceReceipt && invoiceReceipt.Data) {
         router.push({
           pathname: "/(cart)/checkout-summary",
@@ -57,5 +76,9 @@ export function useCartScreen() {
     handleRemove: removeCartItem,
     handleProcessCheckoutPipeline,
     checkoutLoading,
+    stockIssues,
+    stockProblem,
+    fixStock,
+    fixingStock,
   };
 }
