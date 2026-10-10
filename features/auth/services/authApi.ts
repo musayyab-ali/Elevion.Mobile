@@ -1,9 +1,24 @@
-// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-// const BASE_URL_TWO = process.env.EXPO_PUBLIC_API_URL_TWO;
-// const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
-const BASE_URL = "http://thelink.innovex.biz/api/v1";
-const BASE_URL_TWO = "http://thelink.innovex.biz/api/v2";
-const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
+import { API_KEY, API_TIMEOUT_MS, API_URL, API_URL_V2 } from "../../../constants/config";
+
+const BASE_URL = API_URL;
+const BASE_URL_TWO = API_URL_V2;
+const SECURITY_KEY = API_KEY;
+
+/** fetch with a timeout, so a dead connection fails with a clear error instead of hanging. */
+const fetchWithTimeout = async (url: string, init: RequestInit = {}): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      throw { Message: "The server took too long to respond. Please try again.", StatusCode: 408 };
+    }
+    throw { Message: "Unable to connect to the server. Please check your internet and try again.", StatusCode: 0 };
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 const handleResponse = async (response: Response) => {
   const contentType = response.headers.get("content-type");
@@ -46,14 +61,14 @@ const getAuthHeaders = (token: string) => ({
 export const authApi = {
   // --- AUTH SERVICE (OAuth) ---
   getToken: (credentials: any) =>
-    fetch(`${BASE_URL}/oauth/token`, {
+    fetchWithTimeout(`${BASE_URL}/oauth/token`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(credentials),
     }).then(handleResponse),
 
   refreshToken: (token: string) =>
-    fetch(`${BASE_URL}/oauth/token/refresh`, {
+    fetchWithTimeout(`${BASE_URL}/oauth/token/refresh`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ token }),
@@ -61,14 +76,14 @@ export const authApi = {
 
   // --- ACCOUNT SERVICE ---
   register: (data: any) =>
-    fetch(`${BASE_URL}/Account/Register`, {
+    fetchWithTimeout(`${BASE_URL}/Account/Register`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     }).then(handleResponse),
 
   isUserUnique: (value: string, type: "userName" | "email" | "phone") =>
-    fetch(
+    fetchWithTimeout(
       `${BASE_URL_TWO}/Account/IsUserUnique?Value=${encodeURIComponent(value)}&Type=${type}`,
       {
         method: "GET",
@@ -77,7 +92,7 @@ export const authApi = {
     ).then(handleResponse),
 
   login: (credentials: { UserName: string; Password: string }) => {
-    return fetch(`${BASE_URL}/oauth/token`, {
+    return fetchWithTimeout(`${BASE_URL}/oauth/token`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(credentials),
@@ -91,7 +106,7 @@ export const authApi = {
     userName?: string; // Optional now
     phoneCode: number;
   }) =>
-    fetch(`${BASE_URL}/Account/VerifyOTP`, {
+    fetchWithTimeout(`${BASE_URL}/Account/VerifyOTP`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -104,7 +119,7 @@ export const authApi = {
     }).then(handleResponse),
 
   verifyPhoneOtp: (data: { UserName: string; Otp: string }) =>
-    fetch(`${BASE_URL}/Account/VerifyPhoneOtp`, {
+    fetchWithTimeout(`${BASE_URL}/Account/VerifyPhoneOtp`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -112,35 +127,35 @@ export const authApi = {
 
   // Body: { UserName } - Note: Ensure you pass the username here now
   resendOtp: (userName: string) =>
-    fetch(`${BASE_URL}/Account/ResendOTP`, {
+    fetchWithTimeout(`${BASE_URL}/Account/ResendOTP`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ UserName: userName }),
     }).then(handleResponse),
 
   sendForgotPasswordEmail: (username: string) =>
-    fetch(`${BASE_URL_TWO}/Account/SendForgotPasswordEmail`, {
+    fetchWithTimeout(`${BASE_URL_TWO}/Account/SendForgotPasswordEmail`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ Username: username }),
     }).then(handleResponse),
 
   forgotPassword: (payload: any) =>
-    fetch(`${BASE_URL_TWO}/Account/ResetPassword`, {
+    fetchWithTimeout(`${BASE_URL_TWO}/Account/ResetPassword`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),
     }).then(handleResponse),
 
   resetPassword: (payload: any) =>
-    fetch(`${BASE_URL}/Account/ResetPassword`, {
+    fetchWithTimeout(`${BASE_URL}/Account/ResetPassword`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),
     }).then(handleResponse),
 
   getDeletionStatus: (token: string) =>
-    fetch(`${BASE_URL}/Customer/account/deletion-status`, {
+    fetchWithTimeout(`${BASE_URL}/Customer/account/deletion-status`, {
       method: "GET",
       headers: getAuthHeaders(token),
     }).then(handleResponse),
@@ -150,21 +165,21 @@ export const authApi = {
     PhoneCode: string;
     PhoneNumber: string;
   }) =>
-    fetch(`${BASE_URL}/Account/account/verify-deleted-phone`, {
+    fetchWithTimeout(`${BASE_URL}/Account/account/verify-deleted-phone`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),
     }).then(handleResponse),
 
   sendOtpToPhone: (payload: { PhoneNumber: string; PhoneCode: number }) =>
-    fetch(`${BASE_URL}/Account/SendOTP`, {
+    fetchWithTimeout(`${BASE_URL}/Account/SendOTP`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),
     }).then(handleResponse),
 
   restoreDeletedAccount: (token: string) =>
-    fetch(`${BASE_URL}/Customer/account/restore`, {
+    fetchWithTimeout(`${BASE_URL}/Customer/account/restore`, {
       method: "POST",
       headers: getAuthHeaders(token),
       body: JSON.stringify({ files: [] }), // explicit payload compatibility fallback

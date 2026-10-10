@@ -41,3 +41,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# local env (API address and key per machine; .env.example is the template)
+.env
+.env.local
+.env*.local

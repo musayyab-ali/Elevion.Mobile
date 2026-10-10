@@ -1,11 +1,10 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { emitLogout } from "../../utils/authEvents";
+import { API_KEY, API_TIMEOUT_MS, API_URL } from "../../constants/config";
 
-// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-// const SECURITY_KEY = process.env.EXPO_PUBLIC_API_KEY;
-const BASE_URL = "http://thelink.innovex.biz/api/v1";
-const SECURITY_KEY = "0786FDD1-THEL-4A14-BDE9-AF3B9E5CM0785";
+const BASE_URL = API_URL;
+const SECURITY_KEY = API_KEY;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
