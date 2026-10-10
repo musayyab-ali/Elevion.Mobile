@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Theme";
 import { useRewards } from "../hooks/useRewards";
+import { OfflineBanner } from "../../../components/OfflineBanner";
 import type { Loyalty, MyReferral, Voucher } from "../services/rewardsApi";
 
 type Tab = "vouchers" | "membership" | "invite";
@@ -312,6 +313,8 @@ export const RewardsScreen = () => {
   const { vouchers, loyalty, referral, loading, refreshing, refresh, applyCode } = useRewards();
   const [tab, setTab] = useState<Tab>("vouchers");
 
+  const staleSince = tab === "vouchers" ? vouchers.staleSince : tab === "membership" ? loyalty.staleSince : referral.staleSince;
+
   const usableCount = useMemo(() => vouchers.data.filter(isUsable).length, [vouchers.data]);
 
   return (
@@ -343,6 +346,7 @@ export const RewardsScreen = () => {
           keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
         >
+          <OfflineBanner since={staleSince} />
           {tab === "vouchers" && <VouchersTab vouchers={vouchers.data} error={vouchers.error} />}
           {tab === "membership" && <MembershipTab loyalty={loyalty.data} error={loyalty.error} />}
           {tab === "invite" && <InviteTab referral={referral.data} error={referral.error} applyCode={applyCode} />}

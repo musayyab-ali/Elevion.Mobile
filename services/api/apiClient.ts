@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { emitLogout } from "../../utils/authEvents";
+import { clearOfflineCache } from "../cache/offlineCache";
 import { API_KEY, API_TIMEOUT_MS, API_URL } from "../../constants/config";
 
 const BASE_URL = API_URL;
@@ -118,6 +119,7 @@ apiClient.interceptors.response.use(
         await SecureStore.deleteItemAsync("user_email");
         await SecureStore.deleteItemAsync("user_phone");
         await SecureStore.deleteItemAsync("phone_code");
+        await clearOfflineCache();
 
         emitLogout();
         return Promise.reject(refreshError);

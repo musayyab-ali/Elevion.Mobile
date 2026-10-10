@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import { authEvents } from "../utils/authEvents";
 import { sanitizeRawPhoneNumber } from "@/utils/sanatizeNumber";
+import { clearOfflineCache } from "../services/cache/offlineCache";
 interface UserProfile {
   UserName: string | null;
   Name: string | null;
@@ -127,6 +128,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await SecureStore.deleteItemAsync("user_email");
       await SecureStore.deleteItemAsync("phone_code");
       await SecureStore.deleteItemAsync("user_phone");
+      // Cached vouchers / consents belong to the signed-out customer.
+      await clearOfflineCache();
 
       setUser(null);
       setIsAuthenticated(false);

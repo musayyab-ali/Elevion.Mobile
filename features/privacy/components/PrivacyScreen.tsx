@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
@@ -17,6 +18,10 @@ import {
   privacyApi,
   privacyErrorMessage,
 } from "../services/privacyApi";
+import { OfflineBanner } from "../../../components/OfflineBanner";
+import { isOfflineError, readCache, writeCache } from "../../../services/cache/offlineCache";
+
+const CACHE_KEY = "privacy-consents";
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "";
@@ -30,13 +35,26 @@ export const PrivacyScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [savingType, setSavingType] = useState<number | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [staleSince, setStaleSince] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setConsents(await privacyApi.getConsents());
+      const fresh = await privacyApi.getConsents();
+      setConsents(fresh);
+      setStaleSince(null);
       setError(null);
+      void writeCache(CACHE_KEY, fresh);
     } catch (e) {
-      setError(privacyErrorMessage(e, "Could not load your privacy choices."));
+      // No connection: show the last saved choices (read-only in practice, saving needs the server).
+      const saved = isOfflineError(e) ? await readCache<ConsentChoice[]>(CACHE_KEY) : null;
+      if (saved) {
+        setConsents(saved.data);
+        setStaleSince(saved.savedAt);
+        setError(null);
+      } else {
+        setError(privacyErrorMessage(e, "Could not load your privacy choices."));
+      }
     } finally {
       setLoading(false);
     }
@@ -49,10 +67,16 @@ export const PrivacyScreen = () => {
   // Each switch is saved on its own, right away: withdrawing consent must be as easy as giving it.
   const toggle = async (choice: ConsentChoice, value: boolean) => {
     if (savingType !== null) return;
+    if (staleSince !== null) {
+      Alert.alert("You are offline", "Connect to the internet to change your choices, so they are saved correctly.");
+      return;
+    }
     setSavingType(choice.type);
     setConsents((list) => list.map((c) => (c.type === choice.type ? { ...c, isGranted: value } : c)));
     try {
-      setConsents(await privacyApi.saveConsent(choice.type, value));
+      const saved = await privacyApi.saveConsent(choice.type, value);
+      setConsents(saved);
+      void writeCache(CACHE_KEY, saved);
     } catch (e) {
       setConsents((list) => list.map((c) => (c.type === choice.type ? { ...c, isGranted: choice.isGranted } : c)));
       Alert.alert("Could not save", privacyErrorMessage(e, "Please try again."));
@@ -82,7 +106,21 @@ export const PrivacyScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={async () => {
+            setRefreshing(true);
+            await load();
+            setRefreshing(false);
+          }}
+        />
+      }
+    >
+      <OfflineBanner since={staleSince} />
       <Text style={styles.heading}>Your choices</Text>
       <Text style={styles.sub}>Decide how we may contact you and use your data. You can change your mind at any time.</Text>
 
