@@ -29,6 +29,7 @@ import { useAuth } from "@/store/AuthContext";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useSharedWishlistData } from "@/store/WishlistContext";
 import { customerApi } from "../../customer/services/customerApi";
+import { trackProductView } from "../../activity/services/activityApi";
 
 const IMAGE_PLACEHOLDER =
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIAeZuzrVTr0malUh4q4UD4wiipA8RuYlqHHDR6IQBxQ&s=10";
@@ -225,6 +226,11 @@ export const ProductDetailsScreen = () => {
   useEffect(() => {
     syncProductReviewsData();
   }, [syncProductReviewsData]);
+
+  // Tell the shop a signed-in customer opened this product (the server records it only with their consent).
+  useEffect(() => {
+    if (isAuthenticated && numericProductId > 0) trackProductView(numericProductId);
+  }, [isAuthenticated, numericProductId]);
 
   const showFeedbackAlert = (
     title: string,
