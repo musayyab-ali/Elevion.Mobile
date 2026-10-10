@@ -502,6 +502,26 @@ export const ProfileScreen = () => {
             />
           </TouchableOpacity>
 
+          {/* RETURNS and GIFT CARDS */}
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(refNull)/returns")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="return-down-back-outline" size={18} color="#1E293B" />
+            <Text style={styles.settingsBtnText}>My Returns</Text>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" style={styles.rightChevronTrailing} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(refNull)/gift-cards")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="wallet-outline" size={18} color="#1E293B" />
+            <Text style={styles.settingsBtnText}>Gift Cards</Text>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" style={styles.rightChevronTrailing} />
+          </TouchableOpacity>
+
           {/* PRIVACY: consent choices and data export */}
           <TouchableOpacity
             style={styles.settingsBtn}

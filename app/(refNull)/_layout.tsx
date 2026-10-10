@@ -18,6 +18,9 @@ export default function refNullLayout() {
         <Stack.Screen name="settings" options={{ title: "Settings" }} />
         <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
         <Stack.Screen name="privacy" options={{ title: "Privacy & Data" }} />
+        <Stack.Screen name="returns" options={{ title: "My Returns" }} />
+        <Stack.Screen name="new-return" options={{ title: "Return items" }} />
+        <Stack.Screen name="gift-cards" options={{ title: "Gift Cards" }} />
       </Stack>
     </SafeAreaView>
   );

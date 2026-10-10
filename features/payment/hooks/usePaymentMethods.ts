@@ -3,6 +3,8 @@ import { Platform, Keyboard, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import { paymentApi } from "../services/paymentApi";
 import { checkPointsRequest } from "../utils/points";
+import { giftCardsApi, type GiftCard } from "../../giftcards/services/giftCardsApi";
+import { checkCardAmount } from "../../giftcards/utils/giftCardForm";
 import { orderApi } from "@/features/cart/services/orderApi";
 export interface ScreenNotification {
   type: "success" | "error" | null;
@@ -53,6 +55,10 @@ export function usePaymentMethods(orderId: string) {
   const [pointsApplied, setPointsApplied] = useState(false);
   const [burnedPointsCount, setBurnedPointsCount] = useState(0);
   // What the customer owns and what one point is worth (from the order, so the screen can say it before asking).
+  const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
+  const [giftInputs, setGiftInputs] = useState<Record<number, string>>({});
+  const [giftBusyId, setGiftBusyId] = useState<number | null>(null);
+  const [giftNotification, setGiftNotification] = useState<{ type: "error" | "success" | null; text: string }>({ type: null, text: "" });
   const [pointsBalance, setPointsBalance] = useState(0);
   const [pointRate, setPointRate] = useState(0);
 
@@ -150,6 +156,13 @@ export function usePaymentMethods(orderId: string) {
           setGateways(res.Data?.PaymentGateways || []);
           setIsCODAvailable(orderDto?.IsCODPaymentEnable || false);
           setRewardPointsAllowed(res.Data?.RewardPointsAllowed || false);
+
+          // Gift cards the customer can pay with (an empty list when the shop has none switched on).
+          try {
+            setGiftCards(await giftCardsApi.getMyGiftCards(Number(orderId)));
+          } catch {
+            setGiftCards([]);
+          }
           setPointsBalance(Number(orderDto?.TotalEarnedPoints) || 0);
           setPointRate(Number(orderDto?.BurnOnePointAmount) || 0);
 
@@ -379,6 +392,45 @@ export function usePaymentMethods(orderId: string) {
     }
   };
 
+  const handleUseGiftCard = async (card: GiftCard) => {
+    const check = checkCardAmount(giftInputs[card.giftCardId] ?? "", {
+      balance: card.balance,
+      applied: card.appliedToOrder,
+      payable: totals.grandTotal,
+    });
+    if (!check.ok) {
+      setGiftNotification({ type: "error", text: check.message });
+      return;
+    }
+
+    setGiftBusyId(card.giftCardId);
+    setGiftNotification({ type: null, text: "" });
+    try {
+      await giftCardsApi.applyGiftCard(Number(orderId), card.giftCardId, check.amount);
+      setGiftInputs((current) => ({ ...current, [card.giftCardId]: "" }));
+      await loadPaymentSetup(false);
+      setGiftNotification({ type: "success", text: "Gift card applied." });
+    } catch (err: any) {
+      setGiftNotification({ type: "error", text: err?.response?.data?.Message || "Could not use this gift card." });
+    } finally {
+      setGiftBusyId(null);
+    }
+  };
+
+  const handleRemoveGiftCard = async (card: GiftCard) => {
+    setGiftBusyId(card.giftCardId);
+    setGiftNotification({ type: null, text: "" });
+    try {
+      await giftCardsApi.removeGiftCard(Number(orderId), card.giftCardId);
+      await loadPaymentSetup(false);
+      setGiftNotification({ type: "success", text: "Gift card removed." });
+    } catch (err: any) {
+      setGiftNotification({ type: "error", text: err?.response?.data?.Message || "Could not remove this gift card." });
+    } finally {
+      setGiftBusyId(null);
+    }
+  };
+
   // Sending 0 takes the points discount off the order again.
   const handleRemovePoints = async () => {
     setIsPointsLoading(true);
@@ -575,6 +627,13 @@ export function usePaymentMethods(orderId: string) {
     handleCancelPromo,
     handleApplyPoints,
     handleRemovePoints,
+    giftCards,
+    giftInputs,
+    setGiftInputs,
+    giftBusyId,
+    giftNotification,
+    handleUseGiftCard,
+    handleRemoveGiftCard,
     pointsBalance,
     pointRate,
     handleProcessPayment,

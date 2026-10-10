@@ -357,6 +357,69 @@ export const PaymentMethodsScreen = () => {
               )}
             </View>
 
+            {/* GIFT CARDS */}
+            {hook.giftCards.filter((c) => c.appliedToOrder > 0 || (c.isUsable && c.balance > 0)).length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionHeaderTitle}>Gift Cards</Text>
+                {hook.giftCards
+                  .filter((c) => c.appliedToOrder > 0 || (c.isUsable && c.balance > 0))
+                  .map((card) => (
+                    <View key={card.giftCardId} style={{ marginTop: 10 }}>
+                      <Text style={styles.inputFeedbackInlineLabel}>
+                        {card.maskedCode} · Rs. {card.balance.toLocaleString()} left
+                      </Text>
+                      {card.appliedToOrder > 0 ? (
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+                          <Text style={[styles.inputFeedbackInlineLabel, styles.textSuccess]}>
+                            Rs. {card.appliedToOrder.toLocaleString()} used
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => hook.handleRemoveGiftCard(card)}
+                            disabled={hook.isProcessing || hook.giftBusyId !== null}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.removePromoActionLinkText}>Remove</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <View style={styles.promoFormInputRow}>
+                          <TextInput
+                            placeholder="Amount to use"
+                            placeholderTextColor="#94A3B8"
+                            keyboardType="decimal-pad"
+                            style={styles.promoTextInputField}
+                            value={hook.giftInputs[card.giftCardId] ?? ""}
+                            onChangeText={(v) =>
+                              hook.setGiftInputs((current: Record<number, string>) => ({ ...current, [card.giftCardId]: v }))
+                            }
+                            accessibilityLabel={`Amount to use from gift card ${card.maskedCode}`}
+                          />
+                          <TouchableOpacity
+                            style={styles.pointsRedeemButton}
+                            onPress={() => hook.handleUseGiftCard(card)}
+                            disabled={hook.isProcessing || hook.giftBusyId !== null}
+                          >
+                            <Text style={styles.promoSubmitBtnText}>
+                              {hook.giftBusyId === card.giftCardId ? "..." : "Use"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                {!!hook.giftNotification.type && (
+                  <Text
+                    style={[
+                      styles.inputFeedbackInlineLabel,
+                      hook.giftNotification.type === "error" ? styles.textError : styles.textSuccess,
+                    ]}
+                  >
+                    {hook.giftNotification.text}
+                  </Text>
+                )}
+              </View>
+            )}
+
             {/* REWARD POINTS REDEMPTION MODULE */}
             {(hook.rewardPointsAllowed || hook.pointsApplied) && hook.pointRate > 0 && (
               <View style={styles.card}>
@@ -673,6 +736,15 @@ export const PaymentMethodsScreen = () => {
                     ]}
                   >
                     - Rs. {hook.totals.pointsDiscount.toLocaleString()}
+                  </Text>
+                </View>
+              )}
+
+              {hook.giftCards.reduce((sum: number, c: { appliedToOrder: number }) => sum + (c.appliedToOrder || 0), 0) > 0 && (
+                <View style={styles.pricingSummaryCalculationRowItem}>
+                  <Text style={[styles.summaryItemTitleDescriptionLabel, { color: "#10B981" }]}>Gift Card</Text>
+                  <Text style={[styles.summaryItemNumericValueText, { color: "#10B981", fontWeight: "700" }]}>
+                    - Rs. {hook.giftCards.reduce((sum: number, c: { appliedToOrder: number }) => sum + (c.appliedToOrder || 0), 0).toLocaleString()}
                   </Text>
                 </View>
               )}

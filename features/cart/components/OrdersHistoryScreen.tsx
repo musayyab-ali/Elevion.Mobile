@@ -831,6 +831,23 @@ export const OrdersHistoryScreen = () => {
                 ) : null}
 
                 <View style={styles.modalActionsStack}>
+                  {/* A delivered order can be returned */}
+                  {currentOrderDetail.Status === 3 && (
+                    <TouchableOpacity
+                      style={styles.modalPayBtn}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(refNull)/new-return",
+                          params: { orderId: String(currentOrderDetail.OrderId) },
+                        })
+                      }
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="return-down-back-outline" size={18} color="#FFF" />
+                      <Text style={styles.modalPayBtnText}>Return items</Text>
+                    </TouchableOpacity>
+                  )}
+
                   {/* Condition Check for Payment Redirection */}
                   {currentOrderDetail.PaymentStatus !== 4 &&
                     currentOrderDetail.PaymentStatusDisplayName?.toLowerCase() !==
