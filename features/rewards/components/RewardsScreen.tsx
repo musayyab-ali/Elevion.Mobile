@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Theme";
 import { useRewards } from "../hooks/useRewards";
 import { OfflineBanner } from "../../../components/OfflineBanner";
+import { expiryHint } from "../utils/voucherExpiry";
 import type { Loyalty, MyReferral, Voucher } from "../services/rewardsApi";
 
 type Tab = "vouchers" | "membership" | "invite";
@@ -82,6 +83,11 @@ const VoucherCard = ({ voucher }: { voucher: Voucher }) => {
         {usable && <Ionicons name="share-social-outline" size={18} color={Colors.tertiary} />}
       </TouchableOpacity>
 
+      {usable && !!expiryHint(voucher.expiresOn) && (
+        <View style={styles.expiryBadge}>
+          <Text style={styles.expiryText}>{expiryHint(voucher.expiresOn)}</Text>
+        </View>
+      )}
       <Text style={styles.meta}>
         {voucher.expiresOn ? `Valid until ${formatDate(voucher.expiresOn)}` : "No expiry date"}
         {voucher.redeemedOn ? `  ·  Used ${formatDate(voucher.redeemedOn)}` : ""}
@@ -369,6 +375,8 @@ const styles = StyleSheet.create({
 
   voucher: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: "#E2E8F0" },
   dimmed: { opacity: 0.6 },
+  expiryBadge: { alignSelf: "flex-start", backgroundColor: "#FEF3C7", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginTop: 8 },
+  expiryText: { fontSize: 11.5, fontWeight: "700", color: "#92400E" },
   voucherTop: { flexDirection: "row", alignItems: "center", gap: 12 },
   voucherBadge: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#E0F2FE", alignItems: "center", justifyContent: "center" },
   voucherPartner: { fontSize: 16, fontWeight: "700", color: Colors.textMain },
