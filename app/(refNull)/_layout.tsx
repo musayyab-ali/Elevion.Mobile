@@ -17,6 +17,7 @@ export default function refNullLayout() {
         <Stack.Screen name="all-reviews" options={{ title: "All Reviews" }} />
         <Stack.Screen name="settings" options={{ title: "Settings" }} />
         <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
+        <Stack.Screen name="privacy" options={{ title: "Privacy & Data" }} />
       </Stack>
     </SafeAreaView>
   );

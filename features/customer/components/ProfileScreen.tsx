@@ -491,6 +491,22 @@ export const ProfileScreen = () => {
             />
           </TouchableOpacity>
 
+          {/* PRIVACY: consent choices and data export */}
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(refNull)/privacy")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="shield-checkmark-outline" size={18} color="#1E293B" />
+            <Text style={styles.settingsBtnText}>Privacy & Data</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color="#94A3B8"
+              style={styles.rightChevronTrailing}
+            />
+          </TouchableOpacity>
+
           {/* UTILITY PREFERENCE AND SYSTEM TERMINATION FLOWS */}
           <TouchableOpacity
             style={styles.settingsBtn}
