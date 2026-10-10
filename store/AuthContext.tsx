@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        console.log("Access Token :", token);
         if (token) {
           const UserName = await SecureStore.getItemAsync("user_name");
           const name = await SecureStore.getItemAsync("full_name");

@@ -20,6 +20,15 @@ import { GlobalCartBanner } from "@/components/GlobalCartBanner";
 import { Ionicons } from "@expo/vector-icons";
 import { DirectLoginModal } from "@/components/DirectLoginModal";
 
+// Release builds print nothing to the device log: log lines can carry personal data and anyone with a cable can read them.
+if (!__DEV__) {
+  const noop = () => {};
+  console.log = noop;
+  console.info = noop;
+  console.debug = noop;
+  console.warn = noop;
+}
+
 SplashScreen.preventAutoHideAsync();
 
 function RootStack() {

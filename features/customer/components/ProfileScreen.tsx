@@ -475,6 +475,22 @@ export const ProfileScreen = () => {
             </View>
           )}
 
+          {/* REWARDS: vouchers, membership level and invite friends */}
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(refNull)/rewards")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="gift-outline" size={18} color="#1E293B" />
+            <Text style={styles.settingsBtnText}>Rewards & Vouchers</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color="#94A3B8"
+              style={styles.rightChevronTrailing}
+            />
+          </TouchableOpacity>
+
           {/* UTILITY PREFERENCE AND SYSTEM TERMINATION FLOWS */}
           <TouchableOpacity
             style={styles.settingsBtn}
