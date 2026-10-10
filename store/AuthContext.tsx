@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { authEvents } from "../utils/authEvents";
 import { sanitizeRawPhoneNumber } from "@/utils/sanatizeNumber";
 import { clearOfflineCache } from "../services/cache/offlineCache";
+import { unregisterPushNotifications } from "../features/notifications/services/pushService";
 interface UserProfile {
   UserName: string | null;
   Name: string | null;
@@ -121,6 +122,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
+      // First, while the login is still valid: this phone must stop receiving this customer's notifications.
+      await unregisterPushNotifications();
       await SecureStore.deleteItemAsync("accessToken");
       await SecureStore.deleteItemAsync("refreshToken");
       await SecureStore.deleteItemAsync("user_name");

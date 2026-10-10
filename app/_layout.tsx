@@ -19,6 +19,7 @@ import * as SecureStore from "expo-secure-store";
 import { GlobalCartBanner } from "@/components/GlobalCartBanner";
 import { Ionicons } from "@expo/vector-icons";
 import { DirectLoginModal } from "@/components/DirectLoginModal";
+import { usePushNotifications } from "@/features/notifications/hooks/usePushNotifications";
 
 // Release builds print nothing to the device log: log lines can carry personal data and anyone with a cable can read them.
 if (!__DEV__) {
@@ -39,6 +40,9 @@ function RootStack() {
     forceLogoutTriggered,
     clearForceLogoutFlag,
   } = useAuth();
+
+  // Order updates: register the phone while signed in, open the orders tab when a notification is tapped.
+  usePushNotifications(isAuthenticated);
 
   const [checkingLaunch, setCheckingLaunch] = useState(true);
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
