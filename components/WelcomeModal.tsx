@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppButton } from "./AppButton";
 import * as SecureStore from "expo-secure-store";
+import { useBranding } from "@/features/branding/hooks/BrandingProvider";
 
 interface WelcomeModalProps {
   /** Optional callback to fire when the user closes the modal */
@@ -10,6 +11,7 @@ interface WelcomeModalProps {
 }
 
 export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onDismiss }) => {
+  const { branding } = useBranding();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onDismiss }) => {
             <Ionicons name="sparkles" size={32} color="#0077b6" />
           </View>
 
-          <Text style={styles.modalTitle}>Welcome to The Link</Text>
+          <Text style={styles.modalTitle}>Welcome to {branding.shopName}</Text>
 
           <Text style={styles.modalDescription}>
             Your digital account workspace is fully verified and loaded.

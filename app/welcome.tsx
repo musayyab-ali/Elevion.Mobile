@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { Colors } from "../constants/Theme";
+import { useBranding } from "@/features/branding/hooks/BrandingProvider";
+import { welcomeSlides } from "@/features/branding/utils/brandingModel";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -25,35 +27,13 @@ interface SlideItem {
   accentColor: string;
 }
 
-const ONBOARDING_SLIDES: SlideItem[] = [
-  {
-    id: "1",
-    icon: "storefront-outline",
-    title: "VISIT OUR ONLINE SHOP",
-    description:
-      "Explore our premium handpicked inventory with fresh seasonal drops arriving daily right at your fingertips.",
-    accentColor: "#F59E0B",
-  },
-  {
-    id: "2",
-    icon: "search",
-    title: "CHOOSE WHAT YOU WANT",
-    description:
-      "Filter catalog parameters seamlessly by variations, pricing segments, and real-time inventory specifications.",
-    accentColor: "#EF4444",
-  },
-  {
-    id: "3",
-    icon: "card-outline",
-    title: "PLACE YOUR ORDER",
-    description:
-      "Experience stateless checking operations securely via modern localized payment methods and tracking updates.",
-    accentColor: "#10B981",
-  },
-];
-
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { branding } = useBranding();
+  const ONBOARDING_SLIDES = useMemo<SlideItem[]>(
+    () => welcomeSlides(branding, [Colors.primary, Colors.accent, Colors.success, Colors.error]) as SlideItem[],
+    [branding],
+  );
   const flatListRef = useRef<FlatList<SlideItem>>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 

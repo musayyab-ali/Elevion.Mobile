@@ -538,6 +538,17 @@ export const ProfileScreen = () => {
             />
           </TouchableOpacity>
 
+          {/* CONTACT: the shop's details and a message to the shop */}
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(refNull)/contact")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#1E293B" />
+            <Text style={styles.settingsBtnText}>Contact us</Text>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" style={styles.rightChevronTrailing} />
+          </TouchableOpacity>
+
           {/* UTILITY PREFERENCE AND SYSTEM TERMINATION FLOWS */}
           <TouchableOpacity
             style={styles.settingsBtn}

@@ -48,3 +48,17 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Shop branding (name, colours, benefits, contact)
+
+Nothing about one shop is fixed in the code. The app reads `GET /TenantLanding/branding` (written by the shop in the admin under
+Settings -> General and Branding & storefront):
+
+- **Name, contact details, benefits, social links**: replace what the app shows as soon as the answer arrives.
+- **Theme colours**: the screens' styles are built once when the app starts, so the colours of the last visit are kept on the phone
+  (SecureStore, a few hundred bytes) and used from the next start. A shop that changes its theme sees it the next time the app is opened.
+  Before the first visit, or when nothing can be read, the app's own colours are used. Whatever colours are picked, buttons and
+  the header are darkened until text stays readable.
+- **Welcome slides** are the shop's "why shop with us" points; without any they are three plain slides that only use the shop's name.
+- The app's name on the home screen and the icon come from `app.json` and are set per build (EAS profile), not at run time.
+- Profile -> Contact us shows the shop's contact details and sends a message to the shop (it arrives in the admin under Contact messages).

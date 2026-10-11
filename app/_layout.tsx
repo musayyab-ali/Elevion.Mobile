@@ -20,6 +20,7 @@ import { GlobalCartBanner } from "@/components/GlobalCartBanner";
 import { Ionicons } from "@expo/vector-icons";
 import { DirectLoginModal } from "@/components/DirectLoginModal";
 import { usePushNotifications } from "@/features/notifications/hooks/usePushNotifications";
+import { BrandingProvider, useBranding } from "@/features/branding/hooks/BrandingProvider";
 
 // Release builds print nothing to the device log: log lines can carry personal data and anyone with a cable can read them.
 if (!__DEV__) {
@@ -33,6 +34,7 @@ if (!__DEV__) {
 SplashScreen.preventAutoHideAsync();
 
 function RootStack() {
+  const { branding } = useBranding();
   const {
     isAppReady,
     isAuthSettled,
@@ -132,7 +134,7 @@ function RootStack() {
             style={styles.splashLogoImage}
             resizeMode="contain"
           />
-          <Text style={styles.splashAppNameText}>The Link</Text>
+          <Text style={styles.splashAppNameText}>{branding.shopName}</Text>
         </View>
 
         <View style={styles.loadingControlWrapper}>
@@ -307,8 +309,10 @@ const styles = StyleSheet.create({
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootStack />
-    </AuthProvider>
+    <BrandingProvider>
+      <AuthProvider>
+        <RootStack />
+      </AuthProvider>
+    </BrandingProvider>
   );
 }

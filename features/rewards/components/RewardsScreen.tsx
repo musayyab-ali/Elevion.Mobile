@@ -16,6 +16,7 @@ import { useRewards } from "../hooks/useRewards";
 import { OfflineBanner } from "../../../components/OfflineBanner";
 import { expiryHint } from "../utils/voucherExpiry";
 import type { Loyalty, MyReferral, Voucher } from "../services/rewardsApi";
+import { useBranding } from "../../branding/hooks/BrandingProvider";
 
 type Tab = "vouchers" | "membership" | "invite";
 
@@ -213,6 +214,7 @@ const InviteTab = ({
   error: string | null;
   applyCode: (code: string) => Promise<{ ok: boolean; message: string }>;
 }) => {
+  const { branding } = useBranding();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
@@ -222,7 +224,7 @@ const InviteTab = ({
 
   const share = () =>
     Share.share({
-      message: `Join me on The Link and use my referral code ${referral.code} on your first order to get a reward.`,
+      message: `Join me on ${branding.shopName} and use my referral code ${referral.code} on your first order to get a reward.`,
     }).catch(() => undefined);
 
   const submit = async () => {
