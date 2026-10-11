@@ -777,6 +777,16 @@ export const OrdersHistoryScreen = () => {
                   </View>
                 </View>
 
+                {!!currentOrderDetail.DeliveryCode && (
+                  <View style={styles.deliveryCodeBox}>
+                    <Text style={styles.deliveryCodeLabel}>Delivery code</Text>
+                    <Text style={styles.deliveryCodeValue} accessibilityLabel={`Delivery code ${String(currentOrderDetail.DeliveryCode).split("").join(" ")}`}>
+                      {currentOrderDetail.DeliveryCode}
+                    </Text>
+                    <Text style={styles.deliveryCodeHint}>Tell this code to the rider when your order arrives. Do not share it with anyone else.</Text>
+                  </View>
+                )}
+
                 <Text style={styles.sectionHeader}>Items Ordered</Text>
                 {currentOrderDetail.OrderDetails?.OrderItemList?.map(
                   (item: any, index: number) => (
@@ -917,6 +927,10 @@ export const OrdersHistoryScreen = () => {
   );
 };
 const styles = StyleSheet.create({
+  deliveryCodeBox: { backgroundColor: "#EEF6FF", borderRadius: 14, padding: 14, marginBottom: 12, alignItems: "center" },
+  deliveryCodeLabel: { fontSize: 12, fontWeight: "700", color: "#1D4ED8", textTransform: "uppercase", letterSpacing: 0.6 },
+  deliveryCodeValue: { fontSize: 34, fontWeight: "800", letterSpacing: 10, color: "#111827", marginVertical: 4 },
+  deliveryCodeHint: { fontSize: 12, color: "#4B5563", textAlign: "center" },
   container: { flex: 1, backgroundColor: "#F8FAFC" },
   filterBarContainer: {
     paddingTop: 16,
