@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PremiumGuestGate } from "@/components/PremiumGuestGate";
 import { useAuth } from "@/store/AuthContext";
 import { Colors } from "@/constants/Theme";
+import { RiderFeedbackCard } from "./RiderFeedbackCard";
 
 // 🌟 FIX 1: Added Pending (1) and Cancelled (16) status mapping parameters to filters
 const STATUS_FILTERS = [
@@ -776,6 +777,12 @@ export const OrdersHistoryScreen = () => {
                     </View>
                   </View>
                 </View>
+
+                <RiderFeedbackCard
+                  key={String(currentOrderDetail.OrderId)}
+                  orderId={currentOrderDetail.OrderId}
+                  initial={currentOrderDetail.RiderFeedback}
+                />
 
                 {!!currentOrderDetail.DeliveryCode && (
                   <View style={styles.deliveryCodeBox}>

@@ -53,6 +53,18 @@ export const orderApi = {
     }
   },
 
+  /** The signed-in customer rates the rider who delivered the order (1 to 5 stars, once). */
+  rateRider: async (orderId: number, stars: number, comment: string) => {
+    const response = await apiClient.post("/Order/RateRider", { OrderId: orderId, Stars: stars, Comment: comment || null });
+    return response.data;
+  },
+
+  /** Sets (or removes, with 0) the cash tip for the rider while a cash-on-delivery order is out for delivery. */
+  setRiderTip: async (orderId: number, amount: number) => {
+    const response = await apiClient.post("/Order/SetRiderTip", { OrderId: orderId, Amount: amount });
+    return response.data;
+  },
+
   getCustomerOrderDetails: async (orderId: string) => {
     const response = await apiClient.get("/Order/GetCustomerOrderDetails", {
       params: { OrderId: orderId },
