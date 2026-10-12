@@ -10,6 +10,7 @@ import {
   Modal,
   StyleSheet,
   Platform,
+  Linking,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -778,6 +779,16 @@ export const OrdersHistoryScreen = () => {
                   </View>
                 </View>
 
+                {!!currentOrderDetail.TrackingUrl && (
+                  <View style={styles.trackBox}>
+                    <Text style={styles.trackTitle}>Your order is on its way</Text>
+                    {!!currentOrderDetail.EtaText && <Text style={styles.trackEta}>{currentOrderDetail.EtaText}</Text>}
+                    <TouchableOpacity style={styles.trackBtn} onPress={() => Linking.openURL(String(currentOrderDetail.TrackingUrl))} accessibilityRole="link">
+                      <Text style={styles.trackBtnText}>Track your order</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 <RiderFeedbackCard
                   key={String(currentOrderDetail.OrderId)}
                   orderId={currentOrderDetail.OrderId}
@@ -934,6 +945,11 @@ export const OrdersHistoryScreen = () => {
   );
 };
 const styles = StyleSheet.create({
+  trackBox: { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0", borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 12 },
+  trackTitle: { fontSize: 15, fontWeight: "800", color: "#14532D" },
+  trackEta: { fontSize: 13, color: "#166534", marginTop: 2 },
+  trackBtn: { backgroundColor: "#111827", borderRadius: 10, paddingVertical: 11, alignItems: "center", marginTop: 10 },
+  trackBtnText: { color: "#fff", fontWeight: "800" },
   deliveryCodeBox: { backgroundColor: "#EEF6FF", borderRadius: 14, padding: 14, marginBottom: 12, alignItems: "center" },
   deliveryCodeLabel: { fontSize: 12, fontWeight: "700", color: "#1D4ED8", textTransform: "uppercase", letterSpacing: 0.6 },
   deliveryCodeValue: { fontSize: 34, fontWeight: "800", letterSpacing: 10, color: "#111827", marginVertical: 4 },
